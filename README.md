@@ -36,3 +36,9 @@ Arnaud
 ## Version 1
 
 Initial release
+
+## Version 1.1
+
+Adds smart trim mappings making it a lot easier and faster to trim an aircraft:
+- elevator/aileron trim sensitivity adapts to aircraft's IAS and design Vc to compensate higher aerodynamic forces for higher velocities 
+- elevator trim automatically compensates centering elevator inputs to compensate for the absence of Force-Feedback hardware
