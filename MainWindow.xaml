@@ -47,9 +47,10 @@
                 <ComboBox IsEditable="True"
                     Text="{Binding Source={x:Static properties:Settings.Default}, Path=Sensitivity}">
                     <ComboBoxItem>16</ComboBoxItem>
-                    <ComboBoxItem ToolTip="e.g. 800dpi/1in, 1600dpi/2in" IsSelected="True">8</ComboBoxItem>
+                    <ComboBoxItem ToolTip="e.g. 800dpi/1in, 1600dpi/2in">8</ComboBoxItem>
                     <ComboBoxItem ToolTip="e.g. 800dpi/2in">4</ComboBoxItem>
                     <ComboBoxItem>2</ComboBoxItem>
+                    <ComboBoxItem>1</ComboBoxItem>
                     <ComboBoxItem ToolTip="No mouse input">0</ComboBoxItem>
                 </ComboBox>
             </DockPanel>

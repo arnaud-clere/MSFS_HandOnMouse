@@ -1,5 +1,6 @@
 ﻿using HandOnMouse.Properties;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
@@ -60,6 +61,10 @@ namespace HandOnMouse
                     m.SimVarValue = Math.Max(0, m.SimVarMin);
                     m.Sensitivity = Math.Max(1 / 100, Math.Min(100, double.Parse(
                         Kernel32.ReadIni(filePath, "Sensitivity", section, "1"), NumberStyles.Float, CultureInfo.InvariantCulture)));
+                    m.SensitivityAtCruiseSpeed = bool.Parse(
+                        Kernel32.ReadIni(filePath, "SensitivityAtCruiseSpeed", section, "False").Trim());
+                    m.TrimCounterCenteringMove = bool.Parse(
+                        Kernel32.ReadIni(filePath, "TrimCounterCenteringMove", section, "False").Trim());
                     m.IncreaseDirection = (Direction)Enum.Parse(typeof(Direction),
                         Kernel32.ReadIni(filePath, "IncreaseDirection", section, "Push").Trim(), true);
                     m.WaitButtonsReleased = bool.Parse(
@@ -85,26 +90,31 @@ namespace HandOnMouse
         }
         static public Color TextColorFromChange(double normalizedChange)
         {
-            var maxChangeColor = Colors.DarkOrange; 
+            var maxChangeColor = Colors.DarkOrange;
             var change = Math.Min(1, Math.Abs(normalizedChange) * 3); // max if change > max(normalizedChange)/3
             return Color.FromRgb(
                 (byte)(maxChangeColor.R * change),
                 (byte)(maxChangeColor.G * change),
                 (byte)(maxChangeColor.B * change));
         }
+        static public IReadOnlyDictionary<string, string> AxisForTrim = new Dictionary<string, string> {
+            { "ELEVATOR TRIM POSITION", "ELEVATOR POSITION" },
+            { "AILERON TRIM PCT"      , "AILERON POSITION"  },
+            { "RUDDER TRIM PCT"       , "RUDDER POSITION"   },
+            };
+        static public double DesignCruiseSpeedKnots;
+        static public double IndicatedAirSpeedKnots;
 
         public Axis()
         {
             SimVarName = "";
             SimVarUnit = "Percent";
-            SimVarMin = 0;
             SimVarMax = 100;
             SimVarValue = Math.Max(0, SimVarMin);
             ChangeColorForText = Colors.Black;
             IncreaseDirection = Direction.Push;
             ButtonsFilter = RAWMOUSE.RI_MOUSE.Reserved;
-            CurrentChange = 0;
-            SimVarChange = 0;
+            TrimmedAxis = double.NaN;
         }
 
         // R/O properties
@@ -127,11 +137,12 @@ namespace HandOnMouse
                     if (ButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_UP )) btnUp += "R";
                     if (ButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_4_UP     )) btnUp += "B";
                     if (ButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_5_UP     )) btnUp += "F";
-                    btn += btnUp.Length > 0 ? "-" + btnUp : "";
+                    if (btnUp.Length > 0) btn += "-" + btnUp;
                     btn +=
                         IncreaseDirection == Direction.Left ? " ←" :
                         IncreaseDirection == Direction.Push ? " ↑" :
                         IncreaseDirection == Direction.Right ? " →" : " ↓";
+                    if (TrimCounterCenteringMove) btn += "*";
                 }
                 else
                 {
@@ -146,28 +157,8 @@ namespace HandOnMouse
             }
         }
 
-        public string SimVarName
-        {
-            get { return _simVarName; }
-            private set
-            {
-                _simVarName = value.Trim().ToUpper();
-                NotifyPropertyChanged();
-                NotifyPropertyChanged("Text");
-            }
-        }
-        public string SimVarUnit
-        {
-            get { return _simVarUnit; }
-            private set
-            {
-                if (_simVarUnit != value)
-                {
-                    _simVarUnit = value;
-                    NotifyPropertyChanged();
-                }
-            }
-        }
+        public string SimVarName { get; private set; }
+        public string SimVarUnit { get; private set; }
         public double SimVarIncrement 
         { 
             get 
@@ -228,36 +219,27 @@ namespace HandOnMouse
         }
         public bool WaitButtonsReleased { get; private set; }
         public double Sensitivity { get; private set; }
-        public Direction IncreaseDirection
-        {
-            get { return _increaseDirection; }
-            private set
-            {
-                if (_increaseDirection != value)
-                {
-                    _increaseDirection = value;
-                    NotifyPropertyChanged();
-                    NotifyPropertyChanged("Text");
-                }
-            }
+        public bool SensitivityAtCruiseSpeed { get; private set; }
+        public double SmartSensitivity 
+        { 
+            get 
+            { 
+                return SensitivityAtCruiseSpeed && DesignCruiseSpeedKnots > 0 ?
+                    Sensitivity / Math.Max(0.5, // 0.5 Floor to keep some trim sensitivity at speeds < Vc/4
+                        Math.Sqrt(IndicatedAirSpeedKnots / DesignCruiseSpeedKnots)) : // Sqrt to balance aerodynamic trim forces which grow with Velocity^2
+                    Sensitivity; 
+            } 
         }
+        public bool TrimCounterCenteringMove { get; private set; }
+        /// <summary>Last trimmed axis position in [-1..1] to compute moves centering to 0</summary>
+        public double TrimmedAxis { get; set; }
+        public Direction IncreaseDirection { get; private set; }
         /// <summary>A filter of mouse buttons down encoded as a combination of RAWMOUSE.RI_MOUSE</summary>
-        public RAWMOUSE.RI_MOUSE ButtonsFilter
-        {
-            get { return _buttonsFilter; }
-            private set
-            {
-                if (_buttonsFilter != value)
-                {
-                    _buttonsFilter = value;
-                    NotifyPropertyChanged();
-                    NotifyPropertyChanged("Text");
-                }
-            }
-        }
+        public RAWMOUSE.RI_MOUSE ButtonsFilter { get; private set; }
 
         // R/W properties
 
+        public bool IsActive { get; set; }
         public double CurrentChange 
         {
             get { return _change; }
@@ -292,12 +274,12 @@ namespace HandOnMouse
         {
             if (rawScale > 0)
             {
-                CurrentChange += Sensitivity * lastRawOffset / (rawScale * 100);
+                CurrentChange += SmartSensitivity * lastRawOffset / (rawScale * 100);
                 SimVarChange = SimVarScale * CurrentChange;
                 NotifyPropertyChanged("Value");
             }
         }
-        public void UpdateSimVar(double valueInSim)
+        public void UpdateSimVar(double valueInSim, double trimmedAxisChange = 0)
         {
             if (SimVarValue != valueInSim)
             {
@@ -308,6 +290,12 @@ namespace HandOnMouse
             {
                 SimVarValue += SimVarChange;
                 SimVarChange = 0;
+                NotifyPropertyChanged("Value");
+            }
+            if (trimmedAxisChange != 0)
+            {
+                SimVarValue += SmartSensitivity * trimmedAxisChange;
+                NotifyPropertyChanged("Value");
             }
         }
 
@@ -318,17 +306,12 @@ namespace HandOnMouse
         // Implementation
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = "") => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
-        private string _simVarName;
-        private string _simVarUnit;
         private double _simVarMin;
         private double _simVarMax;
         private double _simVarValue;
         private double _simVarChange;
         private double _change;
         private Color _color;
-        
-        private Direction _increaseDirection;
-        private RAWMOUSE.RI_MOUSE _buttonsFilter;
     }
 }
 
