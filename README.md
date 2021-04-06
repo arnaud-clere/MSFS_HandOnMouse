@@ -21,8 +21,8 @@ Since many mouse are equipped with forward/backward buttons and these are not ma
 Mouse Button(s)      | MSFS Control
 ---------------      | ------------
 **Forward alone**    | **Throttle**
+**Backward alone**   | **Flaps** (forward-backward move) or **Landing Gear** (left-right move)<br>or with mapping files with trim:<br>**Elevator trim** (forward-backward move) or **Aileron trim** (left-right move)
 **Forward+Backward** | **Propeller** or **Mixture** or **Spoilers** (for jets and gliders)  
-**Backward alone**   | **Flaps** (forward-backward move) or **Landing Gear** (left-right move)
 
 *NB: Controls with few positions such as flaps and gear are configured to wait for the buttons to be released before actually doing anything so you can revert an inadvertent move.*
 
@@ -42,3 +42,16 @@ Initial release
 Adds smart trim mappings making it a lot easier and faster to trim an aircraft:
 - elevator/aileron trim sensitivity adapts to aircraft's IAS and design Vc to compensate higher aerodynamic forces for higher velocities 
 - elevator trim automatically compensates centering elevator inputs to compensate for the absence of Force-Feedback hardware
+
+> When you already have a good way to actuate flaps and ailerons, and a spring-centered stick/yoke, you should **try to trim with the mouse as this will save you previous time during your approaches**.
+> Trimming is essential to a stabilized approach but it is difficult to simulate due to the variety of trimming implementations and the sparsity of force-feedback hardware. 
+> In MSFS it is more complex than it is in real life, at least in GA aircrafts and gliders. 
+> So, the utility implements it in a more efficient way so you can concentrate on all the other things to do during an approach.
+> When you need to apply to much effort to maintain your stick/yoke in position:
+> 1. Use the mouse to grab the trim control (press Backward button)
+> 2. Gently center back your stick/yoke (you can also move forward/backward the mouse to maintain a perfect attitude 
+> 3. Release the trim control (Backward button), you're done
+> 
+> The default smart trim sensitivity works well for most default aircrafts but not all, so, you can adjust it in a custom mappings file (use the "..." button)
+
+
