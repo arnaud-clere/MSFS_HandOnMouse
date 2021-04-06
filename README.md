@@ -47,11 +47,13 @@ Adds smart trim mappings making it a lot easier and faster to trim an aircraft:
 > Trimming is essential to a stabilized approach but it is difficult to simulate due to the variety of trimming implementations and the sparsity of force-feedback hardware. 
 > In MSFS it is more complex than it is in real life, at least in GA aircrafts and gliders. 
 > So, the utility implements it in a more efficient way so you can concentrate on all the other things to do during an approach.
-> When you need to apply to much effort to maintain your stick/yoke in position:
-> 1. Use the mouse to grab the trim control (press Backward button)
-> 2. Gently center back your stick/yoke (you can also move forward/backward the mouse to maintain a perfect attitude 
-> 3. Release the trim control (Backward button), you're done
-> 
-> The default smart trim sensitivity works well for most default aircrafts but not all, so, you can adjust it in a custom mappings file (use the "..." button)
+
+When you need to apply too much effort to maintain your stick/yoke in position:
+1. Use the mouse to grab the trim control (press Backward button)
+2. Gently center back your stick/yoke (you can also move the mouse forward/backward to maintain a perfect attitude) 
+3. Release the trim control (Backward button)
+4. If trimming is not perfect, you can adjust it with the mouse, or with stick/yoke (back to #1)
+
+*NB: The default smart trim sensitivity works well for most default aircrafts but not all, so, you can adjust it in a custom mappings file (use the "..." button)*
 
 
