@@ -102,6 +102,9 @@
     </EmbeddedResource>
     <None Include="app.config" />
     <None Include="LICENSE" />
+    <None Include="Mappings\Jet.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Mappings\2xJet.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

@@ -56,4 +56,23 @@ When you need to apply too much effort to maintain your stick/yoke in position:
 
 *NB: The default smart trim sensitivity works well for most default aircrafts but not all, so, you can adjust it in a custom mappings file (use the "..." button)*
 
+## Version 1.2 (NOT RELEASED YET)
 
+Adds other smart mappings :
+- flaps maximum value adapts to the current aircraft
+- throttle minimum value adapts to the current aircraft to enable reverse throttle when available
+
+> When the runway is short, reverse throttle need to be used as soon as the aircraft touches the ground but not before!
+> In real life, the reverse range is protected by detents. 
+> The utility simulates this by using the same button but a mouse move orthogonal to the direction chosen for forward throttle.
+
+Just before the flare:
+1. Make a large mouse move toward idle throttle
+2. Wait to touch the ground
+3. Move the mouse to the right to apply reverse 
+
+On a sloped runway you can quickly revert to forward throttle to make sure you reach the platform:
+1. Make a large mouse move to the left to reach idle throttle
+2. Move the mouse forward to apply the necessary power
+
+*NB: Move the mouse backward/forward in the reverse throttle range in case you configured forward throttle in a left/right direction*

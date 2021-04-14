@@ -17,12 +17,8 @@ namespace HandOnMouse
         public enum Direction { Push, Draw, Left, Right };
 
         static public ObservableCollection<Axis> Mappings { get; private set; } = new ObservableCollection<Axis>();
-        static public string Read(string filePath)
+        static public string MappingsRead(string filePath)
         {
-            if (!Path.IsPathRooted(filePath))
-            {
-                filePath = Path.Combine(Directory.GetCurrentDirectory(), "Mappings", filePath);
-            }
             if (!File.Exists(filePath))
             {
                 return "File not found";
@@ -52,7 +48,7 @@ namespace HandOnMouse
                         if (btnString[1].Contains("F")) btn |= RAWMOUSE.RI_MOUSE.BUTTON_5_UP;
                     }
                     m.ButtonsFilter = btn == RAWMOUSE.RI_MOUSE.None ? RAWMOUSE.RI_MOUSE.Reserved : btn; // to avoid changing the axis with no button down
-                    m.SimVarName = Kernel32.ReadIni(filePath, "SimVarName", section);
+                    m.SimVarName = Kernel32.ReadIni(filePath, "SimVarName", section).Trim().ToUpperInvariant();
                     m.SimVarUnit = Kernel32.ReadIni(filePath, "SimVarUnit", section, "Percent").Trim();
                     var min = double.Parse(Kernel32.ReadIni(filePath, "SimVarMin", section, "0"), NumberStyles.Float, CultureInfo.InvariantCulture);
                     var max = double.Parse(Kernel32.ReadIni(filePath, "SimVarMax", section, "100"), NumberStyles.Float, CultureInfo.InvariantCulture);
@@ -65,6 +61,8 @@ namespace HandOnMouse
                         Kernel32.ReadIni(filePath, "SensitivityAtCruiseSpeed", section, "False").Trim());
                     m.TrimCounterCenteringMove = bool.Parse(
                         Kernel32.ReadIni(filePath, "TrimCounterCenteringMove", section, "False").Trim());
+                    m.DisableThrottleReverse = bool.Parse(
+                        Kernel32.ReadIni(filePath, "DisableThrottleReverse", section, "False").Trim());
                     m.IncreaseDirection = (Direction)Enum.Parse(typeof(Direction),
                         Kernel32.ReadIni(filePath, "IncreaseDirection", section, "Push").Trim(), true);
                     m.WaitButtonsReleased = bool.Parse(
@@ -88,6 +86,20 @@ namespace HandOnMouse
             }
             return errors;
         }
+        static public void MappingsUpdate(int i, double inSimValue)
+        {
+            var m = Axis.Mappings[i];
+            if (m.SimVarName.StartsWith("GENERAL ENG THROTTLE LEVER POSITION") && inSimValue < 0)
+            {
+                m.SimVarMin = inSimValue;
+                m.SimVarValue = m.SimVarValue; // in case it is not yet updated and out of bounds?
+            }
+            if (m.SimVarName == "FLAPS HANDLE INDEX")
+            {
+                m.SimVarMax = inSimValue;
+                m.SimVarValue = m.SimVarValue; // in case it is not yet updated and out of bounds?
+            }
+        }
         static public Color TextColorFromChange(double normalizedChange)
         {
             var maxChangeColor = Colors.DarkOrange;
@@ -97,7 +109,13 @@ namespace HandOnMouse
                 (byte)(maxChangeColor.G * change),
                 (byte)(maxChangeColor.B * change));
         }
-        static public IReadOnlyDictionary<string, string> AxisForTrim = new Dictionary<string, string> {
+        static public readonly IReadOnlyList<string> EngineSimVars = new string[] {
+            "GENERAL ENG THROTTLE LEVER POSITION",
+            "GENERAL ENG MIXTURE LEVER POSITION",
+            "GENERAL ENG PROPELLER LEVER POSITION",
+            };
+        static public uint EnginesCount;
+        static public readonly IReadOnlyDictionary<string, string> AxisForTrim = new Dictionary<string, string> {
             { "ELEVATOR TRIM POSITION", "ELEVATOR POSITION" },
             { "AILERON TRIM PCT"      , "AILERON POSITION"  },
             { "RUDDER TRIM PCT"       , "RUDDER POSITION"   },
@@ -152,18 +170,29 @@ namespace HandOnMouse
                 {
                     btn = "(" + btn + ")";
                 }
-                var sim = SimVarName.Length > 0 ? SimVarName.Replace("GENERAL ", "").Replace(" PCT", "").Replace(" POSITION", "").ToLower() : "-";
+                var sim = SimVarName.Length > 0 ? SimVarName.Replace("GENERAL ", "").Replace(" PCT", "").Replace(" POSITION", "").ToLowerInvariant() : "-";
                 return btn + " " + sim;
             }
         }
 
-        public string SimVarName { get; private set; }
+        public string SimVarName 
+        { 
+            get { return _simVarName; } 
+            private set 
+            { 
+                _simVarName = value; 
+                IsThrottle = _simVarName.StartsWith("GENERAL ENG THROTTLE LEVER POSITION");
+                foreach (var v in EngineSimVars)
+                    if (v == _simVarName)
+                        ForAllEngines = true;
+            }
+        }
         public string SimVarUnit { get; private set; }
         public double SimVarIncrement 
         { 
             get 
             {
-                var u = SimVarUnit.ToLower(); 
+                var u = SimVarUnit.ToLowerInvariant(); 
                 return 
                     u == "number" || u == "bool" ? 1 :
                     SimVarScale / Settings.Default.ContinuousSimVarIncrements; 
@@ -231,9 +260,21 @@ namespace HandOnMouse
             } 
         }
         public bool TrimCounterCenteringMove { get; private set; }
+        public bool DisableThrottleReverse { get; private set; }
         /// <summary>Last trimmed axis position in [-1..1] to compute moves centering to 0</summary>
         public double TrimmedAxis { get; set; }
         public Direction IncreaseDirection { get; private set; }
+        public bool IsThrottle { get; private set; }
+        public Direction SmartIncreaseDirection
+        {
+            get
+            {
+                return IsThrottle && _simVarValue < 0 ?
+                    IncreaseDirection == Direction.Push || IncreaseDirection == Direction.Draw ? Direction.Left : Direction.Push :
+                    IncreaseDirection;
+            }
+        }
+        public bool ForAllEngines { get; private set; }
         /// <summary>A filter of mouse buttons down encoded as a combination of RAWMOUSE.RI_MOUSE</summary>
         public RAWMOUSE.RI_MOUSE ButtonsFilter { get; private set; }
 
@@ -279,8 +320,20 @@ namespace HandOnMouse
                 NotifyPropertyChanged("Value");
             }
         }
-        public void UpdateSimVar(double valueInSim, double trimmedAxisChange = 0)
+        public bool UpdateSimVar(double valueInSim, double trimmedAxisChange = 0)
         {
+
+            if (valueInSim < SimVarMin)
+            {
+                CurrentChange = SimVarChange = 0; // Mouse input may be defined by the user for [SimVarMin..SimVarMax] range on purpose
+                return false;
+            }
+            if (valueInSim > SimVarMax)
+            {
+                CurrentChange = SimVarChange = 0; // Mouse input may be defined by the user for [SimVarMin..SimVarMax] range on purpose
+                return false;
+            }
+
             if (SimVarValue != valueInSim)
             {
                 SimVarValue = valueInSim;
@@ -297,6 +350,7 @@ namespace HandOnMouse
                 SimVarValue += SmartSensitivity * trimmedAxisChange;
                 NotifyPropertyChanged("Value");
             }
+            return SimVarValue != valueInSim;
         }
 
         // Events
@@ -306,6 +360,7 @@ namespace HandOnMouse
         // Implementation
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = "") => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
+        private string _simVarName;
         private double _simVarMin;
         private double _simVarMax;
         private double _simVarValue;
