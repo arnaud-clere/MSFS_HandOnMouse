@@ -265,15 +265,6 @@ namespace HandOnMouse
         public double TrimmedAxis { get; set; }
         public Direction IncreaseDirection { get; private set; }
         public bool IsThrottle { get; private set; }
-        public Direction SmartIncreaseDirection
-        {
-            get
-            {
-                return IsThrottle && _simVarValue < 0 ?
-                    IncreaseDirection == Direction.Push || IncreaseDirection == Direction.Draw ? Direction.Left : Direction.Push :
-                    IncreaseDirection;
-            }
-        }
         public bool ForAllEngines { get; private set; }
         /// <summary>A filter of mouse buttons down encoded as a combination of RAWMOUSE.RI_MOUSE</summary>
         public RAWMOUSE.RI_MOUSE ButtonsFilter { get; private set; }

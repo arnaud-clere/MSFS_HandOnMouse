@@ -37,7 +37,7 @@ namespace HandOnMouse.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("8")]
+        [global::System.Configuration.DefaultSettingValueAttribute("4")]
         public double Sensitivity {
             get {
                 return ((double)(this["Sensitivity"]));
@@ -49,13 +49,25 @@ namespace HandOnMouse.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1000")]
+        [global::System.Configuration.DefaultSettingValueAttribute("10000")]
         public double ContinuousSimVarIncrements {
             get {
                 return ((double)(this["ContinuousSimVarIncrements"]));
             }
             set {
                 this["ContinuousSimVarIncrements"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public double ReverseDetentWidthInPercent {
+            get {
+                return ((double)(this["ReverseDetentWidthInPercent"]));
+            }
+            set {
+                this["ReverseDetentWidthInPercent"] = value;
             }
         }
     }

@@ -6,10 +6,13 @@
       <Value Profile="(Default)">Throttle+Prop.ini</Value>
     </Setting>
     <Setting Name="Sensitivity" Type="System.Double" Scope="User">
-      <Value Profile="(Default)">8</Value>
+      <Value Profile="(Default)">4</Value>
     </Setting>
     <Setting Name="ContinuousSimVarIncrements" Type="System.Double" Scope="User">
-      <Value Profile="(Default)">1000</Value>
+      <Value Profile="(Default)">10000</Value>
+    </Setting>
+    <Setting Name="ReverseDetentWidthInPercent" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">1</Value>
     </Setting>
   </Settings>
 </SettingsFile>

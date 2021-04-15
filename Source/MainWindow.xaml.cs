@@ -87,7 +87,7 @@ namespace HandOnMouse
         const int WM_USER_SIMCONNECT = (int)WM.USER + 2;
 
         /// <summary>SimConnect Requests and Data Definitions are actually defined dynamically for each Axis in Axis.Mappings</summary>
-        public enum Definitions { None = 0, AircraftLoaded = 1, IndicatedAirSpeedKnots = 2, DesignCruiseSpeedFeetPerSec = 3, EnginesCount = 4, EnginesSelected = 5, Axis = 6 }
+        public enum Definitions { None = 0, AircraftLoaded = 1, IndicatedAirSpeedKnots = 2, DesignCruiseSpeedFeetPerSec = 3, EnginesCount = 4, Axis = 5 }
 
         IntPtr _hwnd;
         SimConnect _simConnect;
@@ -275,10 +275,6 @@ namespace HandOnMouse
                 _simConnect.AddToDataDefinition(Definitions.EnginesCount, "NUMBER OF ENGINES", "Number", SIMCONNECT_DATATYPE.FLOAT64, 1, SimConnect.SIMCONNECT_UNUSED);
                 _simConnect.RegisterDataDefineStruct<double>(Definitions.EnginesCount);
                 _simConnect.RequestDataOnSimObject(Definitions.EnginesCount, Definitions.EnginesCount, (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.SIM_FRAME, SIMCONNECT_DATA_REQUEST_FLAG.CHANGED, 0, 0, 0);
-
-                _simConnect.AddToDataDefinition(Definitions.EnginesSelected, "ENGINE CONTROL SELECT", "Mask", SIMCONNECT_DATATYPE.FLOAT64, 1, SimConnect.SIMCONNECT_UNUSED);
-                _simConnect.RegisterDataDefineStruct<double>(Definitions.EnginesSelected);
-                // Definitions.EnginesSelected is only set
             }
             _simConnect.SubscribeToSystemEvent(Definitions.AircraftLoaded, "AircraftLoaded");
         }
@@ -425,11 +421,25 @@ namespace HandOnMouse
                                 else
                                     mouse.LastY = 0;
 
-                                var dir = m.SmartIncreaseDirection;
-                                m.UpdateChanges(Properties.Settings.Default.Sensitivity, 
-                                    dir == Axis.Direction.Push ? -mouse.LastY :
-                                    dir == Axis.Direction.Draw ?  mouse.LastY :
-                                    dir == Axis.Direction.Right ? mouse.LastX : -mouse.LastX);
+                                var d = m.IncreaseDirection;
+                                double change =
+                                        d == Axis.Direction.Push ? -mouse.LastY :
+                                        d == Axis.Direction.Draw ? mouse.LastY :
+                                        d == Axis.Direction.Right ? mouse.LastX : -mouse.LastX;
+
+                                var inDetent = m.IsThrottle && Math.Abs(m.Value) < m.SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100;
+                                var inReverse = m.IsThrottle && m.Value < 0;
+                                var reverse = d == Axis.Direction.Push || d == Axis.Direction.Draw ? Axis.Direction.Right : Axis.Direction.Draw;
+                                if (inDetent && mouse.LastX != 0 && reverse == Axis.Direction.Right)
+                                    change = -mouse.LastX;
+                                else if (inDetent && mouse.LastY != 0 && reverse == Axis.Direction.Draw)
+                                    change = -mouse.LastY;
+                                else if (inReverse && change <= 0 && reverse == Axis.Direction.Right)
+                                    change = -mouse.LastX;
+                                else if (inReverse && change <= 0 && reverse == Axis.Direction.Draw)
+                                    change = -mouse.LastY;
+
+                                m.UpdateChanges(Properties.Settings.Default.Sensitivity, change);
                             }
                             if (m.WaitButtonsReleased)
                             {
@@ -495,12 +505,6 @@ namespace HandOnMouse
                 else if (i == (int)Definitions.EnginesCount)
                 {
                     Axis.EnginesCount = (uint)Math.Max(0, Math.Min(4, (double)data.dwData[0]));
-                    _simConnect?.SetDataOnSimObject(Definitions.EnginesSelected, (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT,
-                        Axis.EnginesCount * 2 - 1); // All engines
-                }
-                else if (i == (int)Definitions.EnginesSelected)
-                {
-                    Debug.Assert(false, "Definitions.EnginesSelected should only be used to set data");
                 }
                 else if ((int)Definitions.Axis <= i)
                 {
@@ -518,7 +522,6 @@ namespace HandOnMouse
                             inSimValue = inSim.Trim;
                             if (m.IsActive && !double.IsNaN(m.TrimmedAxis))
                             {
-                                // TODO Limit to centering moves?
                                 trimmedAxisChange = m.SimVarScale * (m.TrimmedAxis - inSim.TrimmedAxis) / (1 - -1) /* position scale */;
                             }
                             m.TrimmedAxis = inSim.TrimmedAxis;
