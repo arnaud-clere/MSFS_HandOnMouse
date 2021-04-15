@@ -11,7 +11,8 @@ MSFS Utility to keep your HandOnMouse for easier/better flying
 
 ## Quick start guide
 
-1. Run the application
+0. Extract all files from the archive to a folder
+1. Run the MSFS_HandOnMouse application
 2. Test the mouse sensitivity and adjust as required (depends on mouse resolution and desired range)
 3. Use the default mappings or click "..." to select mappings more adapted to your plane
 4. Connect to MSFS and check that you can actuate the chosen controls with the mouse
