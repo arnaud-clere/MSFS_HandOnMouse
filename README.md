@@ -57,7 +57,7 @@ When you need to apply too much effort to maintain your stick/yoke in position:
 
 *NB: The default smart trim sensitivity works well for most default aircrafts but not all, so, you can adjust it in a custom mappings file (use the "..." button)*
 
-## Version 1.2 (NOT RELEASED YET)
+## Version 1.2
 
 Adds other smart mappings :
 - flaps maximum value adapts to the current aircraft
