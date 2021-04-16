@@ -2,18 +2,19 @@
 MSFS Utility to keep your HandOnMouse for easier/better flying
 
 > MSFS virtual cockpits are wonderfully immersive but can become challenging when flying requires to actuate critical knobs and levers quickly.
-> * Takeoffs may require to quickly retract gear and/or flaps before critical speeds are reached.
-> * Landings may require to adjust flaps (or even gliders' spoilers) and/or trim without delay.
+> * Takeoffs may require to quickly **retract gear** and/or **flaps** before critical speeds are reached.
+> * Landings may require to **adjust flaps** (or even **gliders' spoilers**) and/or **trim without delay**.
+> * Touchdown on short runways may require prompt and precise use of **reverse throttle**.
 > 
 > Even with dedicated hardware such as quadrants, having to leave your mouse may badly delay other actions such as preparing the aircraft (lights, accessories), completing checklists, answering ATC, etc. I guess using VR mode makes all of these even more challenging.
 > 
-> The solution I use for quite some time now is this small utility that connects to MSFS to map critical actions to mouse moves combined with dedicated buttons pressed.
+> The solution I use for quite some time now is this small utility that connects to MSFS to **map critical actions to mouse moves combined with dedicated buttons pressed**.
 
 ## Quick start guide
 
 0. Extract all files from the archive to a folder
 1. Run the MSFS_HandOnMouse application
-2. Test the mouse sensitivity and adjust as required (depends on mouse resolution and desired range)
+2. Test the mouse sensitivity and adjust as required (depends on mouse resolution and desired range, beware that sensitivity will be reduced in interactions with MSFS)
 3. Use the default mappings or click "..." to select mappings more adapted to your plane
 4. Connect to MSFS and check that you can actuate the chosen controls with the mouse
 5. Either hide the application window with "-" button or keep it on top in a reduced form with "=" button
@@ -21,8 +22,8 @@ MSFS Utility to keep your HandOnMouse for easier/better flying
 Since many mouse are equipped with forward/backward buttons and these are not mapped by default to anything, the utility comes with preconfigured mappings suited to various aircraft types using these buttons:
 Mouse Button(s)      | MSFS Control
 ---------------      | ------------
-**Forward alone**    | **Throttle**
-**Backward alone**   | **Flaps** (forward-backward move) or **Landing Gear** (left-right move)<br>or with mapping files with trim:<br>**Elevator trim** (forward-backward move) or **Aileron trim** (left-right move)
+**Forward alone**    | **Throttle** (forward-backward mouse move) or **Reverse Throttle** (protected by use of orthogonal mouse move)
+**Backward alone**   | **Flaps** (forward-backward move) and **Landing Gear** (left-right move)<br>OR using mapping files with trim:<br>**Elevator trim** (forward-backward move) or **Aileron trim** (left-right move)
 **Forward+Backward** | **Propeller** or **Mixture** or **Spoilers** (for jets and gliders)  
 
 *NB: Controls with few positions such as flaps and gear are configured to wait for the buttons to be released before actually doing anything so you can revert an inadvertent move.*
