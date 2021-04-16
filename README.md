@@ -74,7 +74,6 @@ Just before the flare:
 3. Move the mouse to the right to apply reverse 
 
 On a sloped runway you can quickly revert to forward throttle to make sure you reach the platform:
-1. Make a large mouse move to the left to reach idle throttle
-2. Move the mouse forward to apply the necessary power
+1. Move the mouse forward to get out reverse range and apply the necessary power
 
 *NB: Move the mouse backward/forward in the reverse throttle range in case you configured forward throttle in a left/right direction*
