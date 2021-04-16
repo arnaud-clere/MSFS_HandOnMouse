@@ -22,7 +22,7 @@ MSFS Utility to keep your HandOnMouse for easier/better flying
 Since many mouse are equipped with forward/backward buttons and these are not mapped by default to anything, the utility comes with preconfigured mappings suited to various aircraft types using these buttons:
 Mouse Button(s)      | MSFS Control
 ---------------      | ------------
-**Forward alone**    | **Throttle** (forward-backward mouse move) or **Reverse Throttle** (protected by use of orthogonal mouse move)
+**Forward alone**    | **Throttle** (forward-backward mouse move) and **Reverse Throttle** (protected by use of orthogonal mouse move)
 **Backward alone**   | **Flaps** (forward-backward move) and **Landing Gear** (left-right move)<br>OR using mapping files with trim:<br>**Elevator trim** (forward-backward move) or **Aileron trim** (left-right move)
 **Forward+Backward** | **Propeller** or **Mixture** or **Spoilers** (for jets and gliders)  
 
