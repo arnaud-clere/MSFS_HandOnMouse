@@ -17,6 +17,7 @@ using HandOnMouse.Properties;
 using System.Windows.Input;
 using System.Collections.ObjectModel;
 using System.Windows.Data;
+using System.Windows.Threading;
 
 namespace HandOnMouse
 {
@@ -120,6 +121,11 @@ namespace HandOnMouse
             {
                 Debug.WriteLine($"User32.RegisterRawInputDevices failed with Marshal.GetLastWin32Error: {Marshal.GetLastWin32Error()}");
             }
+
+            var simFrameTimer = new DispatcherTimer();
+            simFrameTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000/36);
+            simFrameTimer.Tick += new EventHandler(Timer_Tick);
+            simFrameTimer.Start();
         }
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
@@ -424,8 +430,14 @@ namespace HandOnMouse
                                 var d = m.IncreaseDirection;
                                 double change =
                                         d == Axis.Direction.Push ? -mouse.LastY :
-                                        d == Axis.Direction.Draw ? mouse.LastY :
+                                        d == Axis.Direction.Draw ?  mouse.LastY :
                                         d == Axis.Direction.Right ? mouse.LastX : -mouse.LastX;
+                                var d2 = m.IncreaseDirection2;
+                                if (change == 0 && d2 != null)
+                                    change =
+                                        d2 == Axis.Direction.Push ? -mouse.LastY :
+                                        d2 == Axis.Direction.Draw ?  mouse.LastY :
+                                        d2 == Axis.Direction.Right ? mouse.LastX : -mouse.LastX;
 
                                 var inDetent = m.IsThrottle && Math.Abs(m.Value) < m.SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100;
                                 var inReverse = m.IsThrottle && m.Value < 0;
@@ -439,7 +451,7 @@ namespace HandOnMouse
                                 else if (inReverse && change <= 0 && reverse == Axis.Direction.Draw)
                                     change = -mouse.LastY;
 
-                                m.UpdateChanges(Properties.Settings.Default.Sensitivity, change);
+                                m.UpdateRawInputChanges(Properties.Settings.Default.Sensitivity, change);
                             }
                             if (m.WaitButtonsReleased)
                             {
@@ -473,18 +485,29 @@ namespace HandOnMouse
                             m.ChangeColorForText = m.SimVarChange != 0 && m.CurrentChange == 0 ? Colors.Red : Axis.TextColorFromChange(m.CurrentChange);
                         }
                     }
-                    else
-                    {
-                        Debug.WriteLine("Received unsupported RAWINPUT");
-                    }
+                    else { Debug.WriteLine("Received unsupported RAWINPUT"); }
                 }
-                else
-                {
-                    Debug.WriteLine("Received unsupported WM.INPUT");
-                }
+                else { Debug.WriteLine("Received unsupported WM.INPUT"); }
             }
             return hwnd;
         }
+
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            for (int i = 0; i < Axis.Mappings.Count; i++)
+            {
+                var m = Axis.Mappings[i];
+                m.UpdateTimerChanges(((DispatcherTimer)sender).Interval.TotalSeconds);
+                if (m.SimVarChange != 0)
+                {
+                    if (_connected)
+                        _simConnect?.RequestDataOnSimObject(ReadAxisValueId(i), ReadAxisValueId(i), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.ONCE, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
+                    else
+                        m.UpdateSimVar(m.SimVarValue);
+                }
+            }
+        }
+
         public void SimConnect_OnRecvData(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA data)
         {
             // if (data.dwObjectID != 1) return;

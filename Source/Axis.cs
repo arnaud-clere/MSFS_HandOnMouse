@@ -63,10 +63,38 @@ namespace HandOnMouse
                         Kernel32.ReadIni(filePath, "TrimCounterCenteringMove", section, "False").Trim());
                     m.DisableThrottleReverse = bool.Parse(
                         Kernel32.ReadIni(filePath, "DisableThrottleReverse", section, "False").Trim());
-                    m.IncreaseDirection = (Direction)Enum.Parse(typeof(Direction),
-                        Kernel32.ReadIni(filePath, "IncreaseDirection", section, "Push").Trim(), true);
+                    var directions = Kernel32.ReadIni(filePath, "IncreaseDirection", section, "Push").Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                    m.IncreaseDirection = (Direction)Enum.Parse(typeof(Direction), directions[0].Trim(), true);
+                    try
+                    {
+                        m.IncreaseDirection2 = (Direction)Enum.Parse(typeof(Direction), directions[1].Trim(), true);
+                        var decreaseDirection =
+                            m.IncreaseDirection == Direction.Draw ? Direction.Push :
+                            m.IncreaseDirection == Direction.Push ? Direction.Draw :
+                            m.IncreaseDirection == Direction.Left ? Direction.Right : Direction.Left;
+                        if (m.IncreaseDirection2 == m.IncreaseDirection || m.IncreaseDirection2 == decreaseDirection)
+                            m.IncreaseDirection2 = null;
+                    }
+                    catch(Exception) { }
+                    m.DecreaseScaleTimeSecs = Math.Max(0, Math.Min(10, double.Parse(
+                        Kernel32.ReadIni(filePath, "DecreaseScaleTimeSecs", section, "0"), NumberStyles.Float, CultureInfo.InvariantCulture)));
                     m.WaitButtonsReleased = bool.Parse(
                         Kernel32.ReadIni(filePath, "WaitButtonsReleased", section, "False").Trim());
+                    var scaleColors = Kernel32.ReadIni(filePath, "SimVarNegativePositiveColors", section, "").Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                    m.HasSimVarNegativeColor = false;
+                    m.HasSimVarPositiveColor = false;
+                    m.SimVarNegativeColor = Brushes.Red;
+                    m.SimVarPositiveColor = Brushes.White;
+                    if (scaleColors.Length > 0)
+                    {
+                        m.SimVarNegativeColor = new SolidColorBrush((Color)ColorConverter.ConvertFromString(scaleColors[0]));
+                        m.HasSimVarNegativeColor = true;
+                    }
+                    if (scaleColors.Length > 1)
+                    {
+                        m.SimVarPositiveColor = new SolidColorBrush((Color)ColorConverter.ConvertFromString(scaleColors[1]));
+                        m.HasSimVarPositiveColor = true;
+                    }
                 }
                 catch (Exception e)
                 {
@@ -160,7 +188,7 @@ namespace HandOnMouse
                         IncreaseDirection == Direction.Left ? " ←" :
                         IncreaseDirection == Direction.Push ? " ↑" :
                         IncreaseDirection == Direction.Right ? " →" : " ↓";
-                    if (TrimCounterCenteringMove) btn += "*";
+                    if (TrimCounterCenteringMove) btn += "+";
                 }
                 else
                 {
@@ -207,6 +235,8 @@ namespace HandOnMouse
                 {
                     _simVarMin = value;
                     NotifyPropertyChanged();
+                    NotifyPropertyChanged("SimVarNegativeScaleString");
+                    NotifyPropertyChanged("SimVarPositiveScaleString");
                 }
             }
         }
@@ -219,10 +249,20 @@ namespace HandOnMouse
                 {
                     _simVarMax = value;
                     NotifyPropertyChanged();
+                    NotifyPropertyChanged("SimVarNegativeScaleString");
+                    NotifyPropertyChanged("SimVarPositiveScaleString");
                 }
             }
         }
         public double SimVarScale { get { return _simVarMax - _simVarMin; } }
+        public double SimVarNegativeScale { get { return _simVarMin < 0 ? _simVarMax < 0 ? 1 : (0-_simVarMin)/SimVarScale : 0; } }
+        public double SimVarPositiveScale { get { return _simVarMax > 0 ? _simVarMin > 0 ? 1 : (_simVarMax-0)/SimVarScale : 0; } }
+        public string SimVarNegativeScaleString { get { return string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", SimVarNegativeScale); } }
+        public string SimVarPositiveScaleString { get { return string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", SimVarPositiveScale); } }
+        public Brush SimVarNegativeColor { get; private set; }
+        public Brush SimVarPositiveColor { get; private set; }
+        public bool HasSimVarNegativeColor { get; private set; }
+        public bool HasSimVarPositiveColor { get; private set; }
         public double SimVarValue
         {
             get { return _simVarValue; }
@@ -264,6 +304,8 @@ namespace HandOnMouse
         /// <summary>Last trimmed axis position in [-1..1] to compute moves centering to 0</summary>
         public double TrimmedAxis { get; set; }
         public Direction IncreaseDirection { get; private set; }
+        public Direction? IncreaseDirection2 { get; private set; }
+        public double DecreaseScaleTimeSecs { get; private set; }
         public bool IsThrottle { get; private set; }
         public bool ForAllEngines { get; private set; }
         /// <summary>A filter of mouse buttons down encoded as a combination of RAWMOUSE.RI_MOUSE</summary>
@@ -302,12 +344,20 @@ namespace HandOnMouse
         // SimConnect:
         //   SimVarValue = simValue+SimVarOffset ; SimVarOffset=0
 
-        public void UpdateChanges(double rawScale, double lastRawOffset)
+        public void UpdateRawInputChanges(double rawScale, double lastRawOffset)
         {
             if (rawScale > 0)
             {
                 CurrentChange += SmartSensitivity * lastRawOffset / (rawScale * 100);
                 SimVarChange = SimVarScale * CurrentChange;
+                NotifyPropertyChanged("Value");
+            }
+        }
+        public void UpdateTimerChanges(double intervalSecs)
+        {
+            if (!IsActive && DecreaseScaleTimeSecs > 0 && Value != 0)
+            {
+                SimVarChange = -Math.Sign(Value) * Math.Min(Math.Abs(Value), SimVarScale * intervalSecs / DecreaseScaleTimeSecs);
                 NotifyPropertyChanged("Value");
             }
         }
