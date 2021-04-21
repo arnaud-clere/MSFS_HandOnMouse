@@ -377,6 +377,7 @@ namespace HandOnMouse
             else
             {
                 Settings.Default.MappingFile = filePath.Replace(MappingsDir() + @"\", "");
+                Settings.Default.Save();
             }
         }
 
