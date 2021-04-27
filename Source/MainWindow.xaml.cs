@@ -1,23 +1,24 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Threading;
 
-using winuser;
 using Microsoft.FlightSimulator.SimConnect;
 using Microsoft.Win32;
-using System.IO;
+
+using winuser;
 
 using HandOnMouse.Properties;
-using System.Windows.Input;
-using System.Collections.ObjectModel;
-using System.Windows.Data;
-using System.Windows.Threading;
 
 namespace HandOnMouse
 {
@@ -91,9 +92,9 @@ namespace HandOnMouse
         public enum Definitions { None = 0, AircraftLoaded = 1, IndicatedAirSpeedKnots = 2, DesignCruiseSpeedFeetPerSec = 3, EnginesCount = 4, Axis = 5 }
 
         IntPtr _hwnd;
+        RAWMOUSE.RI_MOUSE _buttons = RAWMOUSE.RI_MOUSE.None;
         SimConnect _simConnect;
         bool _connected = false;
-        RAWMOUSE.RI_MOUSE _buttons = RAWMOUSE.RI_MOUSE.None;
 
         public MainWindow()
         {
@@ -221,7 +222,7 @@ namespace HandOnMouse
             for (int i = 0; i < Axis.Mappings.Count; i++)
             {
                 var m = Axis.Mappings[i];
-                if (m.SimVarName.Length > 0)
+                if (m.Name.Length > 0)
                 {
                     if (m.TrimCounterCenteringMove && Axis.AxisForTrim.ContainsKey(m.SimVarName))
                     {
@@ -464,7 +465,7 @@ namespace HandOnMouse
                                     // - decrease a subsequent move in the same direction to potentially insignificant moves
                                     if (m.SimVarChange != 0)
                                     {
-                                        if (_connected)
+                                        if (_connected && m.VJoyId == 0)
                                             _simConnect?.RequestDataOnSimObject(ReadAxisValueId(i), ReadAxisValueId(i), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.ONCE, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
                                         else
                                             m.UpdateSimVar(m.SimVarValue);
@@ -477,7 +478,7 @@ namespace HandOnMouse
                                 {
                                     m.CurrentChange = 0;
                                     // Since SimVarChange is proportional to CurrentChange modulo SimVarIncrement
-                                    if (_connected)
+                                    if (_connected && m.VJoyId == 0)
                                         _simConnect?.RequestDataOnSimObject(ReadAxisValueId(i), ReadAxisValueId(i), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.ONCE, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
                                     else
                                         m.UpdateSimVar(m.SimVarValue);
@@ -501,7 +502,7 @@ namespace HandOnMouse
                 m.UpdateTimerChanges(((DispatcherTimer)sender).Interval.TotalSeconds);
                 if (m.SimVarChange != 0)
                 {
-                    if (_connected)
+                    if (_connected && m.VJoyId == 0)
                         _simConnect?.RequestDataOnSimObject(ReadAxisValueId(i), ReadAxisValueId(i), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.ONCE, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
                     else
                         m.UpdateSimVar(m.SimVarValue);

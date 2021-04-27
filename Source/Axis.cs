@@ -10,6 +10,8 @@ using System.Windows.Media;
 using winbase;
 using winuser;
 
+using vJoyInterfaceWrap;
+
 namespace HandOnMouse
 {
     public class Axis : INotifyPropertyChanged
@@ -48,34 +50,113 @@ namespace HandOnMouse
                         if (btnString[1].Contains("F")) btn |= RAWMOUSE.RI_MOUSE.BUTTON_5_UP;
                     }
                     m.ButtonsFilter = btn == RAWMOUSE.RI_MOUSE.None ? RAWMOUSE.RI_MOUSE.Reserved : btn; // to avoid changing the axis with no button down
-                    m.SimVarName = Kernel32.ReadIni(filePath, "SimVarName", section).Trim().ToUpperInvariant();
-                    m.SimVarUnit = Kernel32.ReadIni(filePath, "SimVarUnit", section, "Percent").Trim();
-                    var min = double.Parse(Kernel32.ReadIni(filePath, "SimVarMin", section, "0"), NumberStyles.Float, CultureInfo.InvariantCulture);
-                    var max = double.Parse(Kernel32.ReadIni(filePath, "SimVarMax", section, "100"), NumberStyles.Float, CultureInfo.InvariantCulture);
-                    m.SimVarMax = Math.Max(min, max);
-                    m.SimVarMin = Math.Min(min, max);
-                    m.SimVarValue = Math.Max(0, m.SimVarMin);
+
+                    var nameAndId = Kernel32.ReadIni(filePath, "VJoyAxis", section).Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                    if (nameAndId.Length > 1)
+                    {
+                        try
+                        {
+                            m.VJoyId = uint.Parse(nameAndId[1]);
+                            if (m.VJoyId > 16)
+                            {
+                                errors += section + ": " + $"vJoy device {m.VJoyId} not supported\n";
+                                m.VJoyId = 0;
+                            }
+                        }
+                        catch (Exception e)
+                        { 
+                            errors += section + ": " + e.Message + '\n';
+                            m.VJoyId = 0;
+                        }
+                    }
+                    else if (nameAndId.Length > 0)
+                    {
+                        m.VJoyId = 1;
+                        switch (nameAndId[0].Trim().ToUpperInvariant())
+                        {
+                            case "LX"     : m.VJoyAxis = HID_USAGES.HID_USAGE_X  ; break;
+                            case "LY"     : m.VJoyAxis = HID_USAGES.HID_USAGE_Y  ; break;
+                            case "LZ"     : m.VJoyAxis = HID_USAGES.HID_USAGE_Z  ; break;
+                            case "RX"     : m.VJoyAxis = HID_USAGES.HID_USAGE_RX ; break;
+                            case "RY"     : m.VJoyAxis = HID_USAGES.HID_USAGE_RY ; break;
+                            case "RZ"     : m.VJoyAxis = HID_USAGES.HID_USAGE_RZ ; break;
+                            case "SLIDERX": m.VJoyAxis = HID_USAGES.HID_USAGE_SL0; break;
+                            case "SLIDERY": m.VJoyAxis = HID_USAGES.HID_USAGE_SL1; break;
+                            default: m.VJoyId = 0; break;
+                        }
+                    }
+                    if (m.VJoyId > 0)
+                    {
+                        m.SimVarMin = 0;
+                        m.SimVarMax = 32767;
+                        if (_vJoy == null)
+                        {
+                            _vJoy = new vJoy();
+                            if (_vJoy.vJoyEnabled())
+                            {
+                                UInt32 dllVersion = 0, driverVersion = 0;
+                                if (!(_vJoy.DriverMatch(ref dllVersion, ref driverVersion) || (dllVersion == 536 && driverVersion == 537)))
+                                {
+                                    errors += section + ": " + $"vJoy DLL version {dllVersion} does not support installed vJoy driver version {driverVersion}\n";
+                                    _vJoy = null;
+                                }
+                            }
+                            else
+                            {
+                                errors += section + ": " + $"vJoy driver not installed or not enabled\n";
+                                _vJoy = null;
+                            }
+                        }
+                        _vJoy?.AcquireVJD(m.VJoyId);
+                        var status = _vJoy?.GetVJDStatus(m.VJoyId);
+                        if (status != VjdStat.VJD_STAT_OWN)
+                        {
+                            errors += section + ": " + $"vJoy device {m.VJoyId} not available: {status}\n";
+                            m.VJoyId = 0;
+                        }
+                        else if (!_vJoy?.GetVJDAxisExist(m.VJoyId, m.VJoyAxis) ?? false)
+                        {
+                            errors += section + ": " + $"vJoy device {m.VJoyId} axis {m.VJoyAxis} not found\n";
+                            m.VJoyId = 0;
+                        }
+                    }
+                    else
+                    {
+                        m.SimVarName = Kernel32.ReadIni(filePath, "SimVarName", section).Trim().ToUpperInvariant();
+                        m.SimVarUnit = Kernel32.ReadIni(filePath, "SimVarUnit", section, "Percent").Trim();
+                        var min = double.Parse(Kernel32.ReadIni(filePath, "SimVarMin", section, "0"), NumberStyles.Float, CultureInfo.InvariantCulture);
+                        var max = double.Parse(Kernel32.ReadIni(filePath, "SimVarMax", section, "100"), NumberStyles.Float, CultureInfo.InvariantCulture);
+                        m.SimVarMax = Math.Max(min, max);
+                        m.SimVarMin = Math.Min(min, max);
+                        m.SimVarValue = Math.Max(0, m.SimVarMin);
+                        m.TrimCounterCenteringMove = bool.Parse(
+                            Kernel32.ReadIni(filePath, "TrimCounterCenteringMove", section, "False").Trim());
+                        m.DisableThrottleReverse = bool.Parse(
+                            Kernel32.ReadIni(filePath, "DisableThrottleReverse", section, "False").Trim());
+                    }
                     m.Sensitivity = Math.Max(1 / 100, Math.Min(100, double.Parse(
                         Kernel32.ReadIni(filePath, "Sensitivity", section, "1"), NumberStyles.Float, CultureInfo.InvariantCulture)));
                     m.SensitivityAtCruiseSpeed = bool.Parse(
                         Kernel32.ReadIni(filePath, "SensitivityAtCruiseSpeed", section, "False").Trim());
-                    m.TrimCounterCenteringMove = bool.Parse(
-                        Kernel32.ReadIni(filePath, "TrimCounterCenteringMove", section, "False").Trim());
-                    m.DisableThrottleReverse = bool.Parse(
-                        Kernel32.ReadIni(filePath, "DisableThrottleReverse", section, "False").Trim());
                     var directions = Kernel32.ReadIni(filePath, "IncreaseDirection", section, "Push").Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
                     m.IncreaseDirection = (Direction)Enum.Parse(typeof(Direction), directions[0].Trim(), true);
-                    try
+                    if (directions.Length > 1)
                     {
-                        m.IncreaseDirection2 = (Direction)Enum.Parse(typeof(Direction), directions[1].Trim(), true);
-                        var decreaseDirection =
-                            m.IncreaseDirection == Direction.Draw ? Direction.Push :
-                            m.IncreaseDirection == Direction.Push ? Direction.Draw :
-                            m.IncreaseDirection == Direction.Left ? Direction.Right : Direction.Left;
-                        if (m.IncreaseDirection2 == m.IncreaseDirection || m.IncreaseDirection2 == decreaseDirection)
-                            m.IncreaseDirection2 = null;
+                        try
+                        {
+                            m.IncreaseDirection2 = (Direction)Enum.Parse(typeof(Direction), directions[1].Trim(), true);
+                            var decreaseDirection =
+                                m.IncreaseDirection == Direction.Draw ? Direction.Push :
+                                m.IncreaseDirection == Direction.Push ? Direction.Draw :
+                                m.IncreaseDirection == Direction.Left ? Direction.Right : Direction.Left;
+                            if (m.IncreaseDirection2 == m.IncreaseDirection || m.IncreaseDirection2 == decreaseDirection)
+                                m.IncreaseDirection2 = null;
+                        }
+                        catch (Exception e)
+                        {
+                            errors += section + ": " + e.Message + '\n';
+                        }
                     }
-                    catch(Exception) { }
                     m.DecreaseScaleTimeSecs = Math.Max(0, Math.Min(10, double.Parse(
                         Kernel32.ReadIni(filePath, "DecreaseScaleTimeSecs", section, "0"), NumberStyles.Float, CultureInfo.InvariantCulture)));
                     m.WaitButtonsReleased = bool.Parse(
@@ -102,7 +183,7 @@ namespace HandOnMouse
                 }
                 finally
                 {
-                    if (m.SimVarName.Length > 0)
+                    if (m.Name.Length > 0)
                     {
                         Mappings.Add(m);
                     }
@@ -151,6 +232,8 @@ namespace HandOnMouse
         static public double DesignCruiseSpeedKnots;
         static public double IndicatedAirSpeedKnots;
 
+        static private vJoy _vJoy;
+
         public Axis()
         {
             SimVarName = "";
@@ -198,10 +281,38 @@ namespace HandOnMouse
                 {
                     btn = "(" + btn + ")";
                 }
-                var sim = SimVarName.Length > 0 ? SimVarName.Replace("GENERAL ", "").Replace(" PCT", "").Replace(" POSITION", "").ToLowerInvariant() : "-";
+                var sim = Name.Length > 0 ? Name.Replace("GENERAL ", "").Replace(" PCT", "").Replace(" POSITION", "").ToLowerInvariant() : "-";
                 return btn + " " + sim;
             }
         }
+        public string Name { get { return SimVarName.Length > 0 ? SimVarName : VJoyAxisName; } }
+
+        public string VJoyAxisName
+        {
+            get
+            {
+                if (VJoyId > 0)
+                {
+                    var axisName =
+                        VJoyAxis == HID_USAGES.HID_USAGE_X   ? "L-Axis X" :
+                        VJoyAxis == HID_USAGES.HID_USAGE_Y   ? "L-Axis Y" :
+                        VJoyAxis == HID_USAGES.HID_USAGE_Z   ? "L-Axis Z" :
+                        VJoyAxis == HID_USAGES.HID_USAGE_RX  ? "R-Axis X" :
+                        VJoyAxis == HID_USAGES.HID_USAGE_RY  ? "R-Axis Y" :
+                        VJoyAxis == HID_USAGES.HID_USAGE_RZ  ? "R-Axis Z" :
+                        VJoyAxis == HID_USAGES.HID_USAGE_SL0 ? "Slider X" :
+                        VJoyAxis == HID_USAGES.HID_USAGE_SL1 ? "Slider Y" :
+                        "";
+                    return $"vJoy {VJoyId} {axisName}";
+                }
+                else
+                {
+                    return "";
+                } 
+            }
+        }
+        public uint VJoyId { get; private set; }
+        public HID_USAGES VJoyAxis { get; private set; }
 
         public string SimVarName 
         { 
@@ -361,9 +472,10 @@ namespace HandOnMouse
                 NotifyPropertyChanged("Value");
             }
         }
+
+        /// <returns>True whenever valueInSim must be set to the updated SimVarValue</returns>
         public bool UpdateSimVar(double valueInSim, double trimmedAxisChange = 0)
         {
-
             if (valueInSim < SimVarMin)
             {
                 CurrentChange = SimVarChange = 0; // Mouse input may be defined by the user for [SimVarMin..SimVarMax] range on purpose
@@ -391,7 +503,16 @@ namespace HandOnMouse
                 SimVarValue += SmartSensitivity * trimmedAxisChange;
                 NotifyPropertyChanged("Value");
             }
-            return SimVarValue != valueInSim;
+
+            if (VJoyId > 0)
+            {
+                _vJoy?.SetAxis((int)SimVarValue, VJoyId, VJoyAxis);
+                return false;
+            }
+            else
+            {
+                return SimVarValue != valueInSim;
+            }
         }
 
         // Events
