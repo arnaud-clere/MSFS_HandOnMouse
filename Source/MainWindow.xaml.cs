@@ -171,7 +171,7 @@ namespace HandOnMouse
         }
         private void Window_Help(object sender, RoutedEventArgs e)
         {
-            Process.Start("https://github.com/arnaud-clere/MSFS_HandOnMouse#version-12");
+            Process.Start("https://github.com/arnaud-clere/MSFS_HandOnMouse#version-13");
         }
 
         public void Connect_Click(object sender, RoutedEventArgs e)

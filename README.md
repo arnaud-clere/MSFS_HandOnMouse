@@ -77,3 +77,17 @@ On a sloped runway you can quickly revert to forward throttle to make sure you r
 1. Move the mouse forward to get out reverse range and apply the necessary power
 
 *NB: Move the mouse backward/forward in the reverse throttle range in case you configured forward throttle in a left/right direction*
+
+## Version 1.3
+
+Adds visual cues to reverse throttle and center of left/right axis
+Adds other smart mappings, used in Thr+Yoke+Pedals.ini to replace a yoke or pedals :
+- aileron, rudder and brakes automatically return to a centered position when button/s is/are released
+- brake SimVars cannot be used for precise braking, so brakes are made available with a virtual joystick driver named vJoy
+
+vJoy axis can also be used to increase sensitivity to mouse movements since changes coming from MSFS are ignored
+
+Using any vJoy mapping requires to:
+1. Download vJoy driver: https://sourceforge.net/projects/vjoystick/files/Beta%202.x/2.1.9.1-160719/vJoySetup.exe/download
+2. Install it: vJoySetup.exe
+3. Map vJoy axis displayed into the User Interface to MSFS functions

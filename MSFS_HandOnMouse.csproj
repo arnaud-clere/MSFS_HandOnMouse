@@ -108,7 +108,7 @@
     <None Include="LICENSE">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\MouseOnly.ini">
+    <None Include="Mappings\Thr+Yoke+Pedals.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Mappings\Jet.ini">
