@@ -89,5 +89,5 @@ vJoy axis can also be used to increase sensitivity to mouse movements since chan
 
 Using any vJoy mapping requires to:
 1. Download vJoy driver: https://sourceforge.net/projects/vjoystick/files/Beta%202.x/2.1.9.1-160719/vJoySetup.exe/download
-2. Install it: vJoySetup.exe
-3. Map vJoy axis displayed into the User Interface to MSFS functions
+2. Install it by running: vJoySetup.exe
+3. Map vJoy axis displayed by HandOnMouse to desired MSFS functions
