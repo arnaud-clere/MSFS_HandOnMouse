@@ -81,15 +81,13 @@ namespace HandOnMouse
         }
     }
 
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
+    /// <summary>Interaction logic for MainWindow.xaml</summary>
     public partial class MainWindow : Window
     {
         const int WM_USER_SIMCONNECT = (int)WM.USER + 2;
 
         /// <summary>SimConnect Requests and Data Definitions are actually defined dynamically for each Axis in Axis.Mappings</summary>
-        public enum Definitions { None = 0, AircraftLoaded = 1, IndicatedAirSpeedKnots = 2, DesignCruiseSpeedFeetPerSec = 3, EnginesCount = 4, Axis = 5 }
+        public enum Definitions { None = 0, FlightLoaded = 1, AircraftLoaded = 2, IndicatedAirSpeedKnots = 3, DesignCruiseSpeedFeetPerSec = 4, EnginesCount = 5, Axis = 6 }
 
         IntPtr _hwnd;
         RAWMOUSE.RI_MOUSE _buttons = RAWMOUSE.RI_MOUSE.None;
@@ -120,7 +118,7 @@ namespace HandOnMouse
             rid[0].Target = _hwnd;
             if (!User32.RegisterRawInputDevices(rid, (uint)rid.Length, (uint)Marshal.SizeOf(rid[0])))
             {
-                Debug.WriteLine($"User32.RegisterRawInputDevices failed with Marshal.GetLastWin32Error: {Marshal.GetLastWin32Error()}");
+                Trace.WriteLine($"User32.RegisterRawInputDevices failed Marshal.GetLastWin32Error: {Marshal.GetLastWin32Error()}");
             }
 
             var simFrameTimer = new DispatcherTimer();
@@ -190,10 +188,7 @@ namespace HandOnMouse
                     _simConnect.OnRecvException += new SimConnect.RecvExceptionEventHandler(SimConnect_OnRecvException);
                     _simConnect.OnRecvSimobjectData += new SimConnect.RecvSimobjectDataEventHandler(SimConnect_OnRecvData);
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
+                catch (Exception ex) { Trace.WriteLine($"{ex.Message} at: {ex.StackTrace}"); }
             }
             else
             {
@@ -216,13 +211,25 @@ namespace HandOnMouse
         private void SimConnect_OnRecvOpen(SimConnect sender, SIMCONNECT_RECV_OPEN data)
         {
             _connected = true;
+            var appVersion = new Version(
+                (int)data.dwApplicationVersionMajor, 
+                (int)data.dwApplicationVersionMinor, 
+                (int)data.dwApplicationBuildMajor, 
+                (int)data.dwApplicationBuildMinor);
+            var simConnectVersion = new Version(
+                (int)data.dwSimConnectVersionMajor, 
+                (int)data.dwSimConnectVersionMinor, 
+                (int)data.dwSimConnectBuildMajor, 
+                (int)data.dwSimConnectBuildMinor);
+            Trace.WriteLine($"Connected to: {data.szApplicationName} appVersion: {appVersion} simConnectVersion:{simConnectVersion}");
+
             ((ViewModel)DataContext).StatusBrushForText = new SolidColorBrush(Settings.Default.Sensitivity > 0 ? Colors.Black : Colors.Gray);
             bool requestEngines = false;
             bool requestSpeeds = false;
             for (int i = 0; i < Axis.Mappings.Count; i++)
             {
                 var m = Axis.Mappings[i];
-                if (m.Name.Length > 0)
+                if (m.SimVarName.Length > 0)
                 {
                     if (m.TrimCounterCenteringMove && Axis.AxisForTrim.ContainsKey(m.SimVarName))
                     {
@@ -283,22 +290,29 @@ namespace HandOnMouse
                 _simConnect.RegisterDataDefineStruct<double>(Definitions.EnginesCount);
                 _simConnect.RequestDataOnSimObject(Definitions.EnginesCount, Definitions.EnginesCount, (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.SIM_FRAME, SIMCONNECT_DATA_REQUEST_FLAG.CHANGED, 0, 0, 0);
             }
+            _simConnect.SubscribeToSystemEvent(Definitions.FlightLoaded, "FlightLoaded");
             _simConnect.SubscribeToSystemEvent(Definitions.AircraftLoaded, "AircraftLoaded");
         }
         private void SimConnect_OnRecvEventFilename(SimConnect sender, SIMCONNECT_RECV_EVENT_FILENAME data)
         {
-            if (data.uEventID == (uint)Definitions.AircraftLoaded)
+            Trace.WriteLine($"Received event: {data.uEventID} szFileName: {data.szFileName}");
+
+            if (data.uEventID == (uint)Definitions.FlightLoaded ||
+                data.uEventID == (uint)Definitions.AircraftLoaded)
             {
                 Axis.MappingsRead(MappingFile());
             }
         }
         private void SimConnect_OnRecvQuit(SimConnect sender, SIMCONNECT_RECV data)
         {
+            Trace.WriteLine("Received quit");
+
             Disconnect();
         }
         public void Disconnect()
         {
-            if (_simConnect == null) return;
+            if (_simConnect == null) 
+                return;
 
             try
             {
@@ -310,16 +324,13 @@ namespace HandOnMouse
 
                 ChangeButtonStatus(true, connectButton, true, "CONNECT FS");
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
+            catch (Exception ex) { Trace.WriteLine($"{ex.Message} at: {ex.StackTrace}"); }
         }
 
         private void SimConnect_OnRecvException(SimConnect sender, SIMCONNECT_RECV_EXCEPTION data)
         {
             SIMCONNECT_EXCEPTION e = (SIMCONNECT_EXCEPTION)data.dwException;
-            Console.WriteLine("SimConnect_OnRecvException: " + e.ToString());
+            Trace.WriteLine($"SIMCONNECT_RECV_EXCEPTION: {e} dwSendID: {data.dwSendID} dwIndex: {data.dwIndex}");
             ((ViewModel)DataContext).StatusBrushForText = new SolidColorBrush(Colors.Red);
         }
 
@@ -369,7 +380,9 @@ namespace HandOnMouse
             var errors = Axis.MappingsRead(filePath);
             if (errors.Length > 0)
             {
-                MessageBox.Show(filePath + ":\n" + errors);
+                var message = filePath + ":\n" + errors;
+                Trace.WriteLine(message);
+                MessageBox.Show(message);
             }
             if (Axis.Mappings.Count == 0 && filePath != MappingFile())
             {
@@ -464,12 +477,7 @@ namespace HandOnMouse
                                     // - increase a subsequent move in the opposite direction after even a long time
                                     // - decrease a subsequent move in the same direction to potentially insignificant moves
                                     if (m.SimVarChange != 0)
-                                    {
-                                        if (_connected && m.VJoyId == 0)
-                                            _simConnect?.RequestDataOnSimObject(ReadAxisValueId(i), ReadAxisValueId(i), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.ONCE, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
-                                        else
-                                            m.UpdateSimVar(m.SimVarValue);
-                                    }
+                                        UpdateSimVar(i);
                                 }
                             }
                             else // !m.WaitButtonsReleased
@@ -478,20 +486,26 @@ namespace HandOnMouse
                                 {
                                     m.CurrentChange = 0;
                                     // Since SimVarChange is proportional to CurrentChange modulo SimVarIncrement
-                                    if (_connected && m.VJoyId == 0)
-                                        _simConnect?.RequestDataOnSimObject(ReadAxisValueId(i), ReadAxisValueId(i), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.ONCE, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
-                                    else
-                                        m.UpdateSimVar(m.SimVarValue);
+                                    UpdateSimVar(i);
                                 }
                             }
                             m.ChangeColorForText = m.SimVarChange != 0 && m.CurrentChange == 0 ? Colors.Red : Axis.TextColorFromChange(m.CurrentChange);
                         }
                     }
-                    else { Debug.WriteLine("Received unsupported RAWINPUT"); }
+                    else { Trace.WriteLine($"Received unsupported RAWINPUT header.Type: {input.header.Type}, mouse.Flags: {input.mouse.Flags}"); }
                 }
-                else { Debug.WriteLine("Received unsupported WM.INPUT"); }
+                else { Trace.WriteLine($"Received unsupported WM.INPUT outSize: {outSize}"); }
             }
             return hwnd;
+        }
+
+        private void UpdateSimVar(int i)
+        {
+            var m = Axis.Mappings[i];
+            if (_connected && m.VJoyId == 0)
+                _simConnect?.RequestDataOnSimObject(ReadAxisValueId(i), ReadAxisValueId(i), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.ONCE, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
+            else
+                m.UpdateSimVar(m.SimVarValue);
         }
 
         private void Timer_Tick(object sender, EventArgs e)
@@ -501,12 +515,7 @@ namespace HandOnMouse
                 var m = Axis.Mappings[i];
                 m.UpdateTimerChanges(((DispatcherTimer)sender).Interval.TotalSeconds);
                 if (m.SimVarChange != 0)
-                {
-                    if (_connected && m.VJoyId == 0)
-                        _simConnect?.RequestDataOnSimObject(ReadAxisValueId(i), ReadAxisValueId(i), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.ONCE, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
-                    else
-                        m.UpdateSimVar(m.SimVarValue);
-                }
+                    UpdateSimVar(i);
             }
         }
 
@@ -531,7 +540,7 @@ namespace HandOnMouse
                 {
                     Axis.EnginesCount = (uint)Math.Max(0, Math.Min(4, (double)data.dwData[0]));
                 }
-                else if ((int)Definitions.Axis <= i)
+                else if ((int)Definitions.Axis <= i) // translate i to an Axis.Mappings index and requestType for processing
                 {
                     var translatedId = i - (int)Definitions.Axis;
                     var axisId = translatedId % Axis.Mappings.Count;
@@ -556,6 +565,7 @@ namespace HandOnMouse
                             inSimValue = (double)data.dwData[0];
                         }
                         if (m.UpdateSimVar(inSimValue, trimmedAxisChange))
+                        {
                             if (m.ForAllEngines)
                             {
                                 SmartEngineAxis newValue;
@@ -566,6 +576,7 @@ namespace HandOnMouse
                             {
                                 _simConnect?.SetDataOnSimObject(RequestId(axisId), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, m.SimVarValue);
                             }
+                        }
                     }
                     else if (requestType == RequestType.AxisInfo)
                     {
@@ -573,10 +584,7 @@ namespace HandOnMouse
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-            }
+            catch (Exception ex) { Trace.WriteLine($"{ex.Message} at: {ex.StackTrace}"); }
         }
     }
 }

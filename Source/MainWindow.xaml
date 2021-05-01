@@ -2,7 +2,6 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:properties="clr-namespace:HandOnMouse.Properties" 
-    xmlns:local="clr-namespace:HandOnMouse"
     Title="HandOnMouse" SizeToContent="Height" Width="160"
     AllowsTransparency="True" WindowStyle="None" Topmost="True"
     WindowStartupLocation="CenterScreen"
@@ -89,10 +88,12 @@
                                         <SolidColorBrush Color="{Binding ChangeColorForText, UpdateSourceTrigger=PropertyChanged}"/>
                                     </TextBlock.Foreground>
                                 </TextBlock>
-                                <Rectangle Grid.Row="1" Grid.Column="0" Opacity=".75" Height="1"
+                                <Rectangle Grid.Row="1" Grid.Column="0" Opacity=".75" 
+                                    Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
                                     Fill="{Binding SimVarNegativeColor}" 
                                     Visibility="{Binding HasSimVarNegativeColor, Converter={StaticResource B2V}}"></Rectangle>
-                                <Rectangle Grid.Row="1" Grid.Column="1" Opacity=".75" Height="1" 
+                                <Rectangle Grid.Row="1" Grid.Column="1" Opacity=".75" 
+                                    Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
                                     Fill="{Binding SimVarPositiveColor}" 
                                     Visibility="{Binding HasSimVarPositiveColor, Converter={StaticResource B2V}}"></Rectangle>
                             </Grid>

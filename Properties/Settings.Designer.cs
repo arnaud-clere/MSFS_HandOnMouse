@@ -70,5 +70,17 @@ namespace HandOnMouse.Properties {
                 this["ReverseDetentWidthInPercent"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int SimVarScaleHeightInPixels {
+            get {
+                return ((int)(this["SimVarScaleHeightInPixels"]));
+            }
+            set {
+                this["SimVarScaleHeightInPixels"] = value;
+            }
+        }
     }
 }

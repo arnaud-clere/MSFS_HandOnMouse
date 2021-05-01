@@ -476,33 +476,35 @@ namespace HandOnMouse
         /// <returns>True whenever valueInSim must be set to the updated SimVarValue</returns>
         public bool UpdateSimVar(double valueInSim, double trimmedAxisChange = 0)
         {
-            if (valueInSim < SimVarMin)
+            if (valueInSim < SimVarMin-SimVarIncrement)
             {
                 CurrentChange = SimVarChange = 0; // Mouse input may be defined by the user for [SimVarMin..SimVarMax] range on purpose
                 return false;
             }
-            if (valueInSim > SimVarMax)
+            if (valueInSim > SimVarMax+SimVarIncrement)
             {
                 CurrentChange = SimVarChange = 0; // Mouse input may be defined by the user for [SimVarMin..SimVarMax] range on purpose
                 return false;
             }
-
+            bool changed = false;
             if (SimVarValue != valueInSim)
             {
                 SimVarValue = valueInSim;
-                NotifyPropertyChanged("Value");
+                changed = true;
             }
             if (SimVarChange != 0 && (!WaitButtonsReleased || CurrentChange == 0))
             {
                 SimVarValue += SimVarChange;
                 SimVarChange = 0;
-                NotifyPropertyChanged("Value");
+                changed = true;
             }
             if (trimmedAxisChange != 0)
             {
                 SimVarValue += SmartSensitivity * trimmedAxisChange;
-                NotifyPropertyChanged("Value");
+                changed = true;
             }
+            if (changed)
+                NotifyPropertyChanged("Value");
 
             if (VJoyId > 0)
             {
