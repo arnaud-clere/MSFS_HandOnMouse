@@ -82,7 +82,10 @@ namespace HandOnMouse
                             case "RZ"     : m.VJoyAxis = HID_USAGES.HID_USAGE_RZ ; break;
                             case "SLIDERX": m.VJoyAxis = HID_USAGES.HID_USAGE_SL0; break;
                             case "SLIDERY": m.VJoyAxis = HID_USAGES.HID_USAGE_SL1; break;
-                            default: m.VJoyId = 0; break;
+                            default:
+                                errors += section + ": Unsupported vJoy axis: " + nameAndId[0] + " (use one of LX, LY, LZ, RX, RY, RZ, SLIDERX, SLIDERY)\n";
+                                m.VJoyId = 0;
+                                break;
                         }
                     }
                     if (m.VJoyId > 0)
