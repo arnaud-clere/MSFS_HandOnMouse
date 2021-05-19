@@ -92,6 +92,8 @@ namespace HandOnMouse
                     {
                         m.SimVarMin = 0;
                         m.SimVarMax = 32767;
+                        m.VJoyAxisZero = uint.Parse(Kernel32.ReadIni(filePath, "VJoyAxisZero", section, "0").Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture);
+                        m.VJoyAxisIsThrottle = bool.Parse(Kernel32.ReadIni(filePath, "VJoyAxisIsThrottle", section, "False").Trim());
                         if (_vJoy == null)
                         {
                             _vJoy = new vJoy();
@@ -132,10 +134,8 @@ namespace HandOnMouse
                         m.SimVarMax = Math.Max(min, max);
                         m.SimVarMin = Math.Min(min, max);
                         m.SimVarValue = Math.Max(0, m.SimVarMin);
-                        m.TrimCounterCenteringMove = bool.Parse(
-                            Kernel32.ReadIni(filePath, "TrimCounterCenteringMove", section, "False").Trim());
-                        m.DisableThrottleReverse = bool.Parse(
-                            Kernel32.ReadIni(filePath, "DisableThrottleReverse", section, "False").Trim());
+                        m.TrimCounterCenteringMove = bool.Parse(Kernel32.ReadIni(filePath, "TrimCounterCenteringMove", section, "False").Trim());
+                        m.DisableThrottleReverse = bool.Parse(Kernel32.ReadIni(filePath, "DisableThrottleReverse", section, "False").Trim());
                     }
                     m.Sensitivity = Math.Max(1 / 100, Math.Min(100, double.Parse(
                         Kernel32.ReadIni(filePath, "Sensitivity", section, "1"), NumberStyles.Float, CultureInfo.InvariantCulture)));
@@ -317,6 +317,10 @@ namespace HandOnMouse
         public uint VJoyId { get; private set; }
         public HID_USAGES VJoyAxis { get; private set; }
 
+        /// <summary>For smart axis features only (value sent to vJoy remains in range 0..32763)</summary>
+        public uint VJoyAxisZero { get; private set; }
+        public bool VJoyAxisIsThrottle { get; private set; }
+
         public string SimVarName 
         { 
             get { return _simVarName; } 
@@ -369,8 +373,8 @@ namespace HandOnMouse
             }
         }
         public double SimVarScale { get { return _simVarMax - _simVarMin; } }
-        public double SimVarNegativeScale { get { return _simVarMin < 0 ? _simVarMax < 0 ? 1 : (0-_simVarMin)/SimVarScale : 0; } }
-        public double SimVarPositiveScale { get { return _simVarMax > 0 ? _simVarMin > 0 ? 1 : (_simVarMax-0)/SimVarScale : 0; } }
+        public double SimVarNegativeScale { get { var zero = VJoyAxisZero > 0 ? VJoyAxisZero : 0; return _simVarMin < zero ? _simVarMax < zero ? 1 : (zero-_simVarMin)/SimVarScale : 0; } }
+        public double SimVarPositiveScale { get { var zero = VJoyAxisZero > 0 ? VJoyAxisZero : 0; return _simVarMax > zero ? _simVarMin > zero ? 1 : (_simVarMax-zero)/SimVarScale : 0; } }
         public string SimVarNegativeScaleString { get { return string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", SimVarNegativeScale); } }
         public string SimVarPositiveScaleString { get { return string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", SimVarPositiveScale); } }
         public Brush SimVarNegativeColor { get; private set; }
@@ -469,9 +473,10 @@ namespace HandOnMouse
         }
         public void UpdateTimerChanges(double intervalSecs)
         {
-            if (!IsActive && DecreaseScaleTimeSecs > 0 && Value != 0)
+            var v = VJoyAxisZero > 0 ? Value - VJoyAxisZero : Value;
+            if (!IsActive && DecreaseScaleTimeSecs > 0 && v != 0)
             {
-                SimVarChange = -Math.Sign(Value) * Math.Min(Math.Abs(Value), SimVarScale * intervalSecs / DecreaseScaleTimeSecs);
+                SimVarChange = -Math.Sign(v) * Math.Min(Math.Abs(v), SimVarScale * intervalSecs / DecreaseScaleTimeSecs);
                 NotifyPropertyChanged("Value");
             }
         }

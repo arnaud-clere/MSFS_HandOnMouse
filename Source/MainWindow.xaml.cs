@@ -454,8 +454,12 @@ namespace HandOnMouse
                                         d2 == Axis.Direction.Draw ?  mouse.LastY :
                                         d2 == Axis.Direction.Right ? mouse.LastX : -mouse.LastX;
 
-                                var inDetent = m.IsThrottle && Math.Abs(m.Value) < m.SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100;
-                                var inReverse = m.IsThrottle && m.Value < 0;
+                                var inDetent = 
+                                    (m.IsThrottle && Math.Abs(m.Value) < m.SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100) ||
+                                    (m.VJoyAxisIsThrottle && m.VJoyAxisZero > 0 && Math.Abs(m.Value - m.VJoyAxisZero) < m.SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100);
+                                var inReverse = 
+                                    (m.IsThrottle && m.Value < 0) ||
+                                    (m.VJoyAxisIsThrottle && m.VJoyAxisZero > 0 && (m.Value - m.VJoyAxisZero) < 0);
                                 var reverse = d == Axis.Direction.Push || d == Axis.Direction.Draw ? Axis.Direction.Right : Axis.Direction.Draw;
                                 if (inDetent && mouse.LastX != 0 && reverse == Axis.Direction.Right)
                                     change = -mouse.LastX;
