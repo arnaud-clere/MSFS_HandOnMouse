@@ -164,25 +164,16 @@ namespace HandOnMouse
                         Kernel32.ReadIni(filePath, "DecreaseScaleTimeSecs", section, "0"), NumberStyles.Float, CultureInfo.InvariantCulture)));
                     m.WaitButtonsReleased = bool.Parse(
                         Kernel32.ReadIni(filePath, "WaitButtonsReleased", section, "False").Trim());
+                    m.PositiveDetent = double.Parse(
+                        Kernel32.ReadIni(filePath, "PositiveDetent", section, "0"), NumberStyles.Float, CultureInfo.InvariantCulture);
                     var scaleColors = Kernel32.ReadIni(filePath, "SimVarNegativePositiveColors", section, "").Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
-                    m.HasSimVarNegativeColor = false;
-                    m.HasSimVarPositiveColor = false;
-                    m.SimVarNegativeColor = Brushes.Red;
-                    m.SimVarPositiveColor = Brushes.White;
-                    if (scaleColors.Length > 0)
-                    {
-                        m.SimVarNegativeColor = new SolidColorBrush((Color)ColorConverter.ConvertFromString(scaleColors[0]));
-                        m.HasSimVarNegativeColor = true;
-                    }
-                    if (scaleColors.Length > 1)
-                    {
-                        m.SimVarPositiveColor = new SolidColorBrush((Color)ColorConverter.ConvertFromString(scaleColors[1]));
-                        m.HasSimVarPositiveColor = true;
-                    }
+                    m.SimVarNegativeColor       = ReadColor(scaleColors, 0, section + "/SimVarNegativePositiveColors", ref errors);
+                    m.SimVarPositiveColor       = ReadColor(scaleColors, 1, section + "/SimVarNegativePositiveColors", ref errors);
+                    m.SimVarPositiveDetentColor = ReadColor(scaleColors, 2, section + "/SimVarNegativePositiveColors", ref errors);
                 }
-                catch (Exception e)
-                {
-                    errors += section + ": " + e.Message + '\n';
+                catch (Exception e) 
+                { 
+                    errors += section + ": " + e.Message + '\n'; 
                 }
                 finally
                 {
@@ -373,14 +364,15 @@ namespace HandOnMouse
             }
         }
         public double SimVarScale { get { return _simVarMax - _simVarMin; } }
-        public double SimVarNegativeScale { get { var zero = VJoyAxisZero > 0 ? VJoyAxisZero : 0; return _simVarMin < zero ? _simVarMax < zero ? 1 : (zero-_simVarMin)/SimVarScale : 0; } }
-        public double SimVarPositiveScale { get { var zero = VJoyAxisZero > 0 ? VJoyAxisZero : 0; return _simVarMax > zero ? _simVarMin > zero ? 1 : (_simVarMax-zero)/SimVarScale : 0; } }
-        public string SimVarNegativeScaleString { get { return string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", SimVarNegativeScale); } }
-        public string SimVarPositiveScaleString { get { return string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", SimVarPositiveScale); } }
+        public double SimVarNegativeScale       { get { var zero = VJoyAxisZero > 0 ? VJoyAxisZero : 0; return _simVarMin < zero ? _simVarMax < zero ? 1 : (zero-_simVarMin)/SimVarScale : 0; } }
+        public double SimVarPositiveScale       { get { var zero = VJoyAxisZero > 0 ? VJoyAxisZero : 0; var positiveDetent = PositiveDetent > 0 ? PositiveDetent : _simVarMax; return (positiveDetent-zero)/SimVarScale; } }
+        public double SimVarPositiveDetentScale { get { var zero = VJoyAxisZero > 0 ? VJoyAxisZero : 0; var positiveDetent = PositiveDetent > 0 ? PositiveDetent : _simVarMax; return _simVarMax > positiveDetent ? _simVarMin > positiveDetent ? 1 : (_simVarMax-positiveDetent)/SimVarScale : 0; } }
+        public string SimVarNegativeScaleString       { get { return string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", SimVarNegativeScale); } }
+        public string SimVarPositiveScaleString       { get { return string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", SimVarPositiveScale); } }
+        public string SimVarPositiveDetentScaleString { get { return string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", SimVarPositiveDetentScale); } }
         public Brush SimVarNegativeColor { get; private set; }
         public Brush SimVarPositiveColor { get; private set; }
-        public bool HasSimVarNegativeColor { get; private set; }
-        public bool HasSimVarPositiveColor { get; private set; }
+        public Brush SimVarPositiveDetentColor { get; private set; }
         public double SimVarValue
         {
             get { return _simVarValue; }
@@ -420,6 +412,7 @@ namespace HandOnMouse
         public bool TrimCounterCenteringMove { get; private set; }
         public bool DisableThrottleReverse { get; private set; }
         /// <summary>Last trimmed axis position in [-1..1] to compute moves centering to 0</summary>
+        public double PositiveDetent { get; private set; }
         public double TrimmedAxis { get; set; }
         public Direction IncreaseDirection { get; private set; }
         public Direction? IncreaseDirection2 { get; private set; }
@@ -539,6 +532,18 @@ namespace HandOnMouse
         private double _simVarChange;
         private double _change;
         private Color _color;
+
+        private static Brush ReadColor(string[] scaleColors, uint i, string section, ref string errors)
+        {
+            if (scaleColors.Length > i && scaleColors[i] != "_")
+                try
+                {
+                    return new SolidColorBrush((Color)ColorConverter.ConvertFromString(scaleColors[i]));
+                }
+                catch (Exception e) { errors += section + "/"+i+": " + e.Message + '\n'; }
+
+            return Brushes.Transparent;
+        }
     }
 }
 

@@ -71,10 +71,11 @@
                                     <RowDefinition/>
                                 </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="{Binding SimVarNegativeScaleString, UpdateSourceTrigger=PropertyChanged}"/><!--, StringFormat={}{0:0.##}*}"/>-->
-                                    <ColumnDefinition Width="{Binding SimVarPositiveScaleString, UpdateSourceTrigger=PropertyChanged}"/><!--, StringFormat={}{0:0.##}*}"/>-->
+                                    <ColumnDefinition Width="{Binding SimVarNegativeScaleString      , UpdateSourceTrigger=PropertyChanged}"/><!--, StringFormat={}{0:0.##}*}"/>-->
+                                    <ColumnDefinition Width="{Binding SimVarPositiveScaleString      , UpdateSourceTrigger=PropertyChanged}"/><!--, StringFormat={}{0:0.##}*}"/>-->
+                                    <ColumnDefinition Width="{Binding SimVarPositiveDetentScaleString, UpdateSourceTrigger=PropertyChanged}"/><!--, StringFormat={}{0:0.##}*}"/>-->
                                 </Grid.ColumnDefinitions>
-                                <ProgressBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" TextBlock.TextAlignment="Left" 
+                                <ProgressBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextBlock.TextAlignment="Left" 
                                     Value="{Binding Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
                                     ToolTip="{Binding SimVarUnit, UpdateSourceTrigger=PropertyChanged}"
                                     Minimum="{Binding SimVarMin, UpdateSourceTrigger=PropertyChanged}" 
@@ -82,7 +83,7 @@
                                     <ProgressBar.Foreground><SolidColorBrush Opacity="0.50" Color="White"/></ProgressBar.Foreground>
                                     <ProgressBar.Background><SolidColorBrush Opacity="0.50" Color="LightGray"/></ProgressBar.Background>
                                 </ProgressBar>
-                                <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" TextAlignment="Left" FontSize="8" FontWeight="DemiBold"
+                                <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextAlignment="Left" FontSize="8" FontWeight="DemiBold"
                                     Text="{Binding Text, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:0.##}}">
                                     <TextBlock.Foreground>
                                         <SolidColorBrush Color="{Binding ChangeColorForText, UpdateSourceTrigger=PropertyChanged}"/>
@@ -90,12 +91,13 @@
                                 </TextBlock>
                                 <Rectangle Grid.Row="1" Grid.Column="0" Opacity=".75" 
                                     Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
-                                    Fill="{Binding SimVarNegativeColor}" 
-                                    Visibility="{Binding HasSimVarNegativeColor, Converter={StaticResource B2V}}"></Rectangle>
+                                    Fill="{Binding SimVarNegativeColor}"></Rectangle>
                                 <Rectangle Grid.Row="1" Grid.Column="1" Opacity=".75" 
                                     Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
-                                    Fill="{Binding SimVarPositiveColor}" 
-                                    Visibility="{Binding HasSimVarPositiveColor, Converter={StaticResource B2V}}"></Rectangle>
+                                    Fill="{Binding SimVarPositiveColor}"></Rectangle>
+                                <Rectangle Grid.Row="1" Grid.Column="2" Opacity=".75" 
+                                    Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
+                                    Fill="{Binding SimVarPositiveDetentColor}"></Rectangle>
                             </Grid>
                         </DockPanel>
                     </StackPanel>

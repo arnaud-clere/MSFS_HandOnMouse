@@ -443,7 +443,7 @@ namespace HandOnMouse
                                     mouse.LastY = 0;
 
                                 var d = m.IncreaseDirection;
-                                double change =
+                                double change = // between negative/positive detent(s)
                                         d == Axis.Direction.Push ? -mouse.LastY :
                                         d == Axis.Direction.Draw ?  mouse.LastY :
                                         d == Axis.Direction.Right ? mouse.LastX : -mouse.LastX;
@@ -456,19 +456,22 @@ namespace HandOnMouse
 
                                 var inDetent = 
                                     (m.IsThrottle && Math.Abs(m.Value) < m.SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100) ||
-                                    (m.VJoyAxisIsThrottle && m.VJoyAxisZero > 0 && Math.Abs(m.Value - m.VJoyAxisZero) < m.SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100);
-                                var inReverse = 
+                                    (m.VJoyAxisIsThrottle && m.VJoyAxisZero > 0 && Math.Abs(m.Value - m.VJoyAxisZero) < m.SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100) ||
+                                    (m.PositiveDetent > 0 && Math.Abs(m.Value - m.PositiveDetent) < m.SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100);
+                                var negativeDetent =
                                     (m.IsThrottle && m.Value < 0) ||
-                                    (m.VJoyAxisIsThrottle && m.VJoyAxisZero > 0 && (m.Value - m.VJoyAxisZero) < 0);
-                                var reverse = d == Axis.Direction.Push || d == Axis.Direction.Draw ? Axis.Direction.Right : Axis.Direction.Draw;
-                                if (inDetent && mouse.LastX != 0 && reverse == Axis.Direction.Right)
+                                    (m.VJoyAxisIsThrottle && m.VJoyAxisZero > 0 && m.Value < m.VJoyAxisZero);
+                                var positiveDetent =
+                                    (m.PositiveDetent > 0 && m.PositiveDetent < m.Value);
+                                var orthogonal = d == Axis.Direction.Push || d == Axis.Direction.Draw ? Axis.Direction.Right : Axis.Direction.Draw;
+                                if (inDetent && mouse.LastX != 0 && orthogonal == Axis.Direction.Right)
                                     change = -mouse.LastX;
-                                else if (inDetent && mouse.LastY != 0 && reverse == Axis.Direction.Draw)
+                                else if (inDetent && mouse.LastY != 0 && orthogonal == Axis.Direction.Draw)
                                     change = -mouse.LastY;
-                                else if (inReverse && change <= 0 && reverse == Axis.Direction.Right)
-                                    change = -mouse.LastX;
-                                else if (inReverse && change <= 0 && reverse == Axis.Direction.Draw)
-                                    change = -mouse.LastY;
+                                else if (negativeDetent && change <= 0)
+                                    change = orthogonal == Axis.Direction.Right ? -mouse.LastX : -mouse.LastY;
+                                else if (positiveDetent && change >= 0)
+                                    change = orthogonal == Axis.Direction.Right ? -mouse.LastX : -mouse.LastY;
 
                                 m.UpdateRawInputChanges(Properties.Settings.Default.Sensitivity, change);
                             }
