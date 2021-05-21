@@ -91,3 +91,11 @@ Using any vJoy mapping requires to:
 1. Download vJoy driver: https://sourceforge.net/projects/vjoystick/files/Beta%202.x/2.1.9.1-160719/vJoySetup.exe/download
 2. Install it by running: vJoySetup.exe
 3. Map vJoy axis displayed by HandOnMouse to desired MSFS functions
+
+## Version 1.4
+
+Added vJoy.ini mappings using vJoy including some smart features (detents, autocentering) to better support planes not totally supporting SimVars like Aerosoft's CRJ
+1. Select vJoy.ini possibly editing it to remove axis or features you do not need (say, rudder, brakes)
+2. Map MSFS controls to vJoy device as in ![](vjoy_msfs.png) (beware to select "reverse" for the appropriate axis)
+
+To use reverse throttle with CRJ, you must use its tablet, access last "options" page and "calibrate throttle" to enable reverse range and set an Idle value close to the one in ![](crj_reverse.png)
