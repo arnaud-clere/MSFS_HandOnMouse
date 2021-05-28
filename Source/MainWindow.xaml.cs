@@ -17,6 +17,7 @@ using Microsoft.FlightSimulator.SimConnect;
 using Microsoft.Win32;
 
 using winuser;
+using joystickapi;
 
 using HandOnMouse.Properties;
 
@@ -409,7 +410,7 @@ namespace HandOnMouse
                     {
                         var mouse = input.mouse;
 
-                        // Coalesce button up/down events into homButtonsDown status
+                        // Coalesce button up/down events into _buttons status
                         var buttons = mouse.ButtonFlags;
                         _buttons |= buttons & (
                             RAWMOUSE.RI_MOUSE.LEFT_BUTTON_DOWN |
@@ -433,7 +434,37 @@ namespace HandOnMouse
                         for (int i = 0; i < Axis.Mappings.Count; i++)
                         {
                             var m = Axis.Mappings[i];
-                            m.IsActive = _buttons.HasFlag(m.ButtonsFilter);
+
+                            var maxJoysticks = WinMM.joyGetNumDevs();
+                            for (uint j = 0; j < maxJoysticks; j++)
+                            {
+                                // TODO cache names and check
+                                var caps = new WinMM.JOYCAPS();
+                                var size = (uint)Marshal.SizeOf(caps);
+                                var joystickCaps = WinMM.joyGetDevCaps(j, out caps, size);
+                                if (joystickCaps == WinMM.MMRESULT.MMSYSERR_NOERROR)
+                                {
+                                    var joystickManufacturerId = caps.Mid; // vJoy 4660
+                                    var joystickProductId      = caps.Pid; // vJoy 48813
+                                    var joystickButtons        = caps.NumButtons;
+                                }
+
+                                var info = new WinMM.JOYINFOEX();
+                                info.Size = (uint)Marshal.SizeOf(info);
+                                info.Flags = WinMM.JOYINFOEX.JOY.RETURNBUTTONS;
+                                var joystickInfo = WinMM.joyGetPosEx(j, out info);
+                                if (joystickInfo == WinMM.MMRESULT.MMSYSERR_NOERROR)
+                                {
+                                    var joystickButtonsPressed = info.Buttons;
+                                }
+                                if (joystickInfo == WinMM.MMRESULT.MMSYSERR_BADDEVICEID ||
+                                    joystickInfo == WinMM.MMRESULT.JOYERR_UNPLUGGED)
+                                {
+                                    // Erase cache
+                                }
+                            }
+
+                            m.IsActive = _buttons.HasFlag(m.MouseButtonsFilter);
                             if (m.IsActive)
                             {
                                 // Ignore smallest of changes in XY directions to avoid changing 2 Axis at the same time and increase the effect of SmartIncreaseDirection

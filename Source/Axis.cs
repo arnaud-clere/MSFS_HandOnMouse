@@ -49,7 +49,7 @@ namespace HandOnMouse
                         if (btnString[1].Contains("B")) btn |= RAWMOUSE.RI_MOUSE.BUTTON_4_UP;
                         if (btnString[1].Contains("F")) btn |= RAWMOUSE.RI_MOUSE.BUTTON_5_UP;
                     }
-                    m.ButtonsFilter = btn == RAWMOUSE.RI_MOUSE.None ? RAWMOUSE.RI_MOUSE.Reserved : btn; // to avoid changing the axis with no button down
+                    m.MouseButtonsFilter = btn == RAWMOUSE.RI_MOUSE.None ? RAWMOUSE.RI_MOUSE.Reserved : btn; // to avoid changing the axis with no button down
 
                     var nameAndId = Kernel32.ReadIni(filePath, "VJoyAxis", section).Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
                     if (nameAndId.Length > 1)
@@ -236,7 +236,7 @@ namespace HandOnMouse
             SimVarValue = Math.Max(0, SimVarMin);
             ChangeColorForText = Colors.Black;
             IncreaseDirection = Direction.Push;
-            ButtonsFilter = RAWMOUSE.RI_MOUSE.Reserved;
+            MouseButtonsFilter = RAWMOUSE.RI_MOUSE.Reserved;
             TrimmedAxis = double.NaN;
         }
 
@@ -247,19 +247,19 @@ namespace HandOnMouse
             get
             {
                 var btn = "";
-                if (ButtonsFilter != RAWMOUSE.RI_MOUSE.Reserved)
+                if (MouseButtonsFilter != RAWMOUSE.RI_MOUSE.Reserved)
                 {
-                    if (ButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.LEFT_BUTTON_DOWN  )) btn += "L";
-                    if (ButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_DOWN)) btn += "M";
-                    if (ButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_DOWN )) btn += "R";
-                    if (ButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_4_DOWN     )) btn += "B";
-                    if (ButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN     )) btn += "F";
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.LEFT_BUTTON_DOWN  )) btn += "L";
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_DOWN)) btn += "M";
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_DOWN )) btn += "R";
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_4_DOWN     )) btn += "B";
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN     )) btn += "F";
                     var btnUp = "";
-                    if (ButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.LEFT_BUTTON_UP  )) btnUp += "L";
-                    if (ButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_UP)) btnUp += "M";
-                    if (ButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_UP )) btnUp += "R";
-                    if (ButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_4_UP     )) btnUp += "B";
-                    if (ButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_5_UP     )) btnUp += "F";
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.LEFT_BUTTON_UP  )) btnUp += "L";
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_UP)) btnUp += "M";
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_UP )) btnUp += "R";
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_4_UP     )) btnUp += "B";
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_5_UP     )) btnUp += "F";
                     if (btnUp.Length > 0) btn += "-" + btnUp;
                     btn +=
                         IncreaseDirection == Direction.Left ? " ←" :
@@ -420,7 +420,7 @@ namespace HandOnMouse
         public bool IsThrottle { get; private set; }
         public bool ForAllEngines { get; private set; }
         /// <summary>A filter of mouse buttons down encoded as a combination of RAWMOUSE.RI_MOUSE</summary>
-        public RAWMOUSE.RI_MOUSE ButtonsFilter { get; private set; }
+        public RAWMOUSE.RI_MOUSE MouseButtonsFilter { get; private set; }
 
         // R/W properties
 

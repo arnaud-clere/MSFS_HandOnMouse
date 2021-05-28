@@ -2,6 +2,122 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
+/// <see cref="https://docs.microsoft.com/en-us/windows/win32/api/joystickapi/"/>
+namespace joystickapi
+{
+    static public class WinMM
+    {
+        public enum MMRESULT : UInt32
+        {
+            MMSYSERR_NOERROR = 0,
+            MMSYSERR_ERROR = 1,
+            MMSYSERR_BADDEVICEID = 2,
+            MMSYSERR_NOTENABLED = 3,
+            MMSYSERR_ALLOCATED = 4,
+            MMSYSERR_INVALHANDLE = 5,
+            MMSYSERR_NODRIVER = 6,
+            MMSYSERR_NOMEM = 7,
+            MMSYSERR_NOTSUPPORTED = 8,
+            MMSYSERR_BADERRNUM = 9,
+            MMSYSERR_INVALFLAG = 10,
+            MMSYSERR_INVALPARAM = 11,
+            MMSYSERR_HANDLEBUSY = 12,
+            MMSYSERR_INVALIDALIAS = 13,
+            MMSYSERR_BADDB = 14,
+            MMSYSERR_KEYNOTFOUND = 15,
+            MMSYSERR_READERROR = 16,
+            MMSYSERR_WRITEERROR = 17,
+            MMSYSERR_DELETEERROR = 18,
+            MMSYSERR_VALNOTFOUND = 19,
+            MMSYSERR_NODRIVERCB = 20,
+
+            JOYERR_UNPLUGGED = 167,
+            JOYERR_PARMS = 165,
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct JOYINFOEX
+        {
+            [Flags()]
+            public enum JOY : UInt32
+            {
+                RETURNX		    = 0x00000001,
+                RETURNY		    = 0x00000002,
+                RETURNZ		    = 0x00000004,
+                RETURNR		    = 0x00000008,
+                RETURNU		    = 0x00000010,
+                RETURNV		    = 0x00000020,
+                RETURNPOV		= 0x00000040,
+                RETURNBUTTONS	= 0x00000080,
+                RETURNCENTERED	= 0x00000400,
+                RETURNALL		= RETURNX | RETURNY | RETURNZ | RETURNR | RETURNU | RETURNV | RETURNPOV | RETURNBUTTONS,
+            }
+
+            /// <summary>Must be set to Marshal.Sizeof(JOYINFOEX)</summary>
+            public UInt32 Size;
+            /// <summary>Must be set to desired values</summary>
+            public JOY Flags;
+            public UInt32 Xpos;
+            public UInt32 Ypos;
+            public UInt32 Zpos;
+            public UInt32 Rpos;
+            public UInt32 Upos;
+            public UInt32 Vpos;
+            public UInt32 Buttons;
+            public UInt32 ButtonNumber;
+            public UInt32 POV;
+            public UInt32 Reserved1;
+            public UInt32 Reserved2;
+        }
+
+        const int MAXPNAMELEN = 32;
+        const int MAX_JOYSTICKOEMVXDNAME = 260;
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        public struct JOYCAPS
+        {
+            public UInt16 Mid;
+            public UInt16 Pid;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = MAXPNAMELEN)]
+            public string Pname;
+            public UInt32 Xmin;
+            public UInt32 Xmax;
+            public UInt32 Ymin;
+            public UInt32 Ymax;
+            public UInt32 Zmin;
+            public UInt32 Zmax;
+            public UInt32 NumButtons;
+            public UInt32 PeriodMin;
+            public UInt32 PeriodMax;
+            public UInt32 Rmin;
+            public UInt32 Rmax;
+            public UInt32 Umin;
+            public UInt32 Umax;
+            public UInt32 Vmin;
+            public UInt32 Vmax;
+            public UInt32 Caps;
+            public UInt32 MaxAxes;
+            public UInt32 NumAxes;
+            public UInt32 MaxButtons;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = MAXPNAMELEN)]
+            public string RegKey;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = MAX_JOYSTICKOEMVXDNAME)]
+            public string OEMVxD;
+        }
+
+        /// <see cref="https://docs.microsoft.com/en-us/windows/win32/api/joystickapi/nf-joystickapi-joygetnumdevs"/>
+        [DllImport("WinMM.dll")]
+        public static extern UInt32 joyGetNumDevs();
+
+        /// <see cref="https://docs.microsoft.com/en-us/windows/win32/api/joystickapi/nf-joystickapi-joygetposex"/>
+        [DllImport("WinMM.dll", CharSet = CharSet.Unicode)]
+        public static extern MMRESULT joyGetPosEx(UInt32 id, [Out] out JOYINFOEX info);
+    
+        /// <see cref="https://docs.microsoft.com/en-us/windows/win32/api/joystickapi/nf-joystickapi-joygetdevcaps"/>
+        [DllImport("WinMM.dll", CharSet = CharSet.Unicode)]
+        public static extern MMRESULT joyGetDevCaps(UInt32 id, [Out] out JOYCAPS caps, UInt32 capsBytes);
+    }
+}
+
 /// <see cref="https://docs.microsoft.com/en-us/windows/win32/api/winbase/"/>
 namespace winbase
 {
@@ -23,7 +139,6 @@ namespace winbase
 /// <see cref="https://docs.microsoft.com/en-us/windows/win32/api/winuser/"/>
 namespace winuser
 {
-    /// <see cref=""/>
     public enum RID : uint
     {
         HEADER = 0x10000005,
@@ -35,7 +150,6 @@ namespace winuser
     public struct RAWINPUT
     {
         public RAWINPUTHEADER header;
- 
         public RAWMOUSE mouse; // Embed in a struct to allow the header size to align correctly for 32/64 bit
     }
 
