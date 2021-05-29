@@ -439,26 +439,26 @@ namespace HandOnMouse
                             for (uint j = 0; j < maxJoysticks; j++)
                             {
                                 // TODO cache names and check
-                                var caps = new WinMM.JOYCAPS();
+                                var caps = new JOYCAPS();
                                 var size = (uint)Marshal.SizeOf(caps);
                                 var joystickCaps = WinMM.joyGetDevCaps(j, out caps, size);
-                                if (joystickCaps == WinMM.MMRESULT.MMSYSERR_NOERROR)
+                                if (joystickCaps == MMRESULT.MMSYSERR_NOERROR)
                                 {
                                     var joystickManufacturerId = caps.Mid; // vJoy 4660
                                     var joystickProductId      = caps.Pid; // vJoy 48813
                                     var joystickButtons        = caps.NumButtons;
                                 }
 
-                                var info = new WinMM.JOYINFOEX();
+                                var info = new JOYINFOEX();
                                 info.Size = (uint)Marshal.SizeOf(info);
-                                info.Flags = WinMM.JOYINFOEX.JOY.RETURNBUTTONS;
+                                info.Flags = JOYINFOEX.JOY.RETURNBUTTONS;
                                 var joystickInfo = WinMM.joyGetPosEx(j, out info);
-                                if (joystickInfo == WinMM.MMRESULT.MMSYSERR_NOERROR)
+                                if (joystickInfo == MMRESULT.MMSYSERR_NOERROR)
                                 {
                                     var joystickButtonsPressed = info.Buttons;
                                 }
-                                if (joystickInfo == WinMM.MMRESULT.MMSYSERR_BADDEVICEID ||
-                                    joystickInfo == WinMM.MMRESULT.JOYERR_UNPLUGGED)
+                                if (joystickInfo == MMRESULT.MMSYSERR_BADDEVICEID ||
+                                    joystickInfo == MMRESULT.JOYERR_UNPLUGGED)
                                 {
                                     // Erase cache
                                 }

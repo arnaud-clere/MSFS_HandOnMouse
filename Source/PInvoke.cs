@@ -5,8 +5,6 @@ using System.Text;
 /// <see cref="https://docs.microsoft.com/en-us/windows/win32/api/joystickapi/"/>
 namespace joystickapi
 {
-    static public class WinMM
-    {
         public enum MMRESULT : UInt32
         {
             MMSYSERR_NOERROR = 0,
@@ -70,14 +68,12 @@ namespace joystickapi
             public UInt32 Reserved2;
         }
 
-        const int MAXPNAMELEN = 32;
-        const int MAX_JOYSTICKOEMVXDNAME = 260;
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         public struct JOYCAPS
         {
             public UInt16 Mid;
             public UInt16 Pid;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = MAXPNAMELEN)]
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
             public string Pname;
             public UInt32 Xmin;
             public UInt32 Xmax;
@@ -98,12 +94,14 @@ namespace joystickapi
             public UInt32 MaxAxes;
             public UInt32 NumAxes;
             public UInt32 MaxButtons;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = MAXPNAMELEN)]
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
             public string RegKey;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = MAX_JOYSTICKOEMVXDNAME)]
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
             public string OEMVxD;
         }
 
+    static public class WinMM
+    {
         /// <see cref="https://docs.microsoft.com/en-us/windows/win32/api/joystickapi/nf-joystickapi-joygetnumdevs"/>
         [DllImport("WinMM.dll")]
         public static extern UInt32 joyGetNumDevs();
