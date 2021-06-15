@@ -77,7 +77,7 @@ namespace HandOnMouse
                 }
                 else
                 {
-                    if ((Mouse.Device.ButtonsPressed != RAWMOUSE.RI_MOUSE.None &&
+                    if ((mouseTriggerButtons != RAWMOUSE.RI_MOUSE.None &&
                         !Mouse.Device.ButtonsPressed.HasFlag(mouseTriggerButtons)) ||
                         (controllerTrigger != null &&
                         !controllerTrigger.ButtonsPressed.HasFlag(controllerTriggerButtons)))
@@ -108,8 +108,8 @@ namespace HandOnMouse
 
         // Implementation
 
-        RAWMOUSE.RI_MOUSE mouseTriggerButtons;
-        Controller controllerTrigger;
-        Controller.Buttons controllerTriggerButtons;
+        RAWMOUSE.RI_MOUSE mouseTriggerButtons = RAWMOUSE.RI_MOUSE.None;
+        Controller controllerTrigger = null;
+        Controller.Buttons controllerTriggerButtons = Controller.Buttons.None;
     }
 }
