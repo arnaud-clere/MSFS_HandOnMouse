@@ -322,6 +322,7 @@ namespace HandOnMouse
 
         // R/O properties
 
+        public int Id { get { return Mappings.IndexOf(this); } }
         public string Text
         {
             get
@@ -677,7 +678,7 @@ namespace HandOnMouse
         }
 
         /// <returns>True whenever valueInSim must be set to the updated SimVarValue</returns>
-        public bool UpdateSimVar(double valueInSim, double trimmedAxisChange = 0)
+        public bool UpdateSimVarValue(double valueInSim, double trimmedAxisChange = 0)
         {
             if (valueInSim < SimVarMin-SimVarIncrement)
             {

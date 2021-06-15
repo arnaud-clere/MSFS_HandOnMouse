@@ -73,7 +73,7 @@ namespace HandOnMouse
             get
             {
                 return Buttons & (
-                    // RAWMOUSE.RI_MOUSE.LEFT_BUTTON_DOWN |
+                    // RAWMOUSE.RI_MOUSE.LEFT_BUTTON_DOWN Excluded to use for GUI
                     RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_DOWN |
                     RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_DOWN |
                     RAWMOUSE.RI_MOUSE.BUTTON_4_DOWN |

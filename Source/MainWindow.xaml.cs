@@ -236,38 +236,38 @@ namespace HandOnMouse
             ((ViewModel)DataContext).StatusBrushForText = new SolidColorBrush(Settings.Default.Sensitivity > 0 ? Colors.Black : Colors.Gray);
             bool requestEngines = false;
             bool requestSpeeds = false;
-            for (int i = 0; i < Axis.Mappings.Count; i++)
+            for (int id = 0; id < Axis.Mappings.Count; id++)
             {
-                var m = Axis.Mappings[i];
+                var m = Axis.Mappings[id];
                 if (m.SimVarName.Length > 0)
                 {
                     if (m.TrimCounterCenteringMove && Axis.AxisForTrim.ContainsKey(m.SimVarName))
                     {
-                        _simConnect.AddToDataDefinition(RequestId(i), m.SimVarName, m.SimVarUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)(m.SimVarScale/Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
-                        _simConnect.RegisterDataDefineStruct<double>(RequestId(i));
+                        _simConnect.AddToDataDefinition(RequestId(id), m.SimVarName, m.SimVarUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)(m.SimVarScale/Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
+                        _simConnect.RegisterDataDefineStruct<double>(RequestId(id));
                         
-                        _simConnect.AddToDataDefinition(ReadAxisValueId(i), m.SimVarName, m.SimVarUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
-                        _simConnect.AddToDataDefinition(ReadAxisValueId(i), Axis.AxisForTrim[m.SimVarName], "Position", SIMCONNECT_DATATYPE.FLOAT64, (float)((1 - -1) / Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
-                        _simConnect.RegisterDataDefineStruct<SmartTrimAxis>(ReadAxisValueId(i));
-                        _simConnect.RequestDataOnSimObject(ReadAxisValueId(i), ReadAxisValueId(i), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.SIM_FRAME, SIMCONNECT_DATA_REQUEST_FLAG.CHANGED, 0, 0, 0);
+                        _simConnect.AddToDataDefinition(ReadAxisValueId(id), m.SimVarName, m.SimVarUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
+                        _simConnect.AddToDataDefinition(ReadAxisValueId(id), Axis.AxisForTrim[m.SimVarName], "Position", SIMCONNECT_DATATYPE.FLOAT64, (float)((1 - -1) / Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
+                        _simConnect.RegisterDataDefineStruct<SmartTrimAxis>(ReadAxisValueId(id));
+                        _simConnect.RequestDataOnSimObject(ReadAxisValueId(id), ReadAxisValueId(id), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.SIM_FRAME, SIMCONNECT_DATA_REQUEST_FLAG.CHANGED, 0, 0, 0);
                     }
                     else if (m.ForAllEngines)
                     {
-                        _simConnect.AddToDataDefinition(RequestId(i), m.SimVarName+":1", m.SimVarUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
-                        _simConnect.RegisterDataDefineStruct<double>(RequestId(i));
-                        _simConnect.RequestDataOnSimObject(RequestId(i), RequestId(i), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.SIM_FRAME, SIMCONNECT_DATA_REQUEST_FLAG.CHANGED, 0, 0, 0);
+                        _simConnect.AddToDataDefinition(RequestId(id), m.SimVarName+":1", m.SimVarUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
+                        _simConnect.RegisterDataDefineStruct<double>(RequestId(id));
+                        _simConnect.RequestDataOnSimObject(RequestId(id), RequestId(id), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.SIM_FRAME, SIMCONNECT_DATA_REQUEST_FLAG.CHANGED, 0, 0, 0);
                         
                         for (uint engineId = 1; engineId < 5; engineId++)
-                            _simConnect.AddToDataDefinition(RequestId(i, RequestType.SmartAxisValue), m.SimVarName+":"+engineId, m.SimVarUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
-                        _simConnect.RegisterDataDefineStruct<SmartEngineAxis>(RequestId(i, RequestType.SmartAxisValue));
+                            _simConnect.AddToDataDefinition(RequestId(id, RequestType.SmartAxisValue), m.SimVarName+":"+engineId, m.SimVarUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
+                        _simConnect.RegisterDataDefineStruct<SmartEngineAxis>(RequestId(id, RequestType.SmartAxisValue));
                     }
                     else
                     {
-                        _simConnect.AddToDataDefinition(RequestId(i), m.SimVarName, m.SimVarUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
-                        _simConnect.RegisterDataDefineStruct<double>(RequestId(i));
-                        _simConnect.RequestDataOnSimObject(RequestId(i), RequestId(i), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.SIM_FRAME, SIMCONNECT_DATA_REQUEST_FLAG.CHANGED, 0, 0, 0);
+                        _simConnect.AddToDataDefinition(RequestId(id), m.SimVarName, m.SimVarUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
+                        _simConnect.RegisterDataDefineStruct<double>(RequestId(id));
+                        _simConnect.RequestDataOnSimObject(RequestId(id), RequestId(id), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.SIM_FRAME, SIMCONNECT_DATA_REQUEST_FLAG.CHANGED, 0, 0, 0);
                     }
-                    var infoId = RequestId(i, RequestType.AxisInfo);
+                    var infoId = RequestId(id, RequestType.AxisInfo);
                     if (m.IsThrottle && !m.DisableThrottleReverse)
                     {
                         _simConnect.AddToDataDefinition(infoId, "THROTTLE LOWER LIMIT", "Percent" /* <0 */, SIMCONNECT_DATATYPE.FLOAT64, 1, SimConnect.SIMCONNECT_UNUSED);
@@ -422,9 +422,8 @@ namespace HandOnMouse
 
         private void Mouse_Move(Vector move)
         {
-            for (int i = 0; i < Axis.Mappings.Count; i++)
+            foreach (var m in Axis.Mappings)
             {
-                var m = Axis.Mappings[i];
                 m.UpdateTrigger();
                 if (m.IsActive)
                 {
@@ -439,7 +438,7 @@ namespace HandOnMouse
                         // - increase a subsequent move in the opposite direction after even a long time
                         // - decrease a subsequent move in the same direction to potentially insignificant moves
                         if (m.SimVarChange != 0)
-                            UpdateSimVar(i);
+                            UpdateSimVar(m);
                     }
                 }
                 else // !m.WaitButtonsReleased
@@ -448,7 +447,7 @@ namespace HandOnMouse
                     {
                         m.CurrentChange = 0;
                         // Since SimVarChange is proportional to CurrentChange modulo SimVarIncrement
-                        UpdateSimVar(i);
+                        UpdateSimVar(m);
                     }
                 }
                 m.ChangeColorForText = m.SimVarChange != 0 && m.CurrentChange == 0 ? Colors.Red : Axis.TextColorFromChange(m.CurrentChange);
@@ -456,21 +455,20 @@ namespace HandOnMouse
         }
         private void Timer_Tick(object sender, EventArgs e)
         {
-            for (int i = 0; i < Axis.Mappings.Count; i++)
+            foreach (var m in Axis.Mappings)
             {
-                var m = Axis.Mappings[i];
                 m.UpdateTime(((DispatcherTimer)sender).Interval.TotalSeconds);
                 if (m.SimVarChange != 0)
-                    UpdateSimVar(i);
+                    UpdateSimVar(m);
             }
         }
-        private void UpdateSimVar(int i)
+        private void UpdateSimVar(Axis m)
         {
-            var m = Axis.Mappings[i];
+            Debug.Assert(m.Id >= 0);
             if (_connected && m.VJoyId == 0)
-                _simConnect?.RequestDataOnSimObject(ReadAxisValueId(i), ReadAxisValueId(i), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.ONCE, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
+                _simConnect?.RequestDataOnSimObject(ReadAxisValueId(m.Id), ReadAxisValueId(m.Id), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.ONCE, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
             else
-                m.UpdateSimVar(m.SimVarValue);
+                m.UpdateSimVarValue(m.SimVarValue);
         }
 
         public void SimConnect_OnRecvData(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA data)
@@ -518,7 +516,7 @@ namespace HandOnMouse
                         {
                             inSimValue = (double)data.dwData[0];
                         }
-                        if (m.UpdateSimVar(inSimValue, trimmedAxisChange))
+                        if (m.UpdateSimVarValue(inSimValue, trimmedAxisChange))
                         {
                             if (m.ForAllEngines)
                             {
