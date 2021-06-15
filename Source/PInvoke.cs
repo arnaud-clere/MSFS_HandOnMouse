@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -122,14 +123,24 @@ namespace winbase
     static public class Kernel32
     {
         /// <see cref="https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getprivateprofilestring"/>
-        [DllImport("kernel32", CharSet = CharSet.Unicode)]
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
         static extern int GetPrivateProfileString(string section, string key, string defaultValue, StringBuilder value, int maxLength, string filePath);
 
         static public string ReadIni(string filePath, string key, string section = null, string defaultValue = "", int maxLength = 255)
         {
             var value = new StringBuilder(maxLength);
             var read = GetPrivateProfileString(section, key, defaultValue, value, maxLength, filePath);
+            Debug.Assert(read == value.Length);
             return value.ToString();
+        }
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool WritePrivateProfileString(string section, string key, string value, string filePath);
+        
+        static public bool WriteIni(string filePath, string key, string section, string value)
+        {
+            return WritePrivateProfileString(section, key, value, filePath);
         }
     }
 }

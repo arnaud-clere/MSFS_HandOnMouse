@@ -1,0 +1,134 @@
+﻿<Window x:Class="HandOnMouse.AxisWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:HandOnMouse"
+        WindowStartupLocation="Manual"
+        WindowStyle="ToolWindow"
+        SizeToContent="WidthAndHeight"
+        Title="{Binding Axis.Name}">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="3" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style TargetType="ToggleButton">
+            <Setter Property="Margin" Value="3" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="Margin" Value="3" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Margin" Value="3" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Margin" Value="3" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style TargetType="StackPanel">
+            <Setter Property="Orientation" Value="Horizontal" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </Window.Resources>
+    <Grid >
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="24"/>
+            <RowDefinition Height="24"/>
+            <RowDefinition Height="24"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="24"/>
+            <RowDefinition Height="24"/>
+            <RowDefinition Height="28"/>
+        </Grid.RowDefinitions>
+        <ToggleButton Grid.Column="0" Grid.Row="0" TextBlock.FontSize="10"
+                ToolTip="Once you press this button:&#x0a;1. press the desired mouse/controller button (except left click)&#x0a;2. move mouse in direction where axis must increase&#x0a;3. release the button"
+                Name="SetTriggerButton">Set button and mouse move</ToggleButton>
+        <StackPanel Grid.Column="1" Grid.Row="0">
+            <ComboBox IsEditable="True"
+                Text="{Binding Axis.Sensitivity}" Height="18" Margin="0,0,0,-0.4" VerticalAlignment="Bottom">
+                <ComboBoxItem ToolTip="No sensitivity">0</ComboBoxItem>
+                <ComboBoxItem>0.25</ComboBoxItem>
+                <ComboBoxItem>0.5</ComboBoxItem>
+                <ComboBoxItem ToolTip="Default sensitivity">1</ComboBoxItem>
+                <ComboBoxItem>2</ComboBoxItem>
+                <ComboBoxItem>4</ComboBoxItem>
+            </ComboBox>
+            <TextBlock>Axis sensitivity (ratio)</TextBlock>
+        </StackPanel>
+        <StackPanel Grid.Column="0" Grid.Row="1">
+            <TextBlock>Mouse button(s):</TextBlock>
+            <TextBlock FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
+                Text="{Binding Axis.MouseButtonsText, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
+        </StackPanel>
+        <CheckBox  Grid.Column="1" Grid.Row="1" ToolTip="For axis which efficacy depend on IAS: aileron, trims..."
+                IsChecked="{Binding Axis.SensitivityAtCruiseSpeed}">Sensitivity x IAS/Vc</CheckBox>
+        <StackPanel Grid.Column="0" Grid.Row="2">
+            <TextBlock>Controller button(s):</TextBlock>
+            <TextBlock FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
+                Text="{Binding Axis.ControllerButtonsText, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
+        </StackPanel>
+        <CheckBox  Grid.Column="1" Grid.Row="2" ToolTip="For axis that should be adjusted and confirmed before the move is performed"
+                IsChecked="{Binding Axis.WaitButtonsReleased}">Wait for button release</CheckBox>
+        <StackPanel Grid.Column="0" Grid.Row="3" Orientation="Vertical">
+            <TextBlock>Controller:</TextBlock>
+            <TextBlock FontWeight="Bold" HorizontalAlignment="Center" Margin="0"
+                Text="{Binding Axis.Controller.Name, UpdateSourceTrigger=PropertyChanged}"/>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Grid.Row="3" Orientation="Vertical">
+            <CheckBox ToolTip="For trim axis that should compensate centering moves"
+                IsEnabled="{Binding Axis.IsTrim}"
+                IsChecked="{Binding Axis.TrimCounterCenteringMove}">Trim centering moves of axis below:</CheckBox>
+            <TextBlock FontWeight="Bold" HorizontalAlignment="Center" Margin="0"
+                Text="{Binding Axis.TrimmedAxisName}"/>
+        </StackPanel>
+        <CheckBox  Grid.Column="1" Grid.Row="4" 
+                IsEnabled="{Binding Axis.IsThrottle}"
+                IsChecked="{Binding Axis.DisableThrottleReverse}">Disable smart reverse throttle</CheckBox>
+        <StackPanel Grid.Column="0" Grid.Row="4">
+            <TextBlock>Mouse move:</TextBlock>
+            <TextBlock FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
+                Text="{Binding Axis.IncreaseDirectionText, StringFormat='{} {0} '}"/>
+        </StackPanel>
+        <StackPanel Grid.Column="0" Grid.Row="5">
+            <CheckBox ToolTip="For continuous axis with detents: throttle..."
+                IsChecked="{Binding Axis.DisableIncreaseDirection2}">Disable detent direction:</CheckBox>
+            <TextBlock FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
+                Text="{Binding Axis.IncreaseDirection2Text, StringFormat='{} {0} '}"/>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Grid.Row="5">
+            <ComboBox IsEditable="True"
+                Text="{Binding Axis.DecreaseScaleTimeSecs}" Height="18" Margin="0,0,0,-0.4" VerticalAlignment="Bottom">
+                <ComboBoxItem ToolTip="No decrease to zero with time">0</ComboBoxItem>
+                <ComboBoxItem>0.25</ComboBoxItem>
+                <ComboBoxItem>0.5</ComboBoxItem>
+                <ComboBoxItem>1</ComboBoxItem>
+                <ComboBoxItem>2</ComboBoxItem>
+                <ComboBoxItem>4</ComboBoxItem>
+            </ComboBox>
+            <TextBlock ToolTip="For axis that should be centered most of the time: rudder, brakes...">Time (s) to decrease to zero</TextBlock>
+        </StackPanel>
+        <Grid Grid.ColumnSpan="2" Grid.Column="0" Grid.Row="7" Height="28" Margin="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="2*"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" TextBlock.Foreground="Red" 
+                Click="Button_Reset">Reset</Button>
+            <Button Grid.Column="1" 
+                Click="Button_Cancel">Close without save</Button>
+            <Button Grid.Column="2" TextBlock.Foreground="Green" 
+                Click="Button_Save">Save and close</Button>
+        </Grid>
+    </Grid>
+</Window>

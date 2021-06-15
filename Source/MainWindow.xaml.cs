@@ -17,7 +17,6 @@ using Microsoft.FlightSimulator.SimConnect;
 using Microsoft.Win32;
 
 using winuser;
-using joystickapi;
 
 using HandOnMouse.Properties;
 
@@ -85,20 +84,22 @@ namespace HandOnMouse
     /// <summary>Interaction logic for MainWindow.xaml</summary>
     public partial class MainWindow : Window
     {
+        public static string MappingsDir() { return Path.Combine(Directory.GetCurrentDirectory(), "Mappings"); }
+        public static string MappingFile() { return Path.Combine(MappingsDir(), Settings.Default.MappingFile); }
+
         const int WM_USER_SIMCONNECT = (int)WM.USER + 2;
 
         /// <summary>SimConnect Requests and Data Definitions are actually defined dynamically for each Axis in Axis.Mappings</summary>
         public enum Definitions { None = 0, FlightLoaded = 1, AircraftLoaded = 2, IndicatedAirSpeedKnots = 3, DesignCruiseSpeedFeetPerSec = 4, EnginesCount = 5, Axis = 6 }
 
         IntPtr _hwnd;
-        RAWMOUSE.RI_MOUSE _buttons = RAWMOUSE.RI_MOUSE.None;
         SimConnect _simConnect;
         bool _connected = false;
 
         public MainWindow()
         {
             DataContext = new ViewModel();
-
+    
             InitializeComponent();
 
             Settings.Default.PropertyChanged += new PropertyChangedEventHandler(Settings_Changed);
@@ -121,6 +122,7 @@ namespace HandOnMouse
             {
                 Trace.WriteLine($"User32.RegisterRawInputDevices failed Marshal.GetLastWin32Error: {Marshal.GetLastWin32Error()}");
             }
+            Mouse.Device.RawMouseMove += new Mouse.RawMouseMoveHandler(Mouse_Move);
 
             var simFrameTimer = new DispatcherTimer();
             simFrameTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000/36);
@@ -171,6 +173,13 @@ namespace HandOnMouse
         private void Window_Help(object sender, RoutedEventArgs e)
         {
             Process.Start("https://github.com/arnaud-clere/MSFS_HandOnMouse#version-14");
+        }
+
+        public void Axis_Click(object sender, RoutedEventArgs e)
+        {
+            var w = new AxisWindow((Axis)((Button)sender).Tag);
+            w.Owner = this;
+            w.ShowDialog();
         }
 
         public void Connect_Click(object sender, RoutedEventArgs e)
@@ -346,13 +355,11 @@ namespace HandOnMouse
             b.IsEnabled = enabled;
         }
 
-        public string MappingsDir() { return Path.Combine(Directory.GetCurrentDirectory(), "Mappings"); }
-        public string MappingFile() { return Path.Combine(MappingsDir(), Settings.Default.MappingFile); }
         public void Window_File(object sender, RoutedEventArgs e)
         {
             if (_simConnect != null && _connected)
             {
-                MessageBox.Show("Please DISCONNECT before changing mappings!");
+                MessageBox.Show("Please DISCONNECT before changing mappings!", "HandOnMouse");
             }
             else
             {
@@ -383,7 +390,7 @@ namespace HandOnMouse
             {
                 var message = filePath + ":\n" + errors;
                 Trace.WriteLine(message);
-                MessageBox.Show(message);
+                MessageBox.Show(message, "HandOnMouse");
             }
             if (Axis.Mappings.Count == 0 && filePath != MappingFile())
             {
@@ -398,7 +405,7 @@ namespace HandOnMouse
 
         private IntPtr RawInput_Handler(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
-            if (msg != (int)WM.INPUT) return hwnd;
+            if (msg == (int)WM.INPUT)
             {
                 RAWINPUT input;
                 int inputSize = Marshal.SizeOf(typeof(RAWINPUT));
@@ -406,137 +413,57 @@ namespace HandOnMouse
                 int outSize = User32.GetRawInputData(lParam, RID.INPUT, out input, ref inputSize, headerSize);
                 if (outSize == inputSize)
                 {
-                    if (input.header.Type == RAWINPUTHEADER.RIM.TYPEMOUSE && input.mouse.Flags == RAWMOUSE.MOUSE.MOVE_RELATIVE)
-                    {
-                        var mouse = input.mouse;
-
-                        // Coalesce button up/down events into _buttons status
-                        var buttons = mouse.ButtonFlags;
-                        _buttons |= buttons & (
-                            RAWMOUSE.RI_MOUSE.LEFT_BUTTON_DOWN |
-                            RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_DOWN |
-                            RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_DOWN |
-                            RAWMOUSE.RI_MOUSE.BUTTON_4_DOWN |
-                            RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN);
-                        // Check UP after DOWN in case both are true in a single coalesced message
-                        if (buttons.HasFlag(RAWMOUSE.RI_MOUSE.LEFT_BUTTON_UP     )) _buttons &= ~RAWMOUSE.RI_MOUSE.LEFT_BUTTON_DOWN  ;
-                        if (buttons.HasFlag(RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_UP   )) _buttons &= ~RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_DOWN;
-                        if (buttons.HasFlag(RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_UP    )) _buttons &= ~RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_DOWN ;
-                        if (buttons.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_4_UP        )) _buttons &= ~RAWMOUSE.RI_MOUSE.BUTTON_4_DOWN     ;
-                        if (buttons.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_5_UP        )) _buttons &= ~RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN     ;
-                        // Update complement to enable MouseButtonsFilter with UP requirements
-                        if (_buttons.HasFlag(RAWMOUSE.RI_MOUSE.LEFT_BUTTON_DOWN  )) _buttons &= ~RAWMOUSE.RI_MOUSE.LEFT_BUTTON_UP  ; else _buttons |= RAWMOUSE.RI_MOUSE.LEFT_BUTTON_UP  ;
-                        if (_buttons.HasFlag(RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_DOWN)) _buttons &= ~RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_UP; else _buttons |= RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_UP;
-                        if (_buttons.HasFlag(RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_DOWN )) _buttons &= ~RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_UP ; else _buttons |= RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_UP ;
-                        if (_buttons.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_4_DOWN     )) _buttons &= ~RAWMOUSE.RI_MOUSE.BUTTON_4_UP     ; else _buttons |= RAWMOUSE.RI_MOUSE.BUTTON_4_UP     ;
-                        if (_buttons.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN     )) _buttons &= ~RAWMOUSE.RI_MOUSE.BUTTON_5_UP     ; else _buttons |= RAWMOUSE.RI_MOUSE.BUTTON_5_UP     ;
-
-                        for (int i = 0; i < Axis.Mappings.Count; i++)
-                        {
-                            var m = Axis.Mappings[i];
-
-                            var maxJoysticks = WinMM.joyGetNumDevs();
-                            for (uint j = 0; j < maxJoysticks; j++)
-                            {
-                                // TODO cache names and check
-                                var caps = new JOYCAPS();
-                                var size = (uint)Marshal.SizeOf(caps);
-                                var joystickCaps = WinMM.joyGetDevCaps(j, out caps, size);
-                                if (joystickCaps == MMRESULT.MMSYSERR_NOERROR)
-                                {
-                                    var joystickManufacturerId = caps.Mid; // vJoy 4660
-                                    var joystickProductId      = caps.Pid; // vJoy 48813
-                                    var joystickButtons        = caps.NumButtons;
-                                }
-
-                                var info = new JOYINFOEX();
-                                info.Size = (uint)Marshal.SizeOf(info);
-                                info.Flags = JOYINFOEX.JOY.RETURNBUTTONS;
-                                var joystickInfo = WinMM.joyGetPosEx(j, out info);
-                                if (joystickInfo == MMRESULT.MMSYSERR_NOERROR)
-                                {
-                                    var joystickButtonsPressed = info.Buttons;
-                                }
-                                if (joystickInfo == MMRESULT.MMSYSERR_BADDEVICEID ||
-                                    joystickInfo == MMRESULT.JOYERR_UNPLUGGED)
-                                {
-                                    // Erase cache
-                                }
-                            }
-
-                            m.IsActive = _buttons.HasFlag(m.MouseButtonsFilter);
-                            if (m.IsActive)
-                            {
-                                // Ignore smallest of changes in XY directions to avoid changing 2 Axis at the same time and increase the effect of SmartIncreaseDirection
-                                if (Math.Abs(mouse.LastX) < Math.Abs(mouse.LastY))
-                                    mouse.LastX = 0;
-                                else
-                                    mouse.LastY = 0;
-
-                                var d = m.IncreaseDirection;
-                                double change = // between negative/positive detent(s)
-                                        d == Axis.Direction.Push ? -mouse.LastY :
-                                        d == Axis.Direction.Draw ?  mouse.LastY :
-                                        d == Axis.Direction.Right ? mouse.LastX : -mouse.LastX;
-                                var d2 = m.IncreaseDirection2;
-                                if (change == 0 && d2 != null)
-                                    change =
-                                        d2 == Axis.Direction.Push ? -mouse.LastY :
-                                        d2 == Axis.Direction.Draw ?  mouse.LastY :
-                                        d2 == Axis.Direction.Right ? mouse.LastX : -mouse.LastX;
-
-                                var inDetent = 
-                                    (m.IsThrottle && Math.Abs(m.Value) < m.SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100) ||
-                                    (m.VJoyAxisIsThrottle && m.VJoyAxisZero > 0 && Math.Abs(m.Value - m.VJoyAxisZero) < m.SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100) ||
-                                    (m.PositiveDetent > 0 && Math.Abs(m.Value - m.PositiveDetent) < m.SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100);
-                                var negativeDetent =
-                                    (m.IsThrottle && m.Value < 0) ||
-                                    (m.VJoyAxisIsThrottle && m.VJoyAxisZero > 0 && m.Value < m.VJoyAxisZero);
-                                var positiveDetent =
-                                    (m.PositiveDetent > 0 && m.PositiveDetent < m.Value);
-                                var orthogonal = d == Axis.Direction.Push || d == Axis.Direction.Draw ? Axis.Direction.Right : Axis.Direction.Draw;
-                                if (inDetent && mouse.LastX != 0 && orthogonal == Axis.Direction.Right)
-                                    change = -mouse.LastX;
-                                else if (inDetent && mouse.LastY != 0 && orthogonal == Axis.Direction.Draw)
-                                    change = -mouse.LastY;
-                                else if (negativeDetent && change <= 0)
-                                    change = orthogonal == Axis.Direction.Right ? -mouse.LastX : -mouse.LastY;
-                                else if (positiveDetent && change >= 0)
-                                    change = orthogonal == Axis.Direction.Right ? -mouse.LastX : -mouse.LastY;
-
-                                m.UpdateRawInputChanges(Properties.Settings.Default.Sensitivity, change);
-                            }
-                            if (m.WaitButtonsReleased)
-                            {
-                                if (!m.IsActive) // CurrentChange end
-                                {
-                                    m.CurrentChange = 0;
-                                    // Keeping the remainder for the current change would mysteriously:
-                                    // - increase a subsequent move in the opposite direction after even a long time
-                                    // - decrease a subsequent move in the same direction to potentially insignificant moves
-                                    if (m.SimVarChange != 0)
-                                        UpdateSimVar(i);
-                                }
-                            }
-                            else // !m.WaitButtonsReleased
-                            {
-                                if (m.SimVarChange != 0) // CurrentChange end
-                                {
-                                    m.CurrentChange = 0;
-                                    // Since SimVarChange is proportional to CurrentChange modulo SimVarIncrement
-                                    UpdateSimVar(i);
-                                }
-                            }
-                            m.ChangeColorForText = m.SimVarChange != 0 && m.CurrentChange == 0 ? Colors.Red : Axis.TextColorFromChange(m.CurrentChange);
-                        }
-                    }
-                    else { Trace.WriteLine($"Received unsupported RAWINPUT header.Type: {input.header.Type}, mouse.Flags: {input.mouse.Flags}"); }
+                    if (input.header.Type != RAWINPUTHEADER.RIM.TYPEMOUSE || !Mouse.Device.Update(input.mouse)) { Trace.WriteLine($"Received unsupported RAWINPUT header.Type: {input.header.Type}, mouse.Flags: {input.mouse.Flags}"); }
                 }
                 else { Trace.WriteLine($"Received unsupported WM.INPUT outSize: {outSize}"); }
             }
             return hwnd;
         }
 
+        private void Mouse_Move(Vector move)
+        {
+            for (int i = 0; i < Axis.Mappings.Count; i++)
+            {
+                var m = Axis.Mappings[i];
+                m.UpdateTrigger();
+                if (m.IsActive)
+                {
+                    m.UpdateMove(move);
+                }
+                if (m.WaitButtonsReleased)
+                {
+                    if (!m.IsActive) // CurrentChange end
+                    {
+                        m.CurrentChange = 0;
+                        // Keeping the remainder for the current change would mysteriously:
+                        // - increase a subsequent move in the opposite direction after even a long time
+                        // - decrease a subsequent move in the same direction to potentially insignificant moves
+                        if (m.SimVarChange != 0)
+                            UpdateSimVar(i);
+                    }
+                }
+                else // !m.WaitButtonsReleased
+                {
+                    if (m.SimVarChange != 0) // CurrentChange end
+                    {
+                        m.CurrentChange = 0;
+                        // Since SimVarChange is proportional to CurrentChange modulo SimVarIncrement
+                        UpdateSimVar(i);
+                    }
+                }
+                m.ChangeColorForText = m.SimVarChange != 0 && m.CurrentChange == 0 ? Colors.Red : Axis.TextColorFromChange(m.CurrentChange);
+            }
+        }
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            for (int i = 0; i < Axis.Mappings.Count; i++)
+            {
+                var m = Axis.Mappings[i];
+                m.UpdateTime(((DispatcherTimer)sender).Interval.TotalSeconds);
+                if (m.SimVarChange != 0)
+                    UpdateSimVar(i);
+            }
+        }
         private void UpdateSimVar(int i)
         {
             var m = Axis.Mappings[i];
@@ -544,17 +471,6 @@ namespace HandOnMouse
                 _simConnect?.RequestDataOnSimObject(ReadAxisValueId(i), ReadAxisValueId(i), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.ONCE, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
             else
                 m.UpdateSimVar(m.SimVarValue);
-        }
-
-        private void Timer_Tick(object sender, EventArgs e)
-        {
-            for (int i = 0; i < Axis.Mappings.Count; i++)
-            {
-                var m = Axis.Mappings[i];
-                m.UpdateTimerChanges(((DispatcherTimer)sender).Interval.TotalSeconds);
-                if (m.SimVarChange != 0)
-                    UpdateSimVar(i);
-            }
         }
 
         public void SimConnect_OnRecvData(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA data)

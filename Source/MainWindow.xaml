@@ -27,15 +27,15 @@
             <Button DockPanel.Dock="Right" Click="Window_Close">X</Button>
             <Button DockPanel.Dock="Right" Click="Window_Compact">=</Button>
             <Button DockPanel.Dock="Right" Click="Window_Minimize">-</Button>
-            <Button DockPanel.Dock="Left"  Click="Window_Help"
-                Visibility="{Binding ShowAll, Converter={StaticResource B2V}}">?</Button>
+            <Button DockPanel.Dock="Right"  Click="Window_Help"
+                    Visibility="{Binding ShowAll, Converter={StaticResource B2V}}">?</Button>
             <Button DockPanel.Dock="Left" Click="Window_File"
-                Visibility="{Binding ShowAll, Converter={StaticResource B2V}}">...</Button>
+                    Visibility="{Binding ShowAll, Converter={StaticResource B2V}}">...</Button>
             <Border Padding="1">
                 <Border.Background><SolidColorBrush Opacity="0.5" Color="LightGray"/></Border.Background>
                 <TextBlock Name="MappingsFile" FontSize="10" Margin="0,0,3,0"
-                Text="{Binding Source={x:Static properties:Settings.Default}, Path=MappingFile}"
-                Foreground="{Binding StatusBrushForText, UpdateSourceTrigger=PropertyChanged}">
+                    Text="{Binding Source={x:Static properties:Settings.Default}, Path=MappingFile}"
+                    Foreground="{Binding StatusBrushForText, UpdateSourceTrigger=PropertyChanged}">
                 </TextBlock>
             </Border>
         </DockPanel>
@@ -59,6 +59,10 @@
                 <DataTemplate>
                     <StackPanel>
                         <DockPanel Margin="0 3 0 0">
+                            <Button DockPanel.Dock="Left" Margin="0,0,3,0" Height="14"
+                                    Visibility="{Binding DataContext.ShowAll, Converter={StaticResource B2V}, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
+                                    Tag="{Binding}"
+                                    Click="Axis_Click">...</Button>
                             <TextBlock Width="20" DockPanel.Dock="Left"  TextAlignment="Center" FontSize="8"
                                     Visibility="{Binding DataContext.ShowAll, Converter={StaticResource B2V}, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
                                     Text="{Binding SimVarMin, UpdateSourceTrigger=PropertyChanged}"></TextBlock>

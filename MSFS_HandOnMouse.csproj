@@ -72,7 +72,16 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Source\Mouse.cs" />
+    <Compile Include="Source\AxisWindow.xaml.cs">
+      <DependentUpon>AxisWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Source\Controller.cs" />
     <Compile Include="Source\Settings.cs" />
+    <Page Include="Source\AxisWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Source\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
