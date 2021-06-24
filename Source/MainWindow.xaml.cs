@@ -19,6 +19,7 @@ using Microsoft.Win32;
 using winuser;
 
 using HandOnMouse.Properties;
+using System.Collections.Generic;
 
 namespace HandOnMouse
 {
@@ -98,6 +99,8 @@ namespace HandOnMouse
 
         public MainWindow()
         {
+            Trace.WriteLine($"MainWindow {DateTime.Now}");
+
             DataContext = new ViewModel();
     
             InitializeComponent();
@@ -112,6 +115,8 @@ namespace HandOnMouse
             var source = PresentationSource.FromVisual(this) as HwndSource;
             source.AddHook(WndProc);
             _hwnd = source.Handle;
+
+            Controller.UpdateDevices();
 
             var rid = new RAWINPUTDEVICE[1];
             rid[0].UsagePage = HID_USAGE_PAGE.GENERIC;
@@ -156,6 +161,7 @@ namespace HandOnMouse
         private void Window_Close(object sender, RoutedEventArgs e)
         {
             Close();
+            Trace.WriteLine($"MainWindow Close {DateTime.Now}");
         }
         private void Window_Compact(object sender, RoutedEventArgs e)
         {
@@ -424,33 +430,42 @@ namespace HandOnMouse
         {
             foreach (var m in Axis.Mappings)
             {
-                m.UpdateTrigger();
-                if (m.IsActive)
+                var errors = m.UpdateTrigger();
+                if (errors == null)
                 {
-                    m.UpdateMove(move);
-                }
-                if (m.WaitButtonsReleased)
-                {
-                    if (!m.IsActive) // CurrentChange end
+                    if (m.IsActive)
                     {
-                        m.CurrentChange = 0;
-                        // Keeping the remainder for the current change would mysteriously:
-                        // - increase a subsequent move in the opposite direction after even a long time
-                        // - decrease a subsequent move in the same direction to potentially insignificant moves
-                        if (m.SimVarChange != 0)
+                        m.UpdateMove(move);
+                    }
+                    if (m.WaitButtonsReleased)
+                    {
+                        if (!m.IsActive) // CurrentChange end
+                        {
+                            m.CurrentChange = 0;
+                            // Keeping the remainder for the current change would mysteriously:
+                            // - increase a subsequent move in the opposite direction after even a long time
+                            // - decrease a subsequent move in the same direction to potentially insignificant moves
+                            if (m.SimVarChange != 0)
+                                UpdateSimVar(m);
+                        }
+                    }
+                    else // !m.WaitButtonsReleased
+                    {
+                        if (m.SimVarChange != 0) // CurrentChange end
+                        {
+                            m.CurrentChange = 0;
+                            // Since SimVarChange is proportional to CurrentChange modulo SimVarIncrement
                             UpdateSimVar(m);
+                        }
                     }
+                    m.ChangeColorForText = m.SimVarChange != 0 && m.CurrentChange == 0 ? Colors.Red : Axis.TextColorFromChange(m.CurrentChange);
                 }
-                else // !m.WaitButtonsReleased
+                else if (!displayedErrors.Contains(errors)) 
                 {
-                    if (m.SimVarChange != 0) // CurrentChange end
-                    {
-                        m.CurrentChange = 0;
-                        // Since SimVarChange is proportional to CurrentChange modulo SimVarIncrement
-                        UpdateSimVar(m);
-                    }
+                    displayedErrors.Add(errors);
+                    Trace.WriteLine(errors); 
+                    MessageBox.Show(errors, "HandOnMouse"); 
                 }
-                m.ChangeColorForText = m.SimVarChange != 0 && m.CurrentChange == 0 ? Colors.Red : Axis.TextColorFromChange(m.CurrentChange);
             }
         }
         private void Timer_Tick(object sender, EventArgs e)
@@ -538,5 +553,9 @@ namespace HandOnMouse
             }
             catch (Exception ex) { Trace.WriteLine($"{ex.Message} at: {ex.StackTrace}"); }
         }
+
+        // Implementation
+
+        private List<string> displayedErrors = new List<string>();
     }
 }

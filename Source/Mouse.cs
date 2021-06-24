@@ -4,7 +4,7 @@ using winuser;
 
 namespace HandOnMouse
 {
-    public struct Vector
+    public class Vector
     {
         public int X;
         public int Y;
@@ -56,10 +56,10 @@ namespace HandOnMouse
             if (mouse.LastX != 0 ||
                 mouse.LastY != 0)
             {
-                if (Drag is Vector drag)
+                if (Drag != null)
                 {
-                    drag.X += mouse.LastX;
-                    drag.Y += mouse.LastY;
+                    Drag.X += mouse.LastX;
+                    Drag.Y += mouse.LastY;
                 }
                 RawMouseMove(new Vector(mouse.LastX, mouse.LastY));
             }
@@ -81,10 +81,10 @@ namespace HandOnMouse
             }
         }
 
-        public Vector? Drag { get; private set; }
+        public Vector Drag { get { return _drag; } }
 
-        public void StartDrag(Vector drag) { Drag = drag; }
-        public void StopDrag() { Drag = null; }
+        public void StartDrag(Vector drag) { _drag = drag; }
+        public void StopDrag() { _drag.X = 0; _drag.Y = 0; }
 
         // Events
 
@@ -94,5 +94,6 @@ namespace HandOnMouse
         // Implementation
 
         private static Mouse _device;
+        private Vector _drag = new Vector(0, 0);
     }
 }

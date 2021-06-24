@@ -35,13 +35,9 @@ Enjoy, and let me know what you think!
 Cheers, 
 Arnaud
 
-## Version 1
+## Smart trim 
 
-Initial release
-
-## Version 1.1
-
-Adds smart trim mappings making it a lot easier and faster to trim an aircraft:
+Makes it a lot easier and faster to trim an aircraft:
 - elevator/aileron trim sensitivity adapts to aircraft's IAS and design Vc to compensate higher aerodynamic forces for higher velocities 
 - elevator trim automatically compensates centering elevator inputs to compensate for the absence of Force-Feedback hardware
 
@@ -58,11 +54,9 @@ When you need to apply too much effort to maintain your stick/yoke in position:
 
 *NB: The default smart trim sensitivity works well for most default aircrafts but not all, so, you can adjust it in a custom mappings file (use the "..." button)*
 
-## Version 1.2
+## Smart Throttle 
 
-Adds other smart mappings :
-- flaps maximum value adapts to the current aircraft
-- throttle minimum value adapts to the current aircraft to enable reverse throttle when available
+Minimum value adapts to the current aircraft to enable reverse throttle when available
 
 > When the runway is short, reverse throttle need to be used as soon as the aircraft touches the ground but not before!
 > In real life, the reverse range is protected by detents. 
@@ -78,12 +72,10 @@ On a sloped runway you can quickly revert to forward throttle to make sure you r
 
 *NB: Move the mouse backward/forward in the reverse throttle range in case you configured forward throttle in a left/right direction*
 
-## Version 1.3
+## Smart brakes 
 
-Adds visual cues to reverse throttle and center of left/right axis
-Adds other smart mappings, used in Thr+Yoke+Pedals.ini to replace a yoke or pedals :
-- aileron, rudder and brakes automatically return to a centered position when button/s is/are released
-- brake SimVars cannot be used for precise braking, so brakes are made available with a virtual joystick driver named vJoy
+Automatically return to neutral position when button/s is/are released
+Brake SimVars cannot be used for precise braking, so brakes are made available with a virtual joystick driver named vJoy
 
 vJoy axis can also be used to increase sensitivity to mouse movements since changes coming from MSFS are ignored
 
@@ -92,10 +84,43 @@ Using any vJoy mapping requires to:
 2. Install it by running: vJoySetup.exe
 3. Map vJoy axis displayed by HandOnMouse to desired MSFS functions
 
-## Version 1.4
+## Support planes incompatible with SimVars
 
-Added vJoy.ini mappings using vJoy including some smart features (detents, autocentering) to better support planes not totally supporting SimVars like Aerosoft's CRJ
+vJoy.ini mappings uses vJoy including some smart features (detents, autocentering) to better support planes not totally supporting SimVars like Aerosoft's CRJ
 1. Select vJoy.ini possibly editing it to remove axis or features you do not need (say, rudder, brakes)
 2. Map MSFS controls to vJoy device as in: ![](vjoy_msfs.jpg) (beware to select "reverse" for the appropriate axis)
 
 To use reverse throttle with CRJ, you must use its tablet, access last "options" page and "calibrate throttle" to enable reverse range and set an Idle value close to the one in: ![](crj_reverse.jpg)
+
+---
+
+## Version 2.0
+
+Adds support for triggering axis changes from HID compatible device buttons like joystick triggers
+Adds configuration button to change mappings trigger, direction and smart options and save them to a user specific file or reset them to the defaults defined in the mappings file
+Adds optional log file for troubleshooting if needed
+
+## Version 1.4
+
+Adds vJoy.ini mappings using vJoy including some smart features (detents, autocentering) to better support planes not totally supporting SimVars like Aerosoft's CRJ
+
+## Version 1.3
+
+Adds visual cues to reverse throttle and center of left/right axis
+Adds other smart mappings, used in Thr+Yoke+Pedals.ini to replace a yoke or pedals : aileron, rudder and brakes
+
+## Version 1.2
+
+Adds other smart mappings :
+- flaps maximum value adapts to the current aircraft
+- throttle minimum value adapts to the current aircraft to enable reverse throttle when available
+
+## Version 1.1
+
+Adds smart trim mappings making it a lot easier and faster to trim an aircraft:
+- elevator/aileron trim sensitivity adapts to aircraft's IAS and design Vc to compensate higher aerodynamic forces for higher velocities 
+- elevator trim automatically compensates centering elevator inputs to compensate for the absence of Force-Feedback hardware
+
+## Version 1
+
+Initial release

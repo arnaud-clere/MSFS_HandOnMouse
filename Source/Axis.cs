@@ -11,6 +11,7 @@ using winbase;
 using winuser;
 
 using vJoyInterfaceWrap;
+using System.Windows.Input;
 
 namespace HandOnMouse
 {
@@ -87,7 +88,6 @@ namespace HandOnMouse
                 {
                     m.ControllerManufacturerId = ushort.Parse(mpi[0]);
                     m.ControllerProductId = ushort.Parse(mpi[1]);
-                    m.Controller = Controller.Get(m.ControllerManufacturerId, m.ControllerProductId);
                     m.ControllerButtonsFilter = (Controller.Buttons)(1u << (int)Math.Min(32u, uint.Parse(mpi[2])) - 1);
                 }
             }
@@ -189,12 +189,6 @@ namespace HandOnMouse
                 try
                 {
                     m.IncreaseDirection2 = (Direction)Enum.Parse(typeof(Direction), directions[1].Trim(), true);
-                    var decreaseDirection =
-                        m.IncreaseDirection == Direction.Draw ? Direction.Push :
-                        m.IncreaseDirection == Direction.Push ? Direction.Draw :
-                        m.IncreaseDirection == Direction.Left ? Direction.Right : Direction.Left;
-                    if (m.IncreaseDirection2 == m.IncreaseDirection || m.IncreaseDirection2 == decreaseDirection)
-                        m.IncreaseDirection2 = null;
                 }
                 catch (Exception e)
                 {
@@ -327,8 +321,8 @@ namespace HandOnMouse
         {
             get
             {
-                var btn = MouseButtonsText;
-                if (MouseButtonsText != null)
+                var btn = TriggerText;
+                if (TriggerText != null)
                 {
                     btn += IncreaseDirectionText;
                     if (TrimCounterCenteringMove) btn += "+";
@@ -345,6 +339,18 @@ namespace HandOnMouse
                 return btn + " " + sim;
             }
         }
+        public string TriggerDeviceName 
+        { 
+            get 
+            { 
+                return 
+                    MouseButtonsText != null ? "Mouse" :
+                    KeyboardKeyText != null ? "Keyboard" :
+                    ControllerButtonsText != null ? Controller.Get(ControllerManufacturerId, ControllerProductId)?.Name :
+                    "None"; 
+            } 
+        }
+        public string TriggerText { get { return MouseButtonsText ?? KeyboardKeyText ?? ControllerButtonsText; } }
         public string MouseButtonsText
         {
             get
@@ -368,6 +374,7 @@ namespace HandOnMouse
                 return btn;
             }
         }
+        public string KeyboardKeyText { get { return KeyboardKeyDownFilter != Key.None ? KeyboardKeyDownFilter.ToString() : null; } }
         public string ControllerButtonsText
         {
             get
@@ -379,10 +386,9 @@ namespace HandOnMouse
                     {
                         var b = 1u << (int)n;
                         if (ControllerButtonsFilter.HasFlag((Controller.Buttons)b)) 
-                            if (n < 10)
-                                btn += '1' + n;
-                            else
-                                btn += 'A' + n;
+                            btn += n < 10 ?
+                                (char)(n+'1'):
+                                (char)(n+'A'-10);
                     }
                 }
                 return btn;
@@ -403,7 +409,7 @@ namespace HandOnMouse
             get
             {
                 return
-                    DisableIncreaseDirection2 ? "X" :
+                    DisableIncreaseDirection2 || IncreaseDirection2 == null ? "X" :
                     IncreaseDirection2 == Direction.Left ? " ←" :
                     IncreaseDirection2 == Direction.Push ? " ↑" :
                     IncreaseDirection2 == Direction.Right ? " →" : " ↓";
@@ -546,31 +552,40 @@ namespace HandOnMouse
         /// <summary>Last trimmed axis position in [-1..1] to compute moves centering to 0</summary>
         public double PositiveDetent { get; private set; }
         public double TrimmedAxis { get; set; }
-        public Direction IncreaseDirection { get; private set; }
-        public Direction? IncreaseDirection2 { get; private set; }
-        public bool DisableIncreaseDirection2 { get { return _disableIncreaseDirection2; } set { _disableIncreaseDirection2 = value; NotifyPropertyChanged(); } }
+        public Direction IncreaseDirection { get { return _increaseDirection; } set { if (_increaseDirection != value) { _increaseDirection = value; NotifyPropertyChanged(); NotifyPropertyChanged("IncreaseDirectionText"); NotifyPropertyChanged("IncreaseDirection2"); NotifyPropertyChanged("IncreaseDirection2Text"); NotifyPropertyChanged("Text"); } } }
+        public Direction? IncreaseDirection2 
+        { 
+            get 
+            {
+                var decreaseDirection =
+                    _increaseDirection == Direction.Draw ? Direction.Push :
+                    _increaseDirection == Direction.Push ? Direction.Draw :
+                    _increaseDirection == Direction.Left ? Direction.Right : Direction.Left;
+                return
+                    (_increaseDirection2 == _increaseDirection || _increaseDirection2 == decreaseDirection) ? null :
+                    _increaseDirection2; 
+            } 
+            set 
+            { 
+                if (_increaseDirection2 != value) 
+                { 
+                    _increaseDirection2 = value; 
+                    NotifyPropertyChanged(); 
+                    NotifyPropertyChanged("IncreaseDirection2Text"); 
+                } 
+            } 
+        }
+        public bool DisableIncreaseDirection2 { get { return _disableIncreaseDirection2; } set { _disableIncreaseDirection2 = value; NotifyPropertyChanged(); NotifyPropertyChanged("IncreaseDirection2Text"); } }
         public double DecreaseScaleTimeSecs { get { return _decreaseScaleTimeSecs; } set { _decreaseScaleTimeSecs = value; NotifyPropertyChanged(); } }
         public bool IsThrottle { get; private set; }
         public bool ForAllEngines { get; private set; }
         /// <summary>A filter of mouse buttons down encoded as a combination of RAWMOUSE.RI_MOUSE</summary>
         
-        public RAWMOUSE.RI_MOUSE MouseButtonsFilter { get; set; }
-        
-        public Controller.Buttons ControllerButtonsFilter { get; set; }
-        public Controller Controller
-        {
-            get 
-            {
-                if (_controller == null)
-                    _controller = Controller.Get(ControllerManufacturerId, ControllerProductId);
-            
-                return _controller;
-            } 
-            set 
-            { 
-                _controller = value; 
-            } 
-        }
+        public RAWMOUSE.RI_MOUSE MouseButtonsFilter { get { return _mouseButtonsFilter; } set { if (_mouseButtonsFilter != value) { _mouseButtonsFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("MouseButtonsText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("Text"); } } }
+
+        public Key KeyboardKeyDownFilter { get { return _keyboardKeyDownFilter; } set { if (_keyboardKeyDownFilter != value) { _keyboardKeyDownFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("KeyboardKeyText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("Text"); } } }
+
+        public Controller.Buttons ControllerButtonsFilter { get { return _controllerButtonsFilter; } set { if (_controllerButtonsFilter != value) { _controllerButtonsFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("ControllerButtonsText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("Text"); } } }
         public ushort ControllerManufacturerId { get; set; }
         public ushort ControllerProductId { get; set; }
 
@@ -607,18 +622,38 @@ namespace HandOnMouse
         // SimConnect:
         //   SimVarValue = simValue+SimVarOffset ; SimVarOffset=0
 
-        public void UpdateTrigger()
+        public string UpdateTrigger()
         {
             IsActive = false;
             if (MouseButtonsFilter != RAWMOUSE.RI_MOUSE.Reserved)
                 IsActive = Mouse.Device.Buttons.HasFlag(MouseButtonsFilter);
 
-            if (Controller == null)
-                ; // TODO MessageBox.Show($"Controller mapped to {Name} not installed: {ControllerManufacturerId}/{ControllerProductId}", "HandOnMouse");
-            else if (Controller.DeviceId == Controller.DeviceUnplugged)
-                ; // TODO MessageBox.Show($"Controller mapped to {Name} not plugged: {Controller.Name}", "HandOnMouse");
-            else
-                IsActive |= Controller.ButtonsPressed.HasFlag(ControllerButtonsFilter);
+            if (KeyboardKeyDownFilter != Key.None)
+                IsActive |= Keyboard.IsKeyDown(KeyboardKeyDownFilter);
+
+            bool hid = ControllerManufacturerId > 0 && ControllerProductId > 0;
+            bool found = false;
+            bool plugged = false;
+            if (hid)
+            {
+                foreach (var c in Controller.Devices)
+                {
+                    if (c.ManufacturerId == ControllerManufacturerId && c.ProductId == ControllerProductId)
+                    {
+                        found = true;
+                        if (c.DeviceId != Controller.DeviceUnplugged)
+                        {
+                            plugged = true;
+                            IsActive |= c.ButtonsPressed.HasFlag(ControllerButtonsFilter);
+                        }
+                    }
+                }
+            }
+            return
+                !hid     ? null :
+                !found   ? $"Controller mapped to {Name} not installed: {ControllerManufacturerId}/{ControllerProductId}" :
+                !plugged ? $"Controller mapped to {Name} not plugged: {Controller.Get(ControllerManufacturerId, ControllerProductId)?.Name}" :
+                null;
         }
         public void UpdateMove(Vector move)
         {
@@ -730,10 +765,14 @@ namespace HandOnMouse
 
         private double _change;
         private Color _color;
-        private Controller _controller;
         private double _decreaseScaleTimeSecs;
         private bool _disableIncreaseDirection2;
         private bool _disableThrottleReverse;
+        private Direction _increaseDirection;
+        private Direction? _increaseDirection2;
+        private RAWMOUSE.RI_MOUSE _mouseButtonsFilter;
+        private Key _keyboardKeyDownFilter;
+        private Controller.Buttons _controllerButtonsFilter;
         private double _sensitivity;
         private bool _sensitivityAtCruiseSpeed;
         private string _simVarName;

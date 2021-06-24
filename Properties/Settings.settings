@@ -17,5 +17,8 @@
     <Setting Name="SimVarScaleHeightInPixels" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">1</Value>
     </Setting>
+    <Setting Name="SetMinimumMouseMove" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">100</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

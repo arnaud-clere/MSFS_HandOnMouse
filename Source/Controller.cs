@@ -121,7 +121,7 @@ namespace HandOnMouse
         string _registryKeyName;
         string _name;
 
-        static void UpdateDevices()
+        static public void UpdateDevices()
         {
             var maxDevices = WinMM.joyGetNumDevs();
             for (uint j = 0; j < maxDevices; j++)
@@ -133,22 +133,27 @@ namespace HandOnMouse
                 {
                     Controller c = null;
                     foreach (Controller found in Devices)
-                        if (found.ManufacturerId == caps.Mid && found.ProductId == caps.Pid)
+                        if (found.DeviceId == j)
                             c = found;
 
                     if (c == null)
                     {
                         c = new Controller
                         {
-                            ManufacturerId = caps.Mid, // vJoy 4660
-                            ProductId = caps.Pid, // vJoy 48813
+                            DeviceId = j,
                         };
                         Devices.Add(c);
                     }
-                    c.DeviceId = j;
-                    c.ButtonsAvailable = (Buttons)(caps.NumButtons == 32 ? 0xFFFF_FFFFu : (1u << (int)caps.NumButtons) - 1u);
-                    c._registryKeyName = caps.RegKey;
+                    if (!(c.ManufacturerId == caps.Mid && c.ProductId == caps.Pid))
+                    {
+                        c.ButtonsAvailable = (Buttons)(caps.NumButtons == 32 ? 0xFFFF_FFFFu : (1u << (int)caps.NumButtons) - 1u);
+                        c._registryKeyName = caps.RegKey;
+                        Trace.WriteLine($"HID #{j} changed from {c.ManufacturerId}/{c.ProductId} to {caps.Mid}/{caps.Pid} with {caps.NumButtons} buttons ({c.Name})");
+                        c.ManufacturerId = caps.Mid; // vJoy 4660
+                        c.ProductId = caps.Pid; // vJoy 48813
+                    }
                 }
+                else if (joystickCaps != MMRESULT.JOYERR_PARMS) { Trace.WriteLine($"WinMM.joyGetDevCaps({j}, out caps, {size}) / {maxDevices} returned: {joystickCaps}"); }
             }
         }
     }

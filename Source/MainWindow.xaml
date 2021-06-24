@@ -88,7 +88,7 @@
                                     <ProgressBar.Background><SolidColorBrush Opacity="0.50" Color="LightGray"/></ProgressBar.Background>
                                 </ProgressBar>
                                 <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextAlignment="Left" FontSize="8" FontWeight="DemiBold"
-                                    Text="{Binding Text, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, StringFormat={}{0:0.##}}">
+                                    Text="{Binding Text, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
                                     <TextBlock.Foreground>
                                         <SolidColorBrush Color="{Binding ChangeColorForText, UpdateSourceTrigger=PropertyChanged}"/>
                                     </TextBlock.Foreground>
