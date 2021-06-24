@@ -183,8 +183,16 @@ namespace HandOnMouse
 
         public void Axis_Click(object sender, RoutedEventArgs e)
         {
+            var b = (Button)sender;
+            var midBottom = b.PointToScreen(new Point((b.Width - /*w.Width*/400)/2, b.Height+3));
+            var m = PresentationSource.FromVisual(this).CompositionTarget.TransformToDevice;
+            var xRatio = m.M11;
+            var yRatio = m.M22;
+            
             var w = new AxisWindow((Axis)((Button)sender).Tag);
             w.Owner = this;
+            w.Top = midBottom.Y / yRatio;
+            w.Left = midBottom.X / xRatio;
             w.ShowDialog();
         }
 

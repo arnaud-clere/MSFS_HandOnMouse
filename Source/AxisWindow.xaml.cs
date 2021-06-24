@@ -35,16 +35,6 @@ namespace HandOnMouse
             Keyboard.AddKeyDownHandler(this, new KeyEventHandler(Keyboard_KeyDown));
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            if (Owner != null)
-            {
-                // FIXME
-                Top  = Owner.Top;
-                Left = Owner.Left + Width;
-            }
-        }
-
         private void Keyboard_KeyDown(object sender, KeyEventArgs e)
         {
             _keyboardLastKeyDown = e.Key;
