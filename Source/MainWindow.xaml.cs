@@ -178,21 +178,22 @@ namespace HandOnMouse
         }
         private void Window_Help(object sender, RoutedEventArgs e)
         {
-            Process.Start("https://github.com/arnaud-clere/MSFS_HandOnMouse#version-14");
+            Process.Start("https://github.com/arnaud-clere/MSFS_HandOnMouse#version-20");
         }
 
         public void Axis_Click(object sender, RoutedEventArgs e)
         {
             var b = (Button)sender;
-            var midBottom = b.PointToScreen(new Point((b.Width - /*w.Width*/400)/2, b.Height+3));
-            var m = PresentationSource.FromVisual(this).CompositionTarget.TransformToDevice;
-            var xRatio = m.M11;
-            var yRatio = m.M22;
-            
             var w = new AxisWindow((Axis)((Button)sender).Tag);
+            var midBottom = b.PointToScreen(new Point((b.Width - w.MinWidth)/2, b.Height+3));
+
+            var m = PresentationSource.FromVisual(this).CompositionTarget.TransformToDevice;
+            var windowsToDeviceX = m.M11;
+            var windowsToDeviceY = m.M22;
+            
             w.Owner = this;
-            w.Top = midBottom.Y / yRatio;
-            w.Left = midBottom.X / xRatio;
+            w.Top  = midBottom.Y / windowsToDeviceY;
+            w.Left = midBottom.X / windowsToDeviceX;
             w.ShowDialog();
         }
 
