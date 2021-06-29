@@ -81,7 +81,7 @@ namespace HandOnMouse
             m.MouseButtonsFilter = btn == RAWMOUSE.RI_MOUSE.None ? RAWMOUSE.RI_MOUSE.Reserved : btn; // to avoid changing the axis with no button down
 
             var controllerBtnString = Kernel32.ReadIni(customFilePath, "ControllerButtonsFilter", section).ToUpper().Split(new char[] { '-' });
-            if (controllerBtnString.Length > 0)
+            if (controllerBtnString.Length > 0 && m.MouseButtonsFilter == RAWMOUSE.RI_MOUSE.Reserved)
             {
                 var mpi = controllerBtnString[0].Split(new char[] { '/' });
                 if (mpi.Length == 3)
@@ -90,6 +90,12 @@ namespace HandOnMouse
                     m.ControllerProductId = ushort.Parse(mpi[1]);
                     m.ControllerButtonsFilter = (Controller.Buttons)(1u << (int)Math.Min(32u, uint.Parse(mpi[2])) - 1);
                 }
+            }
+
+            var keyboardString = Kernel32.ReadIni(customFilePath, "KeyboardKeyDownFilter", section);
+            if (keyboardString != "" && m.MouseButtonsFilter == RAWMOUSE.RI_MOUSE.Reserved && m.ControllerManufacturerId == 0)
+            {
+                m.KeyboardKeyDownFilter = (Key)Enum.Parse(typeof(Key), keyboardString);
             }
 
             var nameAndId = Kernel32.ReadIni(filePath, "VJoyAxis", section).Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
@@ -230,6 +236,7 @@ namespace HandOnMouse
                     Kernel32.WriteIni(customFilePath, "DisableIncreaseDirection2", section, m.DisableIncreaseDirection2.ToString());
                     Kernel32.WriteIni(customFilePath, "DisableThrottleReverse", section, m.DisableThrottleReverse.ToString());
                     Kernel32.WriteIni(customFilePath, "IncreaseDirection", section, $"{Enum.Format(typeof(Direction), m.IncreaseDirection, "G")} {(m.IncreaseDirection2 == null ? null : Enum.Format(typeof(Direction), m.IncreaseDirection2, "G"))}");
+                    Kernel32.WriteIni(customFilePath, "KeyboardKeyDownFilter", section, m.KeyboardKeyDownFilter == Key.None ? "" : $"{m.KeyboardKeyDownFilter}");
                     Kernel32.WriteIni(customFilePath, "MouseButtonsFilter", section, m.MouseButtonsText ?? "");
                     Kernel32.WriteIni(customFilePath, "Sensitivity", section, m.Sensitivity.ToString(CultureInfo.InvariantCulture));
                     Kernel32.WriteIni(customFilePath, "SensitivityAtCruiseSpeed", section, m.SensitivityAtCruiseSpeed.ToString());
