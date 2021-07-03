@@ -15,9 +15,10 @@ MSFS Utility to keep your HandOnMouse for easier/better flying
 0. Extract all files from the archive to a folder
 1. Run the MSFS_HandOnMouse application
 2. Test the mouse sensitivity and adjust as required (depends on mouse resolution and desired range, beware that sensitivity will be reduced in interactions with MSFS)
-3. Use the default mappings or click "..." to select mappings more adapted to your plane
+3. Use the default mappings or click top "..." button to select mappings more adapted to your plane
 4. Connect to MSFS and check that you can actuate the chosen controls with the mouse
-5. Either hide the application window with "-" button or keep it on top in a reduced form with "=" button
+5. Click "..." in front of any axis to change its trigger, direction, or other smart options (see custom mappings below)
+6. Either hide the application window with "-" button or keep it on top in a reduced form with "=" button
 
 Since many mouse are equipped with forward/backward buttons and these are not mapped by default to anything, the utility comes with preconfigured mappings suited to various aircraft types using these buttons:
 Mouse Button(s)      | MSFS Control
@@ -34,6 +35,17 @@ Enjoy, and let me know what you think!
 
 Cheers, 
 Arnaud
+
+## Custom mappings
+
+Each mapping file (selected with top "..." button) define a fixed set of axis and the only way to add an axis is to edit the file (see comments in Custom.ini file).
+However, starting with version 2, you can customize each axis option including its trigger, direction, and smart options without having to edit files.
+Indeed, the default mappings only use the mouse forward/backward buttons because they are not used by default but you can use the "..." button in front of any axis to customize how it is mapped to your hardware. 
+
+For instance, if you only have a basic mouse without forward/backward buttons, you can map the axis to another mouse/joystick button instead.
+On the contrary, if you have gaming mouse with many buttons like the G602, you can map each axis of any bi-turboprop to distinct buttons (see 2xThrottle+Prop.ini file).
+
+*NB: Triggers are limited to the 5 standard mouse buttons, all keyboard keys, and 32 joystick buttons.*
 
 ## Smart trim 
 
@@ -52,7 +64,7 @@ When you need to apply too much effort to maintain your stick/yoke in position:
 3. Release the trim control (Backward button)
 4. If trimming is not perfect, you can adjust it with the mouse, or with stick/yoke (back to #1)
 
-*NB: The default smart trim sensitivity works well for most default aircrafts but not all, so, you can adjust it in a custom mappings file (use the "..." button)*
+*NB: The default smart trim sensitivity works well for most default aircrafts but not all, so, you may need to adjust it (use the "..." axis button)*
 
 ## Smart Throttle 
 
