@@ -5,7 +5,7 @@
     Title="HandOnMouse" SizeToContent="Height" Width="160"
     AllowsTransparency="True" WindowStyle="None" Topmost="True"
     WindowStartupLocation="CenterScreen"
-    ResizeMode="CanResizeWithGrip" MinWidth="125" MinHeight="75"
+    ResizeMode="CanResizeWithGrip" MinWidth="110" MinHeight="75"
     SizeChanged="Window_SizeChanged"
     MouseDown="Window_MouseDown">
     <Window.Background><SolidColorBrush Opacity="0.25" Color="White" x:Name="WindowBackground" /></Window.Background>

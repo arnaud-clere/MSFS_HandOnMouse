@@ -480,6 +480,7 @@ namespace HandOnMouse
         {
             foreach (var m in Axis.Mappings)
             {
+                m.UpdateTrigger();
                 m.UpdateTime(((DispatcherTimer)sender).Interval.TotalSeconds);
                 if (m.SimVarChange != 0)
                     UpdateSimVar(m);
@@ -529,6 +530,7 @@ namespace HandOnMouse
                         {
                             var inSim = (SmartTrimAxis)data.dwData[0];
                             inSimValue = inSim.Trim;
+                            m.UpdateTrigger();
                             if (m.IsActive && !double.IsNaN(m.TrimmedAxis))
                             {
                                 trimmedAxisChange = m.SimVarScale * (m.TrimmedAxis - inSim.TrimmedAxis) / (1 - -1) /* position scale */;
