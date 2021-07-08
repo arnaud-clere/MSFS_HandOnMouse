@@ -309,6 +309,7 @@ namespace HandOnMouse
                         _simConnect.RegisterDataDefineStruct<double>(infoId);
                         _simConnect.RequestDataOnSimObject(infoId, infoId, (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.SIM_FRAME, SIMCONNECT_DATA_REQUEST_FLAG.CHANGED, 0, 0, 0);
                     }
+                    // TODO "IS GEAR RETRACTABLE" "FLAPS AVAILABLE" "SPOILER AVAILABLE" "TOE BRAKES AVAILABLE"
                     foreach (var v in Axis.EngineSimVars) if (m.SimVarName.StartsWith(v)) requestEngines = true;
                     if (m.SensitivityAtCruiseSpeed) requestSpeeds = true;
                 }
