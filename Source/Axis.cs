@@ -209,6 +209,7 @@ namespace HandOnMouse
                 Kernel32.ReadIni(filePath, "PositiveDetent", section, "0"), NumberStyles.Float, CultureInfo.InvariantCulture);
 
             m.DisableIncreaseDirection2 = bool.Parse(Kernel32.ReadIni(customFilePath, "DisableIncreaseDirection2", section, "False").Trim());
+            m.IsVisible = bool.Parse(Kernel32.ReadIni(customFilePath, "IsVisible", section, "True").Trim());
 
             var scaleColors = Kernel32.ReadIni(filePath, "SimVarNegativePositiveColors", section, "").Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             m.SimVarNegativeColor = ReadColor(scaleColors, 0, section + "/SimVarNegativePositiveColors", ref errors);
@@ -242,6 +243,7 @@ namespace HandOnMouse
                     Kernel32.WriteIni(customFilePath, "SensitivityAtCruiseSpeed", section, m.SensitivityAtCruiseSpeed.ToString());
                     Kernel32.WriteIni(customFilePath, "TrimCounterCenteringMove", section, m.TrimCounterCenteringMove.ToString());
                     Kernel32.WriteIni(customFilePath, "WaitButtonsReleased", section, m.WaitButtonsReleased.ToString());
+                    Kernel32.WriteIni(customFilePath, "IsVisible", section, m.IsVisible.ToString());
                 }
                 catch (Exception e)
                 {
@@ -319,6 +321,7 @@ namespace HandOnMouse
             IncreaseDirection = Direction.Push;
             MouseButtonsFilter = RAWMOUSE.RI_MOUSE.Reserved;
             TrimmedAxis = double.NaN;
+            IsVisible = true;
         }
 
         // R/O properties
@@ -541,6 +544,8 @@ namespace HandOnMouse
         {
             get { return _simVarValue + _simVarChange; }
         }
+
+        public bool IsVisible { get { return _isVisible; } set { _isVisible = value; NotifyPropertyChanged(); } }
         public bool WaitButtonsReleased { get { return _waitButtonsReleased; } set { _waitButtonsReleased = value; NotifyPropertyChanged(); } }
         public double Sensitivity { get { return _sensitivity; } set { _sensitivity = value; NotifyPropertyChanged(); } }
         public bool SensitivityAtCruiseSpeed { get { return _sensitivityAtCruiseSpeed; } set { _sensitivityAtCruiseSpeed = value; NotifyPropertyChanged(); } }
@@ -789,6 +794,7 @@ namespace HandOnMouse
         private double _simVarChange;
         private bool _trimCounterCenteringMove;
         private bool _waitButtonsReleased;
+        private bool _isVisible;
 
         private static Brush ReadColor(string[] scaleColors, uint i, string section, ref string errors)
         {

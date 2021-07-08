@@ -78,10 +78,24 @@ namespace HandOnMouse
         }
         public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo _)
         {
-            return false;
+            throw new NotImplementedException();
         }
     }
+    class AnyBooleanToVisibilityConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo _)
+        {
+            foreach (var visible in values)
+                if (visible is bool && (bool)visible)
+                    return Visibility.Visible;
 
+            return Visibility.Collapsed;
+        }
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, System.Globalization.CultureInfo _)
+        {
+            throw new NotImplementedException();
+        }
+    }
     /// <summary>Interaction logic for MainWindow.xaml</summary>
     public partial class MainWindow : Window
     {
@@ -295,7 +309,7 @@ namespace HandOnMouse
                         _simConnect.RegisterDataDefineStruct<double>(infoId);
                         _simConnect.RequestDataOnSimObject(infoId, infoId, (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.SIM_FRAME, SIMCONNECT_DATA_REQUEST_FLAG.CHANGED, 0, 0, 0);
                     }
-                    foreach (var v in Axis.EngineSimVars) if (v == m.SimVarName) requestEngines = true;
+                    foreach (var v in Axis.EngineSimVars) if (m.SimVarName.StartsWith(v)) requestEngines = true;
                     if (m.SensitivityAtCruiseSpeed) requestSpeeds = true;
                 }
             }
@@ -516,6 +530,15 @@ namespace HandOnMouse
                 else if (i == (int)Definitions.EnginesCount)
                 {
                     Axis.EnginesCount = (uint)Math.Max(0, Math.Min(4, (double)data.dwData[0]));
+                    foreach (var m in Axis.Mappings)
+                    {
+                        var n = m.SimVarName.Split(':');
+                        uint engine = 0;
+                        if (n.Length > 1 && uint.TryParse(n[1], out engine))
+                        {
+                            m.IsVisible = engine <= Axis.EnginesCount;
+                        }
+                    }
                 }
                 else if ((int)Definitions.Axis <= i) // translate i to an Axis.Mappings index and requestType for processing
                 {

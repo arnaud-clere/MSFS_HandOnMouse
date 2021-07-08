@@ -51,13 +51,11 @@
             <RowDefinition Height="24"/>
             <RowDefinition Height="28"/>
         </Grid.RowDefinitions>
-        <ToggleButton Grid.Column="0" Grid.Row="0" TextBlock.FontSize="10"
-                ToolTip="Once you press this button:&#x0a;1. press the desired mouse/keyboard/controller button/key (except main click)&#x0a;2. move mouse in direction where axis must increase&#x0a;3. release the trigger"
-                Name="SetTriggerButton"
-                Click="SetTriggerButton_Click" Focusable="False">Set trigger and mouse move</ToggleButton>
+        <CheckBox  Grid.Column="0" Grid.Row="0" ToolTip="For axis that should be hidden when '=' is clicked"
+                IsChecked="{Binding Axis.IsVisible}">Visible in compact mode</CheckBox>
         <StackPanel Grid.Column="1" Grid.Row="0">
             <ComboBox IsEditable="True"
-                Text="{Binding Axis.Sensitivity}" Height="18" Margin="0,0,0,-0.4" VerticalAlignment="Bottom">
+                Text="{Binding Axis.Sensitivity}" Height="18" VerticalAlignment="Bottom">
                 <ComboBoxItem ToolTip="No sensitivity">0</ComboBoxItem>
                 <ComboBoxItem>0.25</ComboBoxItem>
                 <ComboBoxItem>0.5</ComboBoxItem>
@@ -67,19 +65,22 @@
             </ComboBox>
             <TextBlock>Axis sensitivity (ratio)</TextBlock>
         </StackPanel>
+        <ToggleButton Grid.Column="0" Grid.Row="1" TextBlock.FontSize="10"
+                ToolTip="Once you press this button:&#x0a;1. press the desired mouse/keyboard/controller button/key (except main click)&#x0a;2. move mouse in direction where axis must increase&#x0a;3. release the trigger"
+                Name="SetTriggerButton"
+                Click="SetTriggerButton_Click" Focusable="False">Set trigger and mouse move</ToggleButton>
         <CheckBox  Grid.Column="1" Grid.Row="1" ToolTip="For axis which efficacy depend on IAS: aileron, trims..."
                 IsChecked="{Binding Axis.SensitivityAtCruiseSpeed}">Sensitivity x IAS/Vc</CheckBox>
-        <TextBlock Grid.Column="0" Grid.Row="1" FontWeight="SemiBold"
+        <TextBlock Grid.Column="0" Grid.Row="2" FontWeight="SemiBold"
                 Text="{Binding TriggerMoveHint}"></TextBlock>
-        <StackPanel Grid.Column="0" Grid.Row="2">
-            <TextBlock>Trigger(s):</TextBlock>
-            <TextBlock FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
-                Text="{Binding Axis.TriggerText, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
-        </StackPanel>
         <CheckBox  Grid.Column="1" Grid.Row="2" ToolTip="For axis that should be adjusted and confirmed before the move is performed"
                 IsChecked="{Binding Axis.WaitButtonsReleased}">Wait for button release</CheckBox>
         <StackPanel Grid.Column="0" Grid.Row="3" Orientation="Vertical">
-            <TextBlock>Trigger device:</TextBlock>
+            <StackPanel>
+                <TextBlock>Trigger(s):</TextBlock>
+                <TextBlock FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
+                Text="{Binding Axis.TriggerText, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
+            </StackPanel>
             <TextBlock FontWeight="Bold" HorizontalAlignment="Center" Margin="0"
                 Text="{Binding Axis.TriggerDeviceName, UpdateSourceTrigger=PropertyChanged}"/>
         </StackPanel>
@@ -90,14 +91,14 @@
             <TextBlock FontWeight="Bold" HorizontalAlignment="Center" Margin="0"
                 Text="{Binding Axis.TrimmedAxisName}"/>
         </StackPanel>
-        <CheckBox  Grid.Column="1" Grid.Row="4" 
-                IsEnabled="{Binding Axis.IsThrottle}"
-                IsChecked="{Binding Axis.DisableThrottleReverse}">Disable smart reverse throttle</CheckBox>
         <StackPanel Grid.Column="0" Grid.Row="4">
             <TextBlock>Mouse move to increase axis:</TextBlock>
             <TextBlock FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
                 Text="{Binding Axis.IncreaseDirectionText, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
         </StackPanel>
+        <CheckBox  Grid.Column="1" Grid.Row="4" 
+                IsEnabled="{Binding Axis.IsThrottle}"
+                IsChecked="{Binding Axis.DisableThrottleReverse}">Disable smart reverse throttle</CheckBox>
         <StackPanel Grid.Column="0" Grid.Row="5">
             <CheckBox ToolTip="For continuous axis with detents: throttle..."
                 IsChecked="{Binding Axis.DisableIncreaseDirection2}">Disable detent direction:</CheckBox>
