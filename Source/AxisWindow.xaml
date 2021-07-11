@@ -48,11 +48,11 @@
             <RowDefinition Height="24"/>
             <RowDefinition Height="40"/>
             <RowDefinition Height="24"/>
-            <RowDefinition Height="24"/>
+            <RowDefinition Height="40"/>
             <RowDefinition Height="28"/>
         </Grid.RowDefinitions>
         <CheckBox  Grid.Column="0" Grid.Row="0" ToolTip="For axis that should be hidden when '=' is clicked"
-                IsChecked="{Binding Axis.IsVisible}">Visible in compact mode</CheckBox>
+                IsChecked="{Binding Axis.IsHidden}">Hide in compact mode</CheckBox>
         <StackPanel Grid.Column="1" Grid.Row="0">
             <ComboBox IsEditable="True"
                 Text="{Binding Axis.Sensitivity}" Height="18" VerticalAlignment="Bottom">
@@ -96,18 +96,9 @@
             <TextBlock FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
                 Text="{Binding Axis.IncreaseDirectionText, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
         </StackPanel>
-        <CheckBox  Grid.Column="1" Grid.Row="4" 
-                IsEnabled="{Binding Axis.IsThrottle}"
-                IsChecked="{Binding Axis.DisableThrottleReverse}">Disable smart reverse throttle</CheckBox>
-        <StackPanel Grid.Column="0" Grid.Row="5">
-            <CheckBox ToolTip="For continuous axis with detents: throttle..."
-                IsChecked="{Binding Axis.DisableIncreaseDirection2}">Disable detent direction:</CheckBox>
-            <TextBlock FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
-                Text="{Binding Axis.IncreaseDirection2Text, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
-        </StackPanel>
-        <StackPanel Grid.Column="1" Grid.Row="5">
+        <StackPanel Grid.Column="1" Grid.Row="4">
             <ComboBox IsEditable="True"
-                Text="{Binding Axis.DecreaseScaleTimeSecs}" Height="18" Margin="0,0,0,-0.4" VerticalAlignment="Bottom">
+                Text="{Binding Axis.DecreaseScaleTimeSecs}" Height="18" VerticalAlignment="Bottom">
                 <ComboBoxItem ToolTip="No decrease to zero with time">0</ComboBoxItem>
                 <ComboBoxItem>0.25</ComboBoxItem>
                 <ComboBoxItem>0.5</ComboBoxItem>
@@ -116,6 +107,28 @@
                 <ComboBoxItem>4</ComboBoxItem>
             </ComboBox>
             <TextBlock ToolTip="For axis that should be centered most of the time: rudder, brakes...">Time (s) to decrease to zero</TextBlock>
+        </StackPanel>
+        <StackPanel Grid.Column="0" Grid.Row="5">
+            <CheckBox ToolTip="For continuous axis with detents: throttle..."
+                IsChecked="{Binding Axis.DisableIncreaseDirection2}">Disable detent direction:</CheckBox>
+            <TextBlock FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
+                Text="{Binding Axis.IncreaseDirection2Text, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Grid.Row="5" Orientation="Vertical">
+            <CheckBox
+                IsEnabled="{Binding Axis.IsThrottle}"
+                IsChecked="{Binding Axis.DisableThrottleReverse}">Disable smart reverse throttle</CheckBox>
+            <StackPanel>
+                <ComboBox IsEditable="True"
+                Text="{Binding Axis.PositiveDetent}" Height="18" VerticalAlignment="Bottom">
+                    <ComboBoxItem ToolTip="No detent">0</ComboBoxItem>
+                    <ComboBoxItem>80</ComboBoxItem>
+                    <ComboBoxItem>85</ComboBoxItem>
+                    <ComboBoxItem>90</ComboBoxItem>
+                    <ComboBoxItem>95</ComboBoxItem>
+                </ComboBox>
+                <TextBlock ToolTip="For axis where max (positive) position should be protected with detent: auto/throttle...">Detent position (%) on max side</TextBlock>
+            </StackPanel>
         </StackPanel>
         <Grid Grid.ColumnSpan="2" Grid.Column="0" Grid.Row="7" Height="28" Margin="0">
             <Grid.ColumnDefinitions>

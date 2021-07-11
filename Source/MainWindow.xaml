@@ -1,8 +1,8 @@
 ﻿<Window x:Class="HandOnMouse.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:HandOnMouse"
     xmlns:properties="clr-namespace:HandOnMouse.Properties" 
-    xmlns:handonmouse="clr-namespace:HandOnMouse"
     Title="HandOnMouse" SizeToContent="Height" Width="160"
     AllowsTransparency="True" WindowStyle="None" Topmost="True"
     WindowStartupLocation="CenterScreen"
@@ -22,14 +22,14 @@
             <Setter Property="Opacity" Value="0.75" />
         </Style>
         <BooleanToVisibilityConverter x:Key="B2V"/>
-        <handonmouse:AnyBooleanToVisibilityConverter x:Key="AnyB2V"/>
+        <local:AnyBooleanToVisibilityConverter x:Key="AnyB2V"/>
     </Window.Resources>
     <StackPanel x:Name="window" VerticalAlignment="Top" Margin="3">
         <DockPanel>
             <Button DockPanel.Dock="Right" Click="Window_Close">X</Button>
             <Button DockPanel.Dock="Right" Click="Window_Compact">=</Button>
             <Button DockPanel.Dock="Right" Click="Window_Minimize">-</Button>
-            <Button DockPanel.Dock="Right"  Click="Window_Help"
+            <Button DockPanel.Dock="Right" Click="Window_Help"
                     Visibility="{Binding ShowAll, Converter={StaticResource B2V}}">?</Button>
             <Button DockPanel.Dock="Left" Click="Window_File"
                     Visibility="{Binding ShowAll, Converter={StaticResource B2V}}">...</Button>

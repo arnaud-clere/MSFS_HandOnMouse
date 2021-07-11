@@ -206,10 +206,10 @@ namespace HandOnMouse
             m.WaitButtonsReleased = bool.Parse(
                 Kernel32.ReadIni(customFilePath, "WaitButtonsReleased", section, "False").Trim());
             m.PositiveDetent = double.Parse(
-                Kernel32.ReadIni(filePath, "PositiveDetent", section, "0"), NumberStyles.Float, CultureInfo.InvariantCulture);
+                Kernel32.ReadIni(customFilePath, "PositiveDetent", section, "0"), NumberStyles.Float, CultureInfo.InvariantCulture);
 
             m.DisableIncreaseDirection2 = bool.Parse(Kernel32.ReadIni(customFilePath, "DisableIncreaseDirection2", section, "False").Trim());
-            m.IsVisible = bool.Parse(Kernel32.ReadIni(customFilePath, "IsVisible", section, "True").Trim());
+            m.IsHidden = bool.Parse(Kernel32.ReadIni(customFilePath, "IsHidden", section, "False").Trim());
 
             var scaleColors = Kernel32.ReadIni(filePath, "SimVarNegativePositiveColors", section, "").Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             m.SimVarNegativeColor = ReadColor(scaleColors, 0, section + "/SimVarNegativePositiveColors", ref errors);
@@ -243,7 +243,8 @@ namespace HandOnMouse
                     Kernel32.WriteIni(customFilePath, "SensitivityAtCruiseSpeed", section, m.SensitivityAtCruiseSpeed.ToString());
                     Kernel32.WriteIni(customFilePath, "TrimCounterCenteringMove", section, m.TrimCounterCenteringMove.ToString());
                     Kernel32.WriteIni(customFilePath, "WaitButtonsReleased", section, m.WaitButtonsReleased.ToString());
-                    Kernel32.WriteIni(customFilePath, "IsVisible", section, m.IsVisible.ToString());
+                    Kernel32.WriteIni(customFilePath, "PositiveDetent", section, m.PositiveDetent.ToString());
+                    Kernel32.WriteIni(customFilePath, "IsHidden", section, m.IsHidden.ToString());
                 }
                 catch (Exception e)
                 {
@@ -271,20 +272,6 @@ namespace HandOnMouse
                 errors += customFilePath + ": " + e.Message + '\n';
             }
             return errors;
-        }
-        static public void MappingsUpdate(int i, double inSimValue)
-        {
-            var m = Mappings[i];
-            if (m.SimVarName.StartsWith("GENERAL ENG THROTTLE LEVER POSITION") && inSimValue < 0)
-            {
-                m.SimVarMin = inSimValue;
-                m.SimVarValue = m.SimVarValue; // in case it is not yet updated and out of bounds?
-            }
-            if (m.SimVarName == "FLAPS HANDLE INDEX")
-            {
-                m.SimVarMax = inSimValue;
-                m.SimVarValue = m.SimVarValue; // in case it is not yet updated and out of bounds?
-            }
         }
         static public Color TextColorFromChange(double normalizedChange)
         {
@@ -321,7 +308,7 @@ namespace HandOnMouse
             IncreaseDirection = Direction.Push;
             MouseButtonsFilter = RAWMOUSE.RI_MOUSE.Reserved;
             TrimmedAxis = double.NaN;
-            IsVisible = true;
+            IsAvailable = true;
         }
 
         // R/O properties
@@ -331,22 +318,23 @@ namespace HandOnMouse
         {
             get
             {
-                var btn = TriggerText;
+                var control = TriggerText;
                 if (TriggerText != null)
                 {
-                    btn += IncreaseDirectionText;
-                    if (TrimCounterCenteringMove) btn += "+";
+                    control += IncreaseDirectionText;
+                    if (TrimCounterCenteringMove) control += "+";
                 }
                 else
                 {
-                    btn = "X";
+                    control = "X";
                 }
                 if (WaitButtonsReleased)
                 {
-                    btn = "(" + btn + ")";
+                    control = "(" + control + ")";
                 }
-                var sim = Name.Length > 0 ? Name.Replace("GENERAL ", "").Replace(" PCT", "").Replace(" POSITION", "").ToLowerInvariant() : "-";
-                return btn + " " + sim;
+                var na = IsAvailable ? "" : "N/A ";
+                var axis = Name.Length > 0 ? Name.Replace("GENERAL ", "").Replace(" PCT", "").Replace(" POSITION", "").ToLowerInvariant() : "-";
+                return control + " " + na + axis;
             }
         }
         public string TriggerDeviceName 
@@ -545,10 +533,12 @@ namespace HandOnMouse
             get { return _simVarValue + _simVarChange; }
         }
 
-        public bool IsVisible { get { return _isVisible; } set { _isVisible = value; NotifyPropertyChanged(); } }
-        public bool WaitButtonsReleased { get { return _waitButtonsReleased; } set { _waitButtonsReleased = value; NotifyPropertyChanged(); } }
-        public double Sensitivity { get { return _sensitivity; } set { _sensitivity = value; NotifyPropertyChanged(); } }
-        public bool SensitivityAtCruiseSpeed { get { return _sensitivityAtCruiseSpeed; } set { _sensitivityAtCruiseSpeed = value; NotifyPropertyChanged(); } }
+        public bool IsVisible { get { return _isAvailable && TriggerText != null && !_isHidden; } }
+        public bool IsAvailable { get { return _isAvailable; } set { if (_isAvailable != value) { _isAvailable = value; NotifyPropertyChanged(); NotifyPropertyChanged("IsVisible"); } } }
+        public bool IsHidden { get { return _isHidden; } set { if (_isHidden != value) { _isHidden = value; NotifyPropertyChanged(); NotifyPropertyChanged("IsVisible"); } } }
+        public bool WaitButtonsReleased { get { return _waitButtonsReleased; } set { if (_waitButtonsReleased != value) { _waitButtonsReleased = value; NotifyPropertyChanged(); } } }
+        public double Sensitivity { get { return _sensitivity; } set { if (_sensitivity != value) { _sensitivity = value; NotifyPropertyChanged(); } } }
+        public bool SensitivityAtCruiseSpeed { get { return _sensitivityAtCruiseSpeed; } set { if (_sensitivityAtCruiseSpeed != value) { _sensitivityAtCruiseSpeed = value; NotifyPropertyChanged(); } } }
         public double SmartSensitivity 
         { 
             get 
@@ -559,10 +549,10 @@ namespace HandOnMouse
                     Sensitivity; 
             } 
         }
-        public bool TrimCounterCenteringMove { get { return _trimCounterCenteringMove; } set { _trimCounterCenteringMove = value; NotifyPropertyChanged(); } }
-        public bool DisableThrottleReverse { get { return _disableThrottleReverse; } set { _disableThrottleReverse = value; NotifyPropertyChanged(); } }
+        public bool TrimCounterCenteringMove { get { return _trimCounterCenteringMove; } set { if (_trimCounterCenteringMove != value) { _trimCounterCenteringMove = value; NotifyPropertyChanged(); } } }
+        public bool DisableThrottleReverse { get { return _disableThrottleReverse; } set { if (_disableThrottleReverse != value) { _disableThrottleReverse = value; NotifyPropertyChanged(); } } }
+        public double PositiveDetent { get { return _positiveDetentPercent; } set { if (_positiveDetentPercent != value) { _positiveDetentPercent = value; NotifyPropertyChanged(); } } }
         /// <summary>Last trimmed axis position in [-1..1] to compute moves centering to 0</summary>
-        public double PositiveDetent { get; private set; }
         public double TrimmedAxis { get; set; }
         public Direction IncreaseDirection { get { return _increaseDirection; } set { if (_increaseDirection != value) { _increaseDirection = value; NotifyPropertyChanged(); NotifyPropertyChanged("IncreaseDirectionText"); NotifyPropertyChanged("IncreaseDirection2"); NotifyPropertyChanged("IncreaseDirection2Text"); NotifyPropertyChanged("Text"); } } }
         public Direction? IncreaseDirection2 
@@ -593,11 +583,11 @@ namespace HandOnMouse
         public bool ForAllEngines { get; private set; }
         /// <summary>A filter of mouse buttons down encoded as a combination of RAWMOUSE.RI_MOUSE</summary>
         
-        public RAWMOUSE.RI_MOUSE MouseButtonsFilter { get { return _mouseButtonsFilter; } set { if (_mouseButtonsFilter != value) { _mouseButtonsFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("MouseButtonsText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("Text"); } } }
+        public RAWMOUSE.RI_MOUSE MouseButtonsFilter { get { return _mouseButtonsFilter; } set { if (_mouseButtonsFilter != value) { _mouseButtonsFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("MouseButtonsText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("IsVisible"); NotifyPropertyChanged("Text"); } } }
 
-        public Key KeyboardKeyDownFilter { get { return _keyboardKeyDownFilter; } set { if (_keyboardKeyDownFilter != value) { _keyboardKeyDownFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("KeyboardKeyText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("Text"); } } }
+        public Key KeyboardKeyDownFilter { get { return _keyboardKeyDownFilter; } set { if (_keyboardKeyDownFilter != value) { _keyboardKeyDownFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("KeyboardKeyText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("IsVisible"); NotifyPropertyChanged("Text"); } } }
 
-        public Controller.Buttons ControllerButtonsFilter { get { return _controllerButtonsFilter; } set { if (_controllerButtonsFilter != value) { _controllerButtonsFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("ControllerButtonsText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("Text"); } } }
+        public Controller.Buttons ControllerButtonsFilter { get { return _controllerButtonsFilter; } set { if (_controllerButtonsFilter != value) { _controllerButtonsFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("ControllerButtonsText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("IsVisible"); NotifyPropertyChanged("Text"); } } }
         public ushort ControllerManufacturerId { get; set; }
         public ushort ControllerProductId { get; set; }
 
@@ -767,6 +757,19 @@ namespace HandOnMouse
                 return SimVarValue != valueInSim;
             }
         }
+        public void UpdateSimInfo(double simInfo)
+        {
+            if (SimVarName.StartsWith("GENERAL ENG THROTTLE LEVER POSITION") && simInfo < 0)
+            {
+                SimVarMin = simInfo;
+                SimVarValue = SimVarValue; // in case it is not yet updated and out of bounds?
+            }
+            else if (SimVarName == "FLAPS HANDLE INDEX")
+            {
+                SimVarMax = simInfo;
+                SimVarValue = SimVarValue; // in case it is not yet updated and out of bounds?
+            }
+        }
 
         // Events
 
@@ -780,6 +783,7 @@ namespace HandOnMouse
         private double _decreaseScaleTimeSecs;
         private bool _disableIncreaseDirection2;
         private bool _disableThrottleReverse;
+        private double _positiveDetentPercent;
         private Direction _increaseDirection;
         private Direction? _increaseDirection2;
         private RAWMOUSE.RI_MOUSE _mouseButtonsFilter;
@@ -794,7 +798,8 @@ namespace HandOnMouse
         private double _simVarChange;
         private bool _trimCounterCenteringMove;
         private bool _waitButtonsReleased;
-        private bool _isVisible;
+        private bool _isHidden;
+        private bool _isAvailable;
 
         private static Brush ReadColor(string[] scaleColors, uint i, string section, ref string errors)
         {

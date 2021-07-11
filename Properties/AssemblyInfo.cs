@@ -28,4 +28,4 @@ using System.Windows;
 //      Patch Number
 //      Revision
 //
-[assembly: AssemblyVersion("1.4.0.*")]
+[assembly: AssemblyVersion("2.1.0.*")]

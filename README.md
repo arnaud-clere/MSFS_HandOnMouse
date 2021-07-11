@@ -106,6 +106,10 @@ To use reverse throttle with CRJ, you must use its tablet, access last "options"
 
 ---
 
+## Version 2.1
+
+Adds ability to hide axis (those Not Available are hidden automatically)
+
 ## Version 2.0
 
 Adds support for triggering axis changes from HID compatible device buttons like joystick triggers
