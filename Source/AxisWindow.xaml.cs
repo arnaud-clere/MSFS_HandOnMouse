@@ -22,7 +22,7 @@ namespace HandOnMouse
 
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = "") => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         private Axis _axis = null;
-        private string _triggerMoveHint = null;
+        private string _triggerMoveHint = "Set options below:";
     }
 
     public partial class AxisWindow : Window
@@ -52,11 +52,11 @@ namespace HandOnMouse
                 m.ControllerButtonsFilter = Controller.Buttons.None;
                 Controller.UpdateDevices();
 
-                d.TriggerMoveHint = "MOVE mouse + PRESS desired trigger";
+                d.TriggerMoveHint = "1. PRESS desired trigger + MOVE mouse";
             }
             else
             {
-                d.TriggerMoveHint = "";
+                d.TriggerMoveHint = "Set options below:";
             }
         }
 
@@ -105,11 +105,11 @@ namespace HandOnMouse
                         m.ControllerButtonsFilter == Controller.Buttons.None &&
                         m.KeyboardKeyDownFilter == Key.None)
                     {
-                        d.TriggerMoveHint = "MOVE mouse + PRESS desired trigger";
+                        d.TriggerMoveHint = "1. PRESS desired trigger + MOVE mouse";
                     }
                     else
                     {
-                        d.TriggerMoveHint = "MOVE mouse firmly in increase direction";
+                        d.TriggerMoveHint = "2. MOVE mouse firmly in increase direction";
 
                         Mouse.Device.StartDrag(move);
                     }
@@ -119,15 +119,15 @@ namespace HandOnMouse
                     var v = Mouse.Device.Drag;
                     if (v.Length < Settings.Default.SetMinimumMouseMove)
                     {
-                        d.TriggerMoveHint = "MOVE mouse firmly in increase direction";
+                        d.TriggerMoveHint = "2. MOVE mouse firmly in increase direction";
                     }
                     else if (!(Math.Abs(v.X) > 2*Math.Abs(v.Y) || Math.Abs(v.Y) > 2* Math.Abs(v.X)))
                     {
-                        d.TriggerMoveHint = "MOVE mouse firmly in F/B/L/R direction";
+                        d.TriggerMoveHint = "2. MOVE mouse firmly in F/B/L/R direction";
                     }
                     else
                     {
-                        d.TriggerMoveHint = "RELEASE the trigger";
+                        d.TriggerMoveHint = "3. RELEASE the trigger + MOVE mouse";
 
                         if ((m.MouseButtonsFilter != RAWMOUSE.RI_MOUSE.Reserved &&
                             !Mouse.Device.ButtonsPressed.HasFlag(m.MouseButtonsFilter)) ||
@@ -136,7 +136,7 @@ namespace HandOnMouse
                             (_controllerTrigger != null &&
                             !_controllerTrigger.ButtonsPressed.HasFlag(m.ControllerButtonsFilter)))
                         {
-                            d.TriggerMoveHint = "";
+                            d.TriggerMoveHint = "Set options below:";
 
                             _controllerTrigger = null;
                             m.IncreaseDirection =
