@@ -61,7 +61,9 @@ Click "..." in front of the "elevator trim" axis then "Set trigger and mouse mov
 1. Press the joystick button you want to use to trim
 2. Move the mouse towards you (Draw)
 3. Release the button
+
 ![](custom.jpg)
+
 Save the customization, and repeat with the "aileron trim" axis using the same trigger but with a mouse move to the right
 
 When you need to apply too much effort to maintain your stick/yoke in position:
@@ -124,7 +126,7 @@ Configure the following G Hub mappings, select G602.ini mappings file in MSFS_Ha
 Mouse Button(s)       | MSFS Control
 ---------------       | ------------
 **F16 & F/Suivant**   | Right & Left **Throttle** (forward-backward move) and **Reverse Throttle** (protected by use of orthogonal move)
-**F17 & B/Précédent** | Right & Left **Propeller** (but you can use them to trigger **Mixture** with "..." button)
+**F17 & B/PrÃ©cÃ©dent** | Right & Left **Propeller** (but you can use them to trigger **Mixture** with "..." button)
 **F18**               | Right & Left **Brakes** (backward and right or left move))  
 **F19**               | **Spoilers** (for jets and gliders)  
 **F12**               | Toggle **Landing Gear**
