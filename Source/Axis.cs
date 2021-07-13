@@ -59,7 +59,7 @@ namespace HandOnMouse
         {
             var errors = "";
             var section = $"Axis{i + 1}";
-            var customFilePath = File.Exists(filePath + '.' + i) ? filePath + '.' + i : filePath;
+            var customFilePath = File.Exists(filePath + '.' + (1 + i)) ? filePath + '.' + (1 + i) : filePath;
             var btn = RAWMOUSE.RI_MOUSE.None;
             var btnString = Kernel32.ReadIni(customFilePath, "MouseButtonsFilter", section).ToUpper().Split(new char[] { '-' });
             if (btnString.Length > 0)
@@ -80,6 +80,9 @@ namespace HandOnMouse
             }
             m.MouseButtonsFilter = btn == RAWMOUSE.RI_MOUSE.None ? RAWMOUSE.RI_MOUSE.Reserved : btn; // to avoid changing the axis with no button down
 
+            m.ControllerManufacturerId = 0;
+            m.ControllerProductId = 0;
+            m.ControllerButtonsFilter = Controller.Buttons.None;
             var controllerBtnString = Kernel32.ReadIni(customFilePath, "ControllerButtonsFilter", section).ToUpper().Split(new char[] { '-' });
             if (controllerBtnString.Length > 0 && m.MouseButtonsFilter == RAWMOUSE.RI_MOUSE.Reserved)
             {
@@ -92,6 +95,7 @@ namespace HandOnMouse
                 }
             }
 
+            m.KeyboardKeyDownFilter = Key.None;
             var keyboardString = Kernel32.ReadIni(customFilePath, "KeyboardKeyDownFilter", section);
             if (keyboardString != "" && m.MouseButtonsFilter == RAWMOUSE.RI_MOUSE.Reserved && m.ControllerManufacturerId == 0)
             {
@@ -226,7 +230,7 @@ namespace HandOnMouse
             {
                 return $"Cannot save axis not correctly read from: {filePath}";
             }
-            var customFilePath = filePath + '.' + id;
+            var customFilePath = filePath + '.' + (1 + id);
             var section = $"Axis{1 + id}";
             if (m.Name.Length > 0)
             {
@@ -260,7 +264,7 @@ namespace HandOnMouse
             {
                 return $"Cannot reset axis not correctly read from: {filePath}";
             }
-            var customFilePath = filePath + '.' + Mappings.IndexOf(m);
+            var customFilePath = filePath + '.' + (1 + id);
             var errors = "";
             try
             {
