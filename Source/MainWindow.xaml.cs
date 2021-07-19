@@ -231,8 +231,11 @@ namespace HandOnMouse
                 try
                 {
                     _simConnect = new SimConnect("HandOnMouse", _hwnd, WM_USER_SIMCONNECT, null, 0);
-                    _simConnect.Text(SIMCONNECT_TEXT_TYPE.PRINT_BLACK, 2, Definitions.None, "HandOnMouse connected!");
+
                     ChangeButtonStatus(false, connectButton, true, "DISCONNECT");
+                    closeButton.IsEnabled = false;
+
+                    _simConnect.Text(SIMCONNECT_TEXT_TYPE.PRINT_BLACK, 2, Definitions.None, "HandOnMouse connected!");
 
                     _simConnect.OnRecvOpen += new SimConnect.RecvOpenEventHandler(SimConnect_OnRecvOpen);
                     _simConnect.OnRecvQuit += new SimConnect.RecvQuitEventHandler(SimConnect_OnRecvQuit);
@@ -401,6 +404,8 @@ namespace HandOnMouse
 
             try
             {
+                closeButton.IsEnabled = true; // even if disconnect fails
+
                 _simConnect.Text(SIMCONNECT_TEXT_TYPE.PRINT_RED, 2, Definitions.None, "HandOnMouse disconnected!");
                 _simConnect.Dispose();
                 _simConnect = null;

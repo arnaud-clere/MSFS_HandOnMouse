@@ -26,7 +26,7 @@
     </Window.Resources>
     <StackPanel x:Name="window" VerticalAlignment="Top" Margin="3">
         <DockPanel>
-            <Button DockPanel.Dock="Right" Click="Window_Close">X</Button>
+            <Button DockPanel.Dock="Right" Click="Window_Close" x:Name="closeButton">X</Button>
             <Button DockPanel.Dock="Right" Click="Window_Compact">=</Button>
             <Button DockPanel.Dock="Right" Click="Window_Minimize">-</Button>
             <Button DockPanel.Dock="Right" Click="Window_Help"
