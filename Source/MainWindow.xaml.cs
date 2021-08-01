@@ -151,11 +151,17 @@ namespace HandOnMouse
         {
             if (e.ChangedButton == MouseButton.Left) DragMove();
         }
-        private void Window_Close(object sender, RoutedEventArgs e)
+        private void Window_Closing(object sender, CancelEventArgs e)
         {
-            _gaugeWindow.Close();
-            Close();
-            Trace.WriteLine($"MainWindow Close {DateTime.Now}");
+            if (_simConnect != null)
+            {
+                e.Cancel = true;
+            }
+            else
+            {
+                _gaugeWindow.Close();
+                Trace.WriteLine($"MainWindow Close {DateTime.Now}");
+            }
         }
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
@@ -195,7 +201,6 @@ namespace HandOnMouse
                     _simConnect = new SimConnect("HandOnMouse", _hwnd, WM_USER_SIMCONNECT, null, 0);
 
                     ChangeButtonStatus(false, connectButton, true, "DISCONNECT");
-                    closeButton.IsEnabled = false;
 
                     _simConnect.Text(SIMCONNECT_TEXT_TYPE.PRINT_BLACK, 2, Definitions.None, "HandOnMouse connected!");
 
@@ -366,8 +371,6 @@ namespace HandOnMouse
 
             try
             {
-                closeButton.IsEnabled = true; // even if disconnect fails
-
                 _simConnect.Text(SIMCONNECT_TEXT_TYPE.PRINT_RED, 2, Definitions.None, "HandOnMouse disconnected!");
                 _simConnect.Dispose();
                 _simConnect = null;
