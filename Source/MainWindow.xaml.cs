@@ -47,10 +47,13 @@ namespace HandOnMouse
                 if (_showAll != value)
                 {
                     _showAll = value;
-                    NotifyPropertyChanged();
+                    NotifyPropertyChanged(); NotifyPropertyChanged("LowOpacity"); NotifyPropertyChanged("MiddleOpacity"); NotifyPropertyChanged("HighOpacity");
                 }
             }
         }
+        public double LowOpacity    { get { return _showAll ? 1 : Math.Max(0, Math.Min(1, 1 - Settings.Default.MaxTransparency*3/3)); } }
+        public double MiddleOpacity { get { return _showAll ? 1 : Math.Max(0, Math.Min(1, 1 - Settings.Default.MaxTransparency*2/3)); } }
+        public double HighOpacity   { get { return _showAll ? 1 : Math.Max(0, Math.Min(1, 1 - Settings.Default.MaxTransparency*1/3)); } }
         public Brush StatusBrushForText
         {
             get { return _statusBrushForText; }

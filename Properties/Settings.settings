@@ -20,5 +20,8 @@
     <Setting Name="SetMinimumMouseMove" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">100</Value>
     </Setting>
+    <Setting Name="MaxTransparency" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">0.75</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

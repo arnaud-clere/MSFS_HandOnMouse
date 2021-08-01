@@ -9,7 +9,7 @@
     ResizeMode="CanResizeWithGrip" MinWidth="110" MinHeight="75"
     SizeChanged="Window_SizeChanged"
     MouseDown="Window_MouseDown">
-    <Window.Background><SolidColorBrush Opacity="0.25" Color="White" x:Name="WindowBackground" /></Window.Background>
+    <Window.Background><SolidColorBrush Opacity="{Binding LowOpacity}" Color="White" x:Name="WindowBackground" /></Window.Background>
     <Window.Resources>
         <Style TargetType="TextBlock">
             <Setter Property="FontSize" Value="8" />

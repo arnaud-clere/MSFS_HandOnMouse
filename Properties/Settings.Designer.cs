@@ -94,5 +94,17 @@ namespace HandOnMouse.Properties {
                 this["SetMinimumMouseMove"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.75")]
+        public double MaxTransparency {
+            get {
+                return ((double)(this["MaxTransparency"]));
+            }
+            set {
+                this["MaxTransparency"] = value;
+            }
+        }
     }
 }
