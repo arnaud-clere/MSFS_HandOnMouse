@@ -3,48 +3,40 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:HandOnMouse"
     xmlns:properties="clr-namespace:HandOnMouse.Properties" 
-    Title="HandOnMouse" SizeToContent="Height" Width="160"
-    AllowsTransparency="True" WindowStyle="None" Topmost="True"
+    Title="HandOnMouse" SizeToContent="Height" Width="300"
+    AllowsTransparency="True" WindowStyle="None"
     WindowStartupLocation="CenterScreen"
-    ResizeMode="CanResizeWithGrip" MinWidth="110" MinHeight="75"
+    ResizeMode="CanResizeWithGrip" MinWidth="240" MinHeight="75"
     SizeChanged="Window_SizeChanged"
     MouseDown="Window_MouseDown">
-    <Window.Background><SolidColorBrush Opacity="{Binding LowOpacity}" Color="White" x:Name="WindowBackground" /></Window.Background>
+    <Window.Background><SolidColorBrush Color="White"/></Window.Background>
     <Window.Resources>
         <Style TargetType="TextBlock">
-            <Setter Property="FontSize" Value="8" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style TargetType="Button">
-            <Setter Property="FontSize" Value="8" />
-            <Setter Property="Width" Value="14" />
+            <Setter Property="Width" Value="20" />
             <Setter Property="HorizontalAlignment" Value="Center" />
-            <Setter Property="Opacity" Value="0.75" />
         </Style>
-        <BooleanToVisibilityConverter x:Key="B2V"/>
-        <local:AnyBooleanToVisibilityConverter x:Key="AnyB2V"/>
     </Window.Resources>
     <StackPanel x:Name="window" VerticalAlignment="Top" Margin="3">
         <DockPanel>
             <Button DockPanel.Dock="Right" Click="Window_Close" x:Name="closeButton">X</Button>
-            <Button DockPanel.Dock="Right" Click="Window_Compact">=</Button>
             <Button DockPanel.Dock="Right" Click="Window_Minimize">-</Button>
-            <Button DockPanel.Dock="Right" Click="Window_Help"
-                    Visibility="{Binding ShowAll, Converter={StaticResource B2V}}">?</Button>
-            <Button DockPanel.Dock="Left" Click="Window_File"
-                    Visibility="{Binding ShowAll, Converter={StaticResource B2V}}">...</Button>
+            <Button DockPanel.Dock="Right" Click="Window_Help">?</Button>
+            <Button DockPanel.Dock="Left" Click="Window_File">...</Button>
             <Border Padding="1">
-                <Border.Background><SolidColorBrush Opacity="0.5" Color="LightGray"/></Border.Background>
-                <TextBlock Name="MappingsFile" FontSize="10" Margin="0,0,3,0"
+                <Border.Background><SolidColorBrush Color="LightGray"/></Border.Background>
+                <TextBlock Name="MappingsFile" Margin="0,0,3,0"
                     Text="{Binding Source={x:Static properties:Settings.Default}, Path=MappingFile}"
                     Foreground="{Binding StatusBrushForText, UpdateSourceTrigger=PropertyChanged}">
                 </TextBlock>
             </Border>
         </DockPanel>
-        <StackPanel Margin="0 3 0 0" Visibility="{Binding ShowAll, Converter={StaticResource B2V}}">
-            <TextBlock FontSize="10">Sensitivity (100x res./range)</TextBlock>
+        <StackPanel Margin="0 3 0 0">
+            <TextBlock>Sensitivity (100x res./range)</TextBlock>
             <DockPanel>
-                <Button DockPanel.Dock="Right" Margin="3 0 0 0" x:Name="connectButton" FontSize="12" Width="80" Background="White" Foreground="DarkGreen" BorderBrush="DarkGreen" Click="Connect_Click">CONNECT FS</Button>
+                <Button DockPanel.Dock="Right" Margin="3 0 0 0" x:Name="connectButton" Width="100" Background="White" Foreground="DarkGreen" BorderBrush="DarkGreen" Click="Connect_Click">CONNECT FS</Button>
                 <ComboBox IsEditable="True"
                     Text="{Binding Source={x:Static properties:Settings.Default}, Path=Sensitivity}">
                     <ComboBoxItem>16</ComboBoxItem>
@@ -60,21 +52,12 @@
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <DockPanel Margin="0 3 0 0">
-                        <DockPanel.Visibility>
-                            <MultiBinding Converter="{StaticResource AnyB2V}">
-                                <Binding Path="IsVisible" UpdateSourceTrigger="PropertyChanged"/>
-                                <Binding Path="DataContext.ShowAll" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}"/>
-                            </MultiBinding>
-                        </DockPanel.Visibility>
-                        <Button DockPanel.Dock="Left" Margin="0,0,3,0" Height="14"
-                                Visibility="{Binding DataContext.ShowAll, Converter={StaticResource B2V}, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
+                        <Button DockPanel.Dock="Left" Margin="0,0,3,0" Height="20" Width="20"
                                 Tag="{Binding}"
                                 Click="Axis_Click">...</Button>
-                        <TextBlock Width="20" DockPanel.Dock="Left"  TextAlignment="Center" FontSize="8"
-                                Visibility="{Binding DataContext.ShowAll, Converter={StaticResource B2V}, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
+                        <TextBlock Width="40" DockPanel.Dock="Left"  TextAlignment="Center"
                                 Text="{Binding SimVarMin, UpdateSourceTrigger=PropertyChanged}"></TextBlock>
-                        <TextBlock Width="20" DockPanel.Dock="Right" TextAlignment="Center" FontSize="8"
-                                Visibility="{Binding DataContext.ShowAll, Converter={StaticResource B2V}, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}" 
+                        <TextBlock Width="40" DockPanel.Dock="Right" TextAlignment="Center"
                                 Text="{Binding SimVarMax, UpdateSourceTrigger=PropertyChanged}"></TextBlock>
                         <Grid>
                             <Grid.RowDefinitions>
@@ -91,22 +74,22 @@
                                 ToolTip="{Binding SimVarUnit, UpdateSourceTrigger=PropertyChanged}"
                                 Minimum="{Binding SimVarMin, UpdateSourceTrigger=PropertyChanged}" 
                                 Maximum="{Binding SimVarMax, UpdateSourceTrigger=PropertyChanged}">
-                                <ProgressBar.Foreground><SolidColorBrush Opacity="0.50" Color="White"/></ProgressBar.Foreground>
-                                <ProgressBar.Background><SolidColorBrush Opacity="0.50" Color="LightGray"/></ProgressBar.Background>
+                                <ProgressBar.Foreground><SolidColorBrush Color="White"/></ProgressBar.Foreground>
+                                <ProgressBar.Background><SolidColorBrush Color="LightGray"/></ProgressBar.Background>
                             </ProgressBar>
-                            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextAlignment="Left" FontSize="8" FontWeight="DemiBold"
+                            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextAlignment="Left" FontWeight="DemiBold"
                                 Text="{Binding Text, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
                                 <TextBlock.Foreground>
                                     <SolidColorBrush Color="{Binding ChangeColorForText, UpdateSourceTrigger=PropertyChanged}"/>
                                 </TextBlock.Foreground>
                             </TextBlock>
-                            <Rectangle Grid.Row="1" Grid.Column="0" Opacity=".75" 
+                            <Rectangle Grid.Row="1" Grid.Column="0" 
                                 Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
                                 Fill="{Binding SimVarNegativeColor}"></Rectangle>
-                            <Rectangle Grid.Row="1" Grid.Column="1" Opacity=".75" 
+                            <Rectangle Grid.Row="1" Grid.Column="1" 
                                 Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
                                 Fill="{Binding SimVarPositiveColor}"></Rectangle>
-                            <Rectangle Grid.Row="1" Grid.Column="2" Opacity=".75" 
+                            <Rectangle Grid.Row="1" Grid.Column="2" 
                                 Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
                                 Fill="{Binding SimVarPositiveDetentColor}"></Rectangle>
                         </Grid>

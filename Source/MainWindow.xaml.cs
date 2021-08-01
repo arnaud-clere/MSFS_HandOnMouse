@@ -39,21 +39,9 @@ namespace HandOnMouse
     public class ViewModel : INotifyPropertyChanged
     {
         public ObservableCollection<Axis> Mappings { get { return Axis.Mappings; } }
-        public bool ShowAll
-        {
-            get { return _showAll; }
-            set
-            {
-                if (_showAll != value)
-                {
-                    _showAll = value;
-                    NotifyPropertyChanged(); NotifyPropertyChanged("LowOpacity"); NotifyPropertyChanged("MiddleOpacity"); NotifyPropertyChanged("HighOpacity");
-                }
-            }
-        }
-        public double LowOpacity    { get { return _showAll ? 1 : Math.Max(0, Math.Min(1, 1 - Settings.Default.MaxTransparency*3/3)); } }
-        public double MiddleOpacity { get { return _showAll ? 1 : Math.Max(0, Math.Min(1, 1 - Settings.Default.MaxTransparency*2/3)); } }
-        public double HighOpacity   { get { return _showAll ? 1 : Math.Max(0, Math.Min(1, 1 - Settings.Default.MaxTransparency*1/3)); } }
+        public double LowOpacity    { get { return Math.Max(0, Math.Min(1, 1 - Settings.Default.MaxTransparency*3/3)); } }
+        public double MiddleOpacity { get { return Math.Max(0, Math.Min(1, 1 - Settings.Default.MaxTransparency*2/3)); } }
+        public double HighOpacity   { get { return Math.Max(0, Math.Min(1, 1 - Settings.Default.MaxTransparency*1/3)); } }
         public Brush StatusBrushForText
         {
             get { return _statusBrushForText; }
@@ -70,35 +58,9 @@ namespace HandOnMouse
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = "") => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        private bool _showAll = true;
         private Brush _statusBrushForText = new SolidColorBrush(Colors.Gray);
     }
-    public class BooleanToWidthConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo _)
-        {
-            return (bool)value ? 100 : 140;
-        }
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo _)
-        {
-            throw new NotImplementedException();
-        }
-    }
-    class AnyBooleanToVisibilityConverter : IMultiValueConverter
-    {
-        public object Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo _)
-        {
-            foreach (var visible in values)
-                if (visible is bool && (bool)visible)
-                    return Visibility.Visible;
 
-            return Visibility.Collapsed;
-        }
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, System.Globalization.CultureInfo _)
-        {
-            throw new NotImplementedException();
-        }
-    }
     /// <summary>Interaction logic for MainWindow.xaml</summary>
     public partial class MainWindow : Window
     {
@@ -131,7 +93,8 @@ namespace HandOnMouse
         {
             Trace.WriteLine($"MainWindow {DateTime.Now}");
 
-            DataContext = new ViewModel();
+            _gaugeWindow.DataContext = DataContext = new ViewModel();
+            _gaugeWindow.Show();
     
             InitializeComponent();
 
@@ -190,13 +153,9 @@ namespace HandOnMouse
         }
         private void Window_Close(object sender, RoutedEventArgs e)
         {
+            _gaugeWindow.Close();
             Close();
             Trace.WriteLine($"MainWindow Close {DateTime.Now}");
-        }
-        private void Window_Compact(object sender, RoutedEventArgs e)
-        {
-            ((ViewModel)DataContext).ShowAll = !((ViewModel)DataContext).ShowAll;
-            Width = ((ViewModel)DataContext).ShowAll ? 160 : 120;
         }
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
@@ -671,7 +630,8 @@ namespace HandOnMouse
 
         // Implementation
 
-        private List<string> displayedErrors = new List<string>();
+        GaugeWindow _gaugeWindow = new GaugeWindow();
+        List<string> displayedErrors = new List<string>();
         bool requestFlaps = false;
         bool requestGear = false;
         bool requestSpoiler = false;

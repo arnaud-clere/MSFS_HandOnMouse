@@ -72,6 +72,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Source\GaugeWindow.xaml.cs">
+      <DependentUpon>GaugeWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Source\Mouse.cs" />
     <Compile Include="Source\AxisWindow.xaml.cs">
       <DependentUpon>AxisWindow.xaml</DependentUpon>
@@ -82,6 +85,10 @@
     <Page Include="Source\AxisWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Source\GaugeWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Source\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

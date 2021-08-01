@@ -4,8 +4,10 @@
         xmlns:local="clr-namespace:HandOnMouse"
         WindowStartupLocation="Manual"
         WindowStyle="ToolWindow"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
         SizeToContent="WidthAndHeight"
-        MinWidth="400" MinHeight="216"
+        MinWidth="432" MinHeight="338"
         Title="{Binding Axis.Name}">
     <Window.Resources>
         <Style TargetType="Border">
@@ -13,7 +15,6 @@
         </Style>
         <Style TargetType="Button">
             <Setter Property="Margin" Value="3" />
-            <Setter Property="FontSize" Value="12" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style TargetType="ToggleButton">
@@ -22,18 +23,15 @@
         </Style>
         <Style TargetType="TextBlock">
             <Setter Property="Margin" Value="3" />
-            <Setter Property="FontSize" Value="10" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style TargetType="CheckBox">
             <Setter Property="Margin" Value="3" />
-            <Setter Property="FontSize" Value="10" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
         <Style TargetType="ComboBox">
             <Setter Property="Margin" Value="3" />
-            <Setter Property="FontSize" Value="10" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style TargetType="StackPanel">
@@ -47,13 +45,13 @@
             <ColumnDefinition Width="1*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="24"/>
-            <RowDefinition Height="40"/>
-            <RowDefinition Height="172"/>
-            <RowDefinition Height="24"/>
-            <RowDefinition Height="28"/>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition Height="190"/>
+            <RowDefinition/>
+            <RowDefinition/>
         </Grid.RowDefinitions>
-        <ToggleButton Grid.Column="0" Grid.Row="0" Focusable="False" TextBlock.FontSize="10"
+        <ToggleButton Grid.Column="0" Grid.Row="0" Focusable="False"
                     Content="Set trigger and mouse move"
                     ToolTip="Once you press this button:&#x0a;1. press the desired mouse/keyboard/controller button/key (except main click)&#x0a;2. move mouse in direction where axis must increase&#x0a;3. release the trigger"
                     Name="SetTriggerButton"
@@ -84,7 +82,7 @@
         </StackPanel></Border>
         <Border Grid.Column="1" Grid.Row="2" Background="#FFE0FEFF"><StackPanel Orientation="Vertical">
             <StackPanel>
-                <ComboBox IsEditable="True" Height="18" VerticalAlignment="Bottom"
+                <ComboBox IsEditable="True" VerticalAlignment="Bottom"
                     Text="{Binding Axis.Sensitivity}">
                     <ComboBoxItem ToolTip="No sensitivity">0</ComboBoxItem>
                     <ComboBoxItem>0.25</ComboBoxItem>
@@ -112,7 +110,7 @@
                     IsChecked="{Binding Axis.DisableThrottleReverse}"
                     Content="Disable smart reverse throttle and detent"/>
                 <StackPanel>
-                <ComboBox IsEditable="True" Height="18" VerticalAlignment="Bottom"
+                <ComboBox IsEditable="True" VerticalAlignment="Bottom"
                     Text="{Binding Axis.PositiveDetent}">
                     <ComboBoxItem ToolTip="No detent">0</ComboBoxItem>
                     <ComboBoxItem>80</ComboBoxItem>
@@ -125,7 +123,7 @@
                     ToolTip="For axis where max (positive) position should be protected with a detent: auto/throttle..."/>
             </StackPanel>
             <StackPanel>
-                <ComboBox IsEditable="True" Height="18" VerticalAlignment="Bottom"
+                <ComboBox IsEditable="True" VerticalAlignment="Bottom"
                     Text="{Binding Axis.DecreaseScaleTimeSecs}">
                     <ComboBoxItem ToolTip="No decrease to zero with time">0</ComboBoxItem>
                     <ComboBoxItem>0.25</ComboBoxItem>
@@ -144,8 +142,8 @@
                     ToolTip="For trim axis that should oppose centering moves of related axis"
                     Content="Oppose centering moves of axis below:"/>
             <TextBlock FontWeight="Bold" HorizontalAlignment="Center" Margin="0"
-                    Text="{Binding Axis.TrimmedAxisName}"/>
-        </StackPanel></Border>
+                    Text="{Binding Axis.TrimmedAxisName}"> </TextBlock>
+            </StackPanel></Border>
         <Border Grid.Column="0" Grid.Row="3" Background="#FFF0FEFF">
             <TextBlock
                     Text="3. RELEASE Trigger(s)"/>
