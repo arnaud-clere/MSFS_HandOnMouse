@@ -39,9 +39,6 @@ namespace HandOnMouse
     public class ViewModel : INotifyPropertyChanged
     {
         public ObservableCollection<Axis> Mappings { get { return Axis.Mappings; } }
-        public double LowOpacity    { get { return Math.Max(0, Math.Min(1, 1 - Settings.Default.MaxTransparency*3/3)); } }
-        public double MiddleOpacity { get { return Math.Max(0, Math.Min(1, 1 - Settings.Default.MaxTransparency*2/3)); } }
-        public double HighOpacity   { get { return Math.Max(0, Math.Min(1, 1 - Settings.Default.MaxTransparency*1/3)); } }
         public Brush StatusBrushForText
         {
             get { return _statusBrushForText; }
@@ -160,6 +157,7 @@ namespace HandOnMouse
             else
             {
                 _gaugeWindow.Close();
+                Settings.Default.Save();
                 Trace.WriteLine($"MainWindow Close {DateTime.Now}");
             }
         }
@@ -444,7 +442,6 @@ namespace HandOnMouse
             else
             {
                 Settings.Default.MappingFile = filePath.Replace(MappingsDir() + @"\", "");
-                Settings.Default.Save();
             }
         }
 
@@ -608,11 +605,11 @@ namespace HandOnMouse
                             }
                             m.TrimmedAxis = inSim.TrimmedAxis;
                         }
-                        else
+                        else // requestType == RequestType.AxisValue
                         {
                             inSimValue = (double)data.dwData[0];
                         }
-                        if (m.UpdateSimVarValue(inSimValue, trimmedAxisChange))
+                        if (m.UpdateSimVarValue(m.IgnoreSimValues ? m.SimVarValue : inSimValue, trimmedAxisChange))
                         {
                             if (m.ForAllEngines)
                             {

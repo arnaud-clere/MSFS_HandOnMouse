@@ -20,8 +20,17 @@
     <Setting Name="SetMinimumMouseMove" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">100</Value>
     </Setting>
-    <Setting Name="MaxTransparency" Type="System.Double" Scope="User">
-      <Value Profile="(Default)">0.75</Value>
+    <Setting Name="GaugeOpacity" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">0.5</Value>
+    </Setting>
+    <Setting Name="GaugeFontSize" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">12</Value>
+    </Setting>
+    <Setting Name="GaugeTop" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">30</Value>
+    </Setting>
+    <Setting Name="GaugeLeft" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">10</Value>
     </Setting>
   </Settings>
 </SettingsFile>

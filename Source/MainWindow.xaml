@@ -10,7 +10,7 @@
     SizeChanged="Window_SizeChanged"
     MouseDown="Window_MouseDown"
     Closing="Window_Closing" Icon="mouse.ico">
-    <Window.Background><SolidColorBrush Color="White"/></Window.Background>
+    <Window.Background><SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlColorKey}}"/></Window.Background>
     <Window.Resources>
         <Style TargetType="TextBlock">
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -19,24 +19,52 @@
             <Setter Property="Width" Value="20" />
             <Setter Property="HorizontalAlignment" Value="Center" />
         </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
     </Window.Resources>
     <StackPanel x:Name="window" VerticalAlignment="Top" Margin="3">
-        <StackPanel Margin="0 3 0 0">
+        <DockPanel Margin="0 3 0 0">
+            <ComboBox DockPanel.Dock="Right" Width="50" IsEditable="True"
+                Text="{Binding Source={x:Static properties:Settings.Default}, Path=Sensitivity}">
+                <ComboBoxItem>16</ComboBoxItem>
+                <ComboBoxItem ToolTip="e.g. 800dpi/1in, 1600dpi/2in">8</ComboBoxItem>
+                <ComboBoxItem ToolTip="e.g. 800dpi/2in">4</ComboBoxItem>
+                <ComboBoxItem>2</ComboBoxItem>
+                <ComboBoxItem>1</ComboBoxItem>
+                <ComboBoxItem ToolTip="No mouse input">0</ComboBoxItem>
+            </ComboBox>
             <TextBlock>Sensitivity (100x res./range)</TextBlock>
-            <DockPanel>
-                <Button DockPanel.Dock="Right" Margin="3 0 0 0" x:Name="connectButton" Width="100" Background="White" Foreground="DarkGreen" BorderBrush="DarkGreen" Click="Connect_Click">CONNECT FS</Button>
-                <ComboBox IsEditable="True"
-                    Text="{Binding Source={x:Static properties:Settings.Default}, Path=Sensitivity}">
-                    <ComboBoxItem>16</ComboBoxItem>
-                    <ComboBoxItem ToolTip="e.g. 800dpi/1in, 1600dpi/2in">8</ComboBoxItem>
-                    <ComboBoxItem ToolTip="e.g. 800dpi/2in">4</ComboBoxItem>
-                    <ComboBoxItem>2</ComboBoxItem>
-                    <ComboBoxItem>1</ComboBoxItem>
-                    <ComboBoxItem ToolTip="No mouse input">0</ComboBoxItem>
-                </ComboBox>
-            </DockPanel>
-        </StackPanel>
-        <DockPanel>
+        </DockPanel>
+        <DockPanel Margin="0 3 0 0">
+            <ComboBox DockPanel.Dock="Right" Width="50" IsEditable="True"
+                Text="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeFontSize, Mode=TwoWay}">
+                <ComboBoxItem>16</ComboBoxItem>
+                <ComboBoxItem>14</ComboBoxItem>
+                <ComboBoxItem>12</ComboBoxItem>
+                <ComboBoxItem>10</ComboBoxItem>
+                <ComboBoxItem>8</ComboBoxItem>
+            </ComboBox>
+            <TextBlock>Gauge text size (pt)</TextBlock>
+        </DockPanel>
+        <DockPanel Margin="0 3 0 0">
+            <ComboBox DockPanel.Dock="Right" Width="50" IsEditable="True"
+                Text="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeOpacity, Mode=TwoWay}">
+                <ComboBoxItem>1 (opaque)</ComboBoxItem>
+                <ComboBoxItem>0.5</ComboBoxItem>
+                <ComboBoxItem>0.25</ComboBoxItem>
+            </ComboBox>
+            <TextBlock>Gauge opacity (ratio)</TextBlock>
+        </DockPanel>
+        <DockPanel Margin="0 3 0 0">
+            <Button DockPanel.Dock="Right" Margin="3 0 0 0" x:Name="connectButton" Width="100" Background="White" Foreground="DarkGreen" BorderBrush="DarkGreen" Click="Connect_Click">CONNECT FS</Button>
+            <CheckBox 
+                    IsChecked="False"
+                    Content="Auto (re)connect FS"
+                    ToolTip="Periodically tries to connect or reconnect to FS" Foreground="Red"/>
+        </DockPanel>
+        <DockPanel Margin="0 3 0 0">
             <Button DockPanel.Dock="Right" Click="Window_Help">?</Button>
             <Button DockPanel.Dock="Left" Click="Window_File">...</Button>
             <TextBlock Name="MappingsFile" Margin="3,0"
@@ -64,13 +92,13 @@
                                 <ColumnDefinition Width="{Binding SimVarPositiveScaleString      , UpdateSourceTrigger=PropertyChanged}"/><!--, StringFormat={}{0:0.##}*}"/>-->
                                 <ColumnDefinition Width="{Binding SimVarPositiveDetentScaleString, UpdateSourceTrigger=PropertyChanged}"/><!--, StringFormat={}{0:0.##}*}"/>-->
                             </Grid.ColumnDefinitions>
-                            <ProgressBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextBlock.TextAlignment="Left" 
+                            <ProgressBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextBlock.TextAlignment="Left" BorderThickness="0" 
                                 Value="{Binding Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
                                 ToolTip="{Binding SimVarUnit, UpdateSourceTrigger=PropertyChanged}"
                                 Minimum="{Binding SimVarMin, UpdateSourceTrigger=PropertyChanged}" 
                                 Maximum="{Binding SimVarMax, UpdateSourceTrigger=PropertyChanged}">
-                                <ProgressBar.Foreground><SolidColorBrush Color="White"/></ProgressBar.Foreground>
-                                <ProgressBar.Background><SolidColorBrush Color="LightGray"/></ProgressBar.Background>
+                                <ProgressBar.Foreground><SolidColorBrush Color="LightGray"/></ProgressBar.Foreground>
+                                <ProgressBar.Background><SolidColorBrush Color="DimGray"  /></ProgressBar.Background>
                             </ProgressBar>
                             <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextAlignment="Left" FontWeight="DemiBold"
                                 Text="{Binding Text, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
@@ -80,13 +108,13 @@
                             </TextBlock>
                             <Rectangle Grid.Row="1" Grid.Column="0" 
                                 Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
-                                Fill="{Binding SimVarNegativeColor}"></Rectangle>
+                                Fill="{Binding SimVarNegativeColor}"/>
                             <Rectangle Grid.Row="1" Grid.Column="1" 
                                 Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
-                                Fill="{Binding SimVarPositiveColor}"></Rectangle>
+                                Fill="{Binding SimVarPositiveColor}"/>
                             <Rectangle Grid.Row="1" Grid.Column="2" 
                                 Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
-                                Fill="{Binding SimVarPositiveDetentColor}"></Rectangle>
+                                Fill="{Binding SimVarPositiveDetentColor}"/>
                         </Grid>
                     </DockPanel>
                 </DataTemplate>

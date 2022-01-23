@@ -2,12 +2,10 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:HandOnMouse"
-        WindowStartupLocation="Manual"
-        WindowStyle="ToolWindow"
-        ShowInTaskbar="False"
-        ResizeMode="NoResize"
-        SizeToContent="WidthAndHeight"
-        MinWidth="432" MinHeight="338"
+        WindowStartupLocation="Manual" WindowStyle="ToolWindow"
+        Icon="mouse.ico" ShowInTaskbar="False"
+        ResizeMode="NoResize" SizeToContent="WidthAndHeight"
+        MinWidth="432" MinHeight="224"
         Title="{Binding Axis.Name}">
     <Window.Resources>
         <Style TargetType="Border">
@@ -43,11 +41,12 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1*"/>
             <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition/>
             <RowDefinition/>
-            <RowDefinition Height="190"/>
+            <RowDefinition Height="120"/>
             <RowDefinition/>
             <RowDefinition/>
         </Grid.RowDefinitions>
@@ -68,7 +67,7 @@
             <TextBlock FontWeight="Bold" HorizontalAlignment="Center" Margin="0"
                     Text="{Binding Axis.TriggerDeviceName, UpdateSourceTrigger=PropertyChanged}"/>
         </StackPanel></Border>
-        <Border Grid.Column="1" Grid.Row="1" Background="#FFF0FEFF"><StackPanel Orientation="Vertical">
+        <Border Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" Background="#FFF0FEFF"><StackPanel Orientation="Vertical" VerticalAlignment="Top">
             <CheckBox 
                     IsChecked="{Binding Axis.IsHidden}"
                     Content="Hide in compact mode even with trigger"
@@ -80,7 +79,7 @@
             <TextBlock FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
                     Text="{Binding Axis.IncreaseDirectionText, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
         </StackPanel></Border>
-        <Border Grid.Column="1" Grid.Row="2" Background="#FFE0FEFF"><StackPanel Orientation="Vertical">
+        <Border Grid.Column="1" Grid.Row="2" Background="#FFE0FEFF"><StackPanel Orientation="Vertical" VerticalAlignment="Top">
             <StackPanel>
                 <ComboBox IsEditable="True" VerticalAlignment="Bottom"
                     Text="{Binding Axis.Sensitivity}">
@@ -97,32 +96,11 @@
                     IsChecked="{Binding Axis.SensitivityAtCruiseSpeed}"
                     Content="Sensitivity smartly increases with IAS/Vc"
                     ToolTip="For axis which efficacy depend on IAS: aileron, trims..."/>
-            <StackPanel>
-                <CheckBox 
-                    IsChecked="{Binding Axis.DisableIncreaseDirection2}"
-                    Content="Disable smart detent direction:"
-                    ToolTip="For continuous axis where detents should be simulated by a orthogonal change in mouse move direction: throttle..."/>
-                <TextBlock FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
-                    Text="{Binding Axis.IncreaseDirection2Text, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
-            </StackPanel>
-                <CheckBox
-                    IsEnabled="{Binding Axis.IsThrottle}"
-                    IsChecked="{Binding Axis.DisableThrottleReverse}"
-                    Content="Disable smart reverse throttle and detent"/>
+            <CheckBox Foreground="Red"
+                    IsChecked="{Binding Axis.IgnoreSimValues}"
+                    Content="Ignore axis value from Simulator"
+                    ToolTip="To increase mouse accuracy or avoid abrupt changes from Simulator"/>
                 <StackPanel>
-                <ComboBox IsEditable="True" VerticalAlignment="Bottom"
-                    Text="{Binding Axis.PositiveDetent}">
-                    <ComboBoxItem ToolTip="No detent">0</ComboBoxItem>
-                    <ComboBoxItem>80</ComboBoxItem>
-                    <ComboBoxItem>85</ComboBoxItem>
-                    <ComboBoxItem>90</ComboBoxItem>
-                    <ComboBoxItem>95</ComboBoxItem>
-                </ComboBox>
-                <TextBlock 
-                    Text="Detent position (%) on max side"
-                    ToolTip="For axis where max (positive) position should be protected with a detent: auto/throttle..."/>
-            </StackPanel>
-            <StackPanel>
                 <ComboBox IsEditable="True" VerticalAlignment="Bottom"
                     Text="{Binding Axis.DecreaseScaleTimeSecs}">
                     <ComboBoxItem ToolTip="No decrease to zero with time">0</ComboBoxItem>
@@ -136,29 +114,57 @@
                     Text="Time (s) to decrease to zero"
                     ToolTip="For axis that should be neutered most of the time: rudder, brakes..."/>
             </StackPanel>
+            </StackPanel></Border>
+        <Border Grid.Column="2" Grid.Row="2" Background="#FFE0FEFF">
+            <StackPanel Orientation="Vertical" VerticalAlignment="Top">
+                <StackPanel>
+                    <CheckBox 
+                    IsChecked="{Binding Axis.DisableIncreaseDirection2}"
+                    Content="Disable smart detent direction:"
+                    ToolTip="For continuous axis where detents should be simulated by a orthogonal change in mouse move direction: throttle..."/>
+                    <TextBlock FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
+                    Text="{Binding Axis.IncreaseDirection2Text, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
+                </StackPanel>
+                <CheckBox
+                    IsEnabled="{Binding Axis.IsThrottle}"
+                    IsChecked="{Binding Axis.DisableThrottleReverse}"
+                    Content="Disable smart reverse throttle and detent"/>
+                <StackPanel>
+                    <ComboBox IsEditable="True" VerticalAlignment="Bottom"
+                    Text="{Binding Axis.PositiveDetent}">
+                        <ComboBoxItem ToolTip="No detent">0</ComboBoxItem>
+                        <ComboBoxItem>80</ComboBoxItem>
+                        <ComboBoxItem>85</ComboBoxItem>
+                        <ComboBoxItem>90</ComboBoxItem>
+                        <ComboBoxItem>95</ComboBoxItem>
+                    </ComboBox>
+                    <TextBlock 
+                    Text="Detent position (%) on max side"
+                    ToolTip="For axis where max (positive) position should be protected with a detent: auto/throttle..."/>
+                </StackPanel>
             <CheckBox 
                     IsEnabled="{Binding Axis.IsTrim}"
                     IsChecked="{Binding Axis.TrimCounterCenteringMove}" 
                     ToolTip="For trim axis that should oppose centering moves of related axis"
                     Content="Oppose centering moves of axis below:"/>
             <TextBlock FontWeight="Bold" HorizontalAlignment="Center" Margin="0"
-                    Text="{Binding Axis.TrimmedAxisName}"> </TextBlock>
+                    Text="{Binding Axis.TrimmedAxisName}"></TextBlock>
             </StackPanel></Border>
         <Border Grid.Column="0" Grid.Row="3" Background="#FFF0FEFF">
             <TextBlock
                     Text="3. RELEASE Trigger(s)"/>
         </Border>
-        <Border Grid.Column="1" Grid.Row="3" Background="#FFF0FEFF">
+        <Border Grid.Column="1" Grid.Row="3" Grid.ColumnSpan="2" Background="#FFF0FEFF">
             <CheckBox
                     IsChecked="{Binding Axis.WaitButtonsReleased}" 
                     Content="Wait for trigger release to actuate axis" 
                     ToolTip="For axis that should be adjusted and confirmed before it is actually moved"/>
         </Border>
-        <Button Grid.Column="0" Grid.Row="4" TextBlock.Foreground="Red" 
-                    Content="Reset to default"
+        <Button Grid.Column="1" Grid.Row="0" TextBlock.Foreground="Red" 
+                    Content="Reset all to default"
                     Click="Button_Reset"/>
-        <Button Grid.Column="1" Grid.Row="4" TextBlock.Foreground="Green" 
-                    Content="Save and close" 
+        <Button Grid.Column="2" Grid.Row="0" TextBlock.Foreground="Green" 
+                    Content="Save all and close" 
                     Click="Button_Save"/>
     </Grid>
 </Window>

@@ -192,6 +192,8 @@ namespace HandOnMouse
                 Kernel32.ReadIni(customFilePath, "Sensitivity", section, "1"), NumberStyles.Float, CultureInfo.InvariantCulture)));
             m.SensitivityAtCruiseSpeed = bool.Parse(
                 Kernel32.ReadIni(customFilePath, "SensitivityAtCruiseSpeed", section, "False").Trim());
+            m.IgnoreSimValues = bool.Parse(
+                Kernel32.ReadIni(customFilePath, "IgnoreSimValues", section, "False").Trim());
             var directions = Kernel32.ReadIni(customFilePath, "IncreaseDirection", section, "Push").Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             m.IncreaseDirection = (Direction)Enum.Parse(typeof(Direction), directions[0].Trim(), true);
             if (directions.Length > 1)
@@ -245,6 +247,7 @@ namespace HandOnMouse
                     Kernel32.WriteIni(customFilePath, "MouseButtonsFilter", section, m.MouseButtonsText ?? "");
                     Kernel32.WriteIni(customFilePath, "Sensitivity", section, m.Sensitivity.ToString(CultureInfo.InvariantCulture));
                     Kernel32.WriteIni(customFilePath, "SensitivityAtCruiseSpeed", section, m.SensitivityAtCruiseSpeed.ToString());
+                    Kernel32.WriteIni(customFilePath, "IgnoreSimValues", section, m.IgnoreSimValues.ToString());
                     Kernel32.WriteIni(customFilePath, "TrimCounterCenteringMove", section, m.TrimCounterCenteringMove.ToString());
                     Kernel32.WriteIni(customFilePath, "WaitButtonsReleased", section, m.WaitButtonsReleased.ToString());
                     Kernel32.WriteIni(customFilePath, "PositiveDetent", section, m.PositiveDetent.ToString());
@@ -618,6 +621,7 @@ namespace HandOnMouse
                 }
             }
         }
+        public bool IgnoreSimValues { get; set; }
 
         // Methods
 

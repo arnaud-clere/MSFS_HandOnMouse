@@ -97,13 +97,49 @@ namespace HandOnMouse.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0.75")]
-        public double MaxTransparency {
+        [global::System.Configuration.DefaultSettingValueAttribute("0.5")]
+        public double GaugeOpacity {
             get {
-                return ((double)(this["MaxTransparency"]));
+                return ((double)(this["GaugeOpacity"]));
             }
             set {
-                this["MaxTransparency"] = value;
+                this["GaugeOpacity"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("12")]
+        public double GaugeFontSize {
+            get {
+                return ((double)(this["GaugeFontSize"]));
+            }
+            set {
+                this["GaugeFontSize"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("30")]
+        public double GaugeTop {
+            get {
+                return ((double)(this["GaugeTop"]));
+            }
+            set {
+                this["GaugeTop"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public double GaugeLeft {
+            get {
+                return ((double)(this["GaugeLeft"]));
+            }
+            set {
+                this["GaugeLeft"] = value;
             }
         }
     }
