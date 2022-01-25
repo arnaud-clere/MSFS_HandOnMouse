@@ -79,7 +79,10 @@ namespace HandOnMouse
             IsGearRetractable = 9,
             ThrottleLowerLimit = 10,
             FlapsNumHandlePosition = 11,
-            Axis = 12
+            ElevatorTrimDisabled = 12,
+            AileronTrimDisabled = 13,
+            RudderTrimDisabled = 14,
+            Axis = 15
         }
 
         IntPtr _hwnd;
@@ -284,6 +287,9 @@ namespace HandOnMouse
                     if (m.SimVarName == "GEAR HANDLE POSITION") requestGear = true;
                     if (m.SimVarName == "SPOILERS HANDLE POSITION") requestSpoiler = true;
                     if (m.SimVarName.StartsWith("BRAKE LEFT POSITION") || m.SimVarName.StartsWith("BRAKE RIGHT POSITION")) requestBrakes = true;
+                    if (m.SimVarName.StartsWith("ELEVATOR TRIM")) requestElevatorTrim = true;
+                    if (m.SimVarName.StartsWith("AILERON TRIM")) requestAileronTrim = true;
+                    if (m.SimVarName.StartsWith("RUDDER TRIM")) requestRudderTrim = true;
                     foreach (var v in Axis.EngineSimVars) if (m.SimVarName.StartsWith(v)) requestEngines = true;
                     if (m.SensitivityAtCruiseSpeed) requestSpeeds = true;
                 }
@@ -329,6 +335,21 @@ namespace HandOnMouse
                 RegisterData(Definitions.FlapsNumHandlePosition, "FLAPS NUM HANDLE POSITIONS", "Number");
                 RequestData(Definitions.FlapsNumHandlePosition);
             }
+            if (requestElevatorTrim)
+            {
+                RegisterData(Definitions.ElevatorTrimDisabled, "ELEVATOR TRIM DISABLED", "Bool");
+                RequestData(Definitions.ElevatorTrimDisabled);
+            }
+            if (requestAileronTrim)
+            {
+                RegisterData(Definitions.AileronTrimDisabled, "AILERON TRIM DISABLED", "Bool");
+                RequestData(Definitions.AileronTrimDisabled);
+            }
+            if (requestRudderTrim)
+            {
+                RegisterData(Definitions.RudderTrimDisabled, "RUDDER_TRIM_DISABLED", "Bool");
+                RequestData(Definitions.RudderTrimDisabled);
+            }
             _simConnect.SubscribeToSystemEvent(Definitions.AircraftLoaded, "AircraftLoaded");
         }
         private void RegisterData(Definitions id, string simVarName, string simVarType, float epsilon = 1)
@@ -348,13 +369,16 @@ namespace HandOnMouse
             {
                 Axis.MappingsRead(MappingFile()); // to reset axis info?!
             }
-            if (requestReverse) RequestData(Definitions.ThrottleLowerLimit);
-            if (requestSpeeds)  RequestData(Definitions.DesignCruiseSpeedFeetPerSec);
-            if (requestEngines) RequestData(Definitions.EnginesCount);
-            if (requestBrakes)  RequestData(Definitions.BrakesAvailable);
-            if (requestSpoiler) RequestData(Definitions.SpoilerAvailable);
-            if (requestGear)    RequestData(Definitions.IsGearRetractable);
-            if (requestFlaps)   RequestData(Definitions.FlapsAvailable);
+            if (requestReverse)         RequestData(Definitions.ThrottleLowerLimit);
+            if (requestSpeeds)          RequestData(Definitions.DesignCruiseSpeedFeetPerSec);
+            if (requestEngines)         RequestData(Definitions.EnginesCount);
+            if (requestBrakes)          RequestData(Definitions.BrakesAvailable);
+            if (requestSpoiler)         RequestData(Definitions.SpoilerAvailable);
+            if (requestGear)            RequestData(Definitions.IsGearRetractable);
+            if (requestFlaps)           RequestData(Definitions.FlapsAvailable);
+            if (requestElevatorTrim)    RequestData(Definitions.ElevatorTrimDisabled);
+            if (requestAileronTrim)     RequestData(Definitions.AileronTrimDisabled);
+            if (requestRudderTrim)      RequestData(Definitions.RudderTrimDisabled);
         }
         private void SimConnect_OnRecvQuit(SimConnect sender, SIMCONNECT_RECV data)
         {
@@ -578,6 +602,24 @@ namespace HandOnMouse
                         if (m.SimVarName == "GEAR HANDLE POSITION")
                             m.IsAvailable = false;
                 }
+                else if (i == (int)Definitions.ElevatorTrimDisabled && (double)data.dwData[0] != 0)
+                {
+                    foreach (var m in Axis.Mappings)
+                        if (m.SimVarName.StartsWith("ELEVATOR TRIM"))
+                            m.IsAvailable = false;
+                }
+                else if (i == (int)Definitions.AileronTrimDisabled && (double)data.dwData[0] != 0)
+                {
+                    foreach (var m in Axis.Mappings)
+                        if (m.SimVarName.StartsWith("AILERON TRIM"))
+                            m.IsAvailable = false;
+                }
+                else if (i == (int)Definitions.RudderTrimDisabled && (double)data.dwData[0] != 0)
+                {
+                    foreach (var m in Axis.Mappings)
+                        if (m.SimVarName.StartsWith("RUDDER_TRIM"))
+                            m.IsAvailable = false;
+                }
                 else if ((i == (int)Definitions.ThrottleLowerLimit) ||
                          (i == (int)Definitions.FlapsNumHandlePosition))
                 {
@@ -639,5 +681,8 @@ namespace HandOnMouse
         bool requestEngines = false;
         bool requestSpeeds = false;
         bool requestReverse = false;
+        bool requestElevatorTrim = false;
+        bool requestAileronTrim = false;
+        bool requestRudderTrim = false;
     }
 }
