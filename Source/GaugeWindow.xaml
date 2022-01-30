@@ -35,18 +35,18 @@
                             <ColumnDefinition Width="{Binding SimVarPositiveScaleString      , UpdateSourceTrigger=PropertyChanged}"/><!--, StringFormat={}{0:0.##}*}"/>-->
                             <ColumnDefinition Width="{Binding SimVarPositiveDetentScaleString, UpdateSourceTrigger=PropertyChanged}"/><!--, StringFormat={}{0:0.##}*}"/>-->
                         </Grid.ColumnDefinitions>
-                        <ProgressBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextBlock.TextAlignment="Left" BorderThickness="0"
+                            <ProgressBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextBlock.TextAlignment="Left" BorderThickness="1"
                             Value="{Binding Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
                             ToolTip="{Binding SimVarUnit, UpdateSourceTrigger=PropertyChanged}"
                             Minimum="{Binding SimVarMin, UpdateSourceTrigger=PropertyChanged}" 
                             Maximum="{Binding SimVarMax, UpdateSourceTrigger=PropertyChanged}">
+                            <ProgressBar.BorderBrush><SolidColorBrush Color="LightCyan"/></ProgressBar.BorderBrush>
                             <ProgressBar.Foreground>
-                                <SolidColorBrush Color="LightGray"
+                                <SolidColorBrush Color="LightCyan"
                                                  Opacity="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeOpacity, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
                             </ProgressBar.Foreground>
                             <ProgressBar.Background>
-                                <SolidColorBrush Color="DimGray"
-                                                 Opacity="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeOpacity, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"/>
+                                <SolidColorBrush Color="DarkCyan" Opacity="0.2"/>
                             </ProgressBar.Background>
                         </ProgressBar>
                         <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextAlignment="Left" FontWeight="DemiBold"

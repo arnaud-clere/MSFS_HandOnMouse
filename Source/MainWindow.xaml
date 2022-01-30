@@ -51,7 +51,8 @@
         <DockPanel Margin="0 3 0 0">
             <ComboBox DockPanel.Dock="Right" Width="50" IsEditable="True"
                 Text="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeOpacity, Mode=TwoWay}">
-                <ComboBoxItem>1 (opaque)</ComboBoxItem>
+                <ComboBoxItem ToolTip="Opaque">1</ComboBoxItem>
+                <ComboBoxItem>0.75</ComboBoxItem>
                 <ComboBoxItem>0.5</ComboBoxItem>
                 <ComboBoxItem>0.25</ComboBoxItem>
             </ComboBox>
@@ -59,7 +60,7 @@
         </DockPanel>
         <DockPanel Margin="0 3 0 0">
             <Button DockPanel.Dock="Right" Margin="3 0 0 0" x:Name="connectButton" Width="100" Background="White" Foreground="DarkGreen" BorderBrush="DarkGreen" Click="Connect_Click">CONNECT FS</Button>
-            <CheckBox 
+            <CheckBox IsEnabled="False"
                     IsChecked="False"
                     Content="Auto (re)connect FS"
                     ToolTip="Periodically tries to connect or reconnect to FS" Foreground="Red"/>
