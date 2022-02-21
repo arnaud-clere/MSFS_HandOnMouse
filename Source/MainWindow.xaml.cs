@@ -461,11 +461,8 @@ namespace HandOnMouse
                 Settings.Default.MappingFile = filePath.Replace(MappingsDir() + @"\", "");
                 foreach (var m in Axis.Mappings)
                 {
-                    if (m.VJoyId == 0)
-                    {
-                        m.PropertyChanged += new PropertyChangedEventHandler(Axis_SimVarValueChanged);
-                    }
-                    else
+                    m.PropertyChanged += new PropertyChangedEventHandler(Axis_SimVarValueChanged);
+                    if (m.VJoyId > 0)
                     {
                         if (_vJoy == null)
                         {
