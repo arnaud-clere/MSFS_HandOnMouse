@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 using Microsoft.Win32;
 
 using joystickapi;
-using System.Diagnostics;
 
 namespace HandOnMouse
 {

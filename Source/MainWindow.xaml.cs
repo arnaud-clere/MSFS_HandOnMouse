@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -7,19 +8,19 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
 
+using winuser;
+
+using vJoyInterfaceWrap;
+
 using Microsoft.FlightSimulator.SimConnect;
 using Microsoft.Win32;
 
-using winuser;
-
 using HandOnMouse.Properties;
-using System.Collections.Generic;
 
 namespace HandOnMouse
 {
@@ -85,10 +86,6 @@ namespace HandOnMouse
             Axis = 15
         }
 
-        IntPtr _hwnd;
-        SimConnect _simConnect;
-        bool _connected = false;
-
         public MainWindow()
         {
             Trace.WriteLine($"MainWindow {DateTime.Now}");
@@ -101,6 +98,7 @@ namespace HandOnMouse
             Settings.Default.PropertyChanged += new PropertyChangedEventHandler(Settings_Changed);
             TryReadMappings();
         }
+
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
@@ -359,7 +357,8 @@ namespace HandOnMouse
         }
         private void RequestData(Definitions id, SIMCONNECT_PERIOD period = SIMCONNECT_PERIOD.ONCE)
         {
-            _simConnect.RequestDataOnSimObject(id, id, (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, period, period > SIMCONNECT_PERIOD.ONCE ? SIMCONNECT_DATA_REQUEST_FLAG.CHANGED : SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
+            Debug.Assert(_simConnect != null);
+            _simConnect?.RequestDataOnSimObject(id, id, (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, period, period > SIMCONNECT_PERIOD.ONCE ? SIMCONNECT_DATA_REQUEST_FLAG.CHANGED : SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
         }
         private void SimConnect_OnRecvEventFilename(SimConnect sender, SIMCONNECT_RECV_EVENT_FILENAME data)
         {
@@ -453,19 +452,63 @@ namespace HandOnMouse
                 filePath = MappingFile();
             }
             var errors = Axis.MappingsRead(filePath);
-            if (errors.Length > 0)
-            {
-                var message = filePath + ":\n" + errors;
-                Trace.WriteLine(message);
-                MessageBox.Show(message, "HandOnMouse");
-            }
-            if (Axis.Mappings.Count == 0 && filePath != MappingFile())
+            if (Axis.Mappings.Count == 0 && filePath != MappingFile()) // revert to previous file
             {
                 Axis.MappingsRead(MappingFile());
             }
             else
             {
                 Settings.Default.MappingFile = filePath.Replace(MappingsDir() + @"\", "");
+                foreach (var m in Axis.Mappings)
+                {
+                    if (m.VJoyId == 0)
+                    {
+                        m.PropertyChanged += new PropertyChangedEventHandler(Axis_SimVarValueChanged);
+                    }
+                    else
+                    {
+                        if (_vJoy == null)
+                        {
+                            _vJoy = new vJoy();
+                            if (_vJoy.vJoyEnabled())
+                            {
+                                UInt32 dllVersion = 0, driverVersion = 0;
+                                if (!(_vJoy.DriverMatch(ref dllVersion, ref driverVersion) || (dllVersion == 536 && driverVersion == 537)))
+                                {
+                                    errors += m.SimVarName + ": " + $"vJoy DLL version {dllVersion} does not support installed vJoy driver version {driverVersion}\n";
+                                    _vJoy = null;
+                                }
+                            }
+                            else
+                            {
+                                errors += m.SimVarName + ": " + $"vJoy driver not installed or not enabled\n";
+                                _vJoy = null;
+                            }
+                        }
+                        if (_vJoy?.AcquireVJD(m.VJoyId) != true)
+                        {
+                            errors += m.SimVarName + ": " + $"vJoy axis {m.VJoyId} not acquired\n";
+                            m.IsAvailable = false;
+                        }
+                        var status = _vJoy?.GetVJDStatus(m.VJoyId);
+                        if (status != VjdStat.VJD_STAT_OWN)
+                        {
+                            errors += m.SimVarName + ": " + $"vJoy device {m.VJoyId} not available: {status}\n";
+                            m.IsAvailable = false;
+                        }
+                        else if (_vJoy?.GetVJDAxisExist(m.VJoyId, m.VJoyAxis) != true)
+                        {
+                            errors += m.SimVarName + ": " + $"vJoy device {m.VJoyId} axis {m.VJoyAxis} not found\n";
+                            m.IsAvailable = false;
+                        }
+                    }
+                }
+            }
+            if (errors.Length > 0)
+            {
+                var message = filePath + ":\n" + errors;
+                Trace.WriteLine(message);
+                MessageBox.Show(message, "HandOnMouse");
             }
         }
 
@@ -490,64 +533,46 @@ namespace HandOnMouse
         {
             foreach (var m in Axis.Mappings)
             {
-                var errors = m.UpdateTrigger();
-                if (errors == null)
-                {
-                    if (m.IsActive)
-                    {
-                        m.UpdateMove(move);
-                    }
-                    if (m.WaitButtonsReleased)
-                    {
-                        if (!m.IsActive) // CurrentChange end
-                        {
-                            m.CurrentChange = 0;
-                            // Keeping the remainder for the current change would mysteriously:
-                            // - increase a subsequent move in the opposite direction after even a long time
-                            // - decrease a subsequent move in the same direction to potentially insignificant moves
-                            if (m.SimVarChange != 0)
-                                UpdateSimVar(m);
-                        }
-                    }
-                    else // !m.WaitButtonsReleased
-                    {
-                        if (m.SimVarChange != 0) // CurrentChange end
-                        {
-                            m.CurrentChange = 0;
-                            // Since SimVarChange is proportional to CurrentChange modulo SimVarIncrement
-                            UpdateSimVar(m);
-                        }
-                    }
-                    m.ChangeColorForText = m.SimVarChange != 0 && m.CurrentChange == 0 ? Colors.Red : Axis.TextColorFromChange(m.CurrentChange);
-                }
-                else if (!displayedErrors.Contains(errors)) 
+                var errors = m.UpdateMove(move);
+                if (errors != null && !displayedErrors.Contains(errors))
                 {
                     displayedErrors.Add(errors);
                     Trace.WriteLine(errors); 
-                    MessageBox.Show(errors, "HandOnMouse"); 
+                    MessageBox.Show(errors, "HandOnMouse");
                 }
             }
         }
         private void Timer_Tick(object sender, EventArgs e)
         {
+            Mouse_Move(new Vector(0,0)); // to at least detect a trigger change without mouse move
             foreach (var m in Axis.Mappings)
             {
-                m.UpdateTrigger();
                 m.UpdateTime(((DispatcherTimer)sender).Interval.TotalSeconds);
-                if (m.SimVarChange != 0)
-                    UpdateSimVar(m);
             }
         }
-        private void UpdateSimVar(Axis m)
+        private void Axis_SimVarValueChanged(object sender, PropertyChangedEventArgs p)
         {
-            Debug.Assert(m.Id >= 0);
-            if (_connected && m.VJoyId == 0)
-                _simConnect?.RequestDataOnSimObject(ReadAxisValueId(m.Id), ReadAxisValueId(m.Id), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_PERIOD.ONCE, SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
-            else
-                m.UpdateSimVarValue(m.SimVarValue);
+            var m = (Axis)sender;
+            if (m.IsAvailable && p.PropertyName == "SimVarValue")
+            {
+                if (m.VJoyId > 0)
+                {
+                    _vJoy?.SetAxis((int)m.SimVarValue, m.VJoyId, m.VJoyAxis);
+                }
+                else if (m.ForAllEngines)
+                {
+                    SmartEngineAxis newValue;
+                    newValue.Engine1 = newValue.Engine2 = newValue.Engine3 = newValue.Engine4 = m.SimVarValue;
+                    _simConnect?.SetDataOnSimObject(RequestId(m.Id, RequestType.SmartAxisValue), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, newValue);
+                }
+                else
+                {
+                    _simConnect?.SetDataOnSimObject(RequestId(m.Id), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, m.SimVarValue);
+                }
+            }
         }
 
-        public void SimConnect_OnRecvData(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA data)
+        private void SimConnect_OnRecvData(SimConnect sender, SIMCONNECT_RECV_SIMOBJECT_DATA data)
         {
             // if (data.dwObjectID != 1) return;
             // if (data.dwentrynumber != 1 || data.dwoutof != 1 || data.dwDefineCount != 1) return;
@@ -640,30 +665,13 @@ namespace HandOnMouse
                         {
                             var inSim = (SmartTrimAxis)data.dwData[0];
                             inSimValue = inSim.Trim;
-                            m.UpdateTrigger();
-                            if (m.IsActive && !double.IsNaN(m.TrimmedAxis))
-                            {
-                                trimmedAxisChange = m.SimVarScale * (m.TrimmedAxis - inSim.TrimmedAxis) / (1 - -1) /* position scale */;
-                            }
-                            m.TrimmedAxis = inSim.TrimmedAxis;
+                            trimmedAxisChange = m.TrimmedAxis - inSim.TrimmedAxis;
                         }
                         else // requestType == RequestType.AxisValue
                         {
                             inSimValue = (double)data.dwData[0];
                         }
-                        if (m.UpdateSimVarValue(m.IgnoreSimValues ? m.SimVarValue : inSimValue, trimmedAxisChange))
-                        {
-                            if (m.ForAllEngines)
-                            {
-                                SmartEngineAxis newValue;
-                                newValue.Engine1 = newValue.Engine2 = newValue.Engine3 = newValue.Engine4 = m.SimVarValue;
-                                _simConnect?.SetDataOnSimObject(RequestId(axisId, RequestType.SmartAxisValue), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, newValue);
-                            }
-                            else
-                            {
-                                _simConnect?.SetDataOnSimObject(RequestId(axisId), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, m.SimVarValue);
-                            }
-                        }
+                        m.UpdateSimVarValue(inSimValue - m.SimVarValue, trimmedAxisChange);
                     }
                 }
             }
@@ -672,7 +680,12 @@ namespace HandOnMouse
 
         // Implementation
 
+        IntPtr _hwnd;
+        SimConnect _simConnect;
+        vJoy _vJoy;
+        bool _connected = false;
         GaugeWindow _gaugeWindow = new GaugeWindow();
+
         List<string> displayedErrors = new List<string>();
         bool requestFlaps = false;
         bool requestGear = false;

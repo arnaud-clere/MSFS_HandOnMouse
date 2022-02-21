@@ -1,17 +1,18 @@
-﻿using HandOnMouse.Properties;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Media;
+using System.Windows.Input;
+
 using winbase;
 using winuser;
 
-using vJoyInterfaceWrap;
-using System.Windows.Input;
+using HandOnMouse.Properties;
 
 namespace HandOnMouse
 {
@@ -145,36 +146,6 @@ namespace HandOnMouse
                 m.SimVarMax = 32767;
                 m.VJoyAxisZero = uint.Parse(Kernel32.ReadIni(filePath, "VJoyAxisZero", section, "0").Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture);
                 m.VJoyAxisIsThrottle = bool.Parse(Kernel32.ReadIni(filePath, "VJoyAxisIsThrottle", section, "False").Trim());
-                if (_vJoy == null)
-                {
-                    _vJoy = new vJoy();
-                    if (_vJoy.vJoyEnabled())
-                    {
-                        UInt32 dllVersion = 0, driverVersion = 0;
-                        if (!(_vJoy.DriverMatch(ref dllVersion, ref driverVersion) || (dllVersion == 536 && driverVersion == 537)))
-                        {
-                            errors += section + ": " + $"vJoy DLL version {dllVersion} does not support installed vJoy driver version {driverVersion}\n";
-                            _vJoy = null;
-                        }
-                    }
-                    else
-                    {
-                        errors += section + ": " + $"vJoy driver not installed or not enabled\n";
-                        _vJoy = null;
-                    }
-                }
-                _vJoy?.AcquireVJD(m.VJoyId);
-                var status = _vJoy?.GetVJDStatus(m.VJoyId);
-                if (status != VjdStat.VJD_STAT_OWN)
-                {
-                    errors += section + ": " + $"vJoy device {m.VJoyId} not available: {status}\n";
-                    m.VJoyId = 0;
-                }
-                else if (!_vJoy?.GetVJDAxisExist(m.VJoyId, m.VJoyAxis) ?? false)
-                {
-                    errors += section + ": " + $"vJoy device {m.VJoyId} axis {m.VJoyAxis} not found\n";
-                    m.VJoyId = 0;
-                }
             }
             else
             {
@@ -192,8 +163,8 @@ namespace HandOnMouse
                 Kernel32.ReadIni(customFilePath, "Sensitivity", section, "1"), NumberStyles.Float, CultureInfo.InvariantCulture)));
             m.SensitivityAtCruiseSpeed = bool.Parse(
                 Kernel32.ReadIni(customFilePath, "SensitivityAtCruiseSpeed", section, "False").Trim());
-            m.IgnoreSimValues = bool.Parse(
-                Kernel32.ReadIni(customFilePath, "IgnoreSimValues", section, "False").Trim());
+            m.AllowedExternalChangePerSec = Math.Max(0, Math.Min(20, double.Parse(
+                Kernel32.ReadIni(customFilePath, "AllowedExternalChangePerSec", section, "20"), NumberStyles.Float, CultureInfo.InvariantCulture)));
             var directions = Kernel32.ReadIni(customFilePath, "IncreaseDirection", section, "Push").Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             m.IncreaseDirection = (Direction)Enum.Parse(typeof(Direction), directions[0].Trim(), true);
             if (directions.Length > 1)
@@ -247,7 +218,7 @@ namespace HandOnMouse
                     Kernel32.WriteIni(customFilePath, "MouseButtonsFilter", section, m.MouseButtonsText ?? "");
                     Kernel32.WriteIni(customFilePath, "Sensitivity", section, m.Sensitivity.ToString(CultureInfo.InvariantCulture));
                     Kernel32.WriteIni(customFilePath, "SensitivityAtCruiseSpeed", section, m.SensitivityAtCruiseSpeed.ToString());
-                    Kernel32.WriteIni(customFilePath, "IgnoreSimValues", section, m.IgnoreSimValues.ToString());
+                    Kernel32.WriteIni(customFilePath, "AllowedExternalChangePerSec", section, m.AllowedExternalChangePerSec.ToString(CultureInfo.InvariantCulture));
                     Kernel32.WriteIni(customFilePath, "TrimCounterCenteringMove", section, m.TrimCounterCenteringMove.ToString());
                     Kernel32.WriteIni(customFilePath, "WaitButtonsReleased", section, m.WaitButtonsReleased.ToString());
                     Kernel32.WriteIni(customFilePath, "PositiveDetent", section, m.PositiveDetent.ToString());
@@ -289,6 +260,7 @@ namespace HandOnMouse
                 (byte)(maxChangeColor.G * change),
                 (byte)(maxChangeColor.B * change));
         }
+        
         static public readonly IReadOnlyList<string> EngineSimVars = new string[] {
             "GENERAL ENG THROTTLE LEVER POSITION",
             "GENERAL ENG MIXTURE LEVER POSITION",
@@ -303,8 +275,6 @@ namespace HandOnMouse
         static public double DesignCruiseSpeedKnots;
         static public double IndicatedAirSpeedKnots;
 
-        static private vJoy _vJoy;
-
         public Axis()
         {
             SimVarName = "";
@@ -316,11 +286,82 @@ namespace HandOnMouse
             MouseButtonsFilter = RAWMOUSE.RI_MOUSE.Reserved;
             TrimmedAxis = double.NaN;
             IsAvailable = true;
+            AllowedExternalChangePerSec = 20;
         }
 
-        // R/O properties
+        // Configurable properties
 
         public int Id { get { return Mappings.IndexOf(this); } }
+
+        public uint VJoyId { get; set; }
+        public HID_USAGES VJoyAxis { get; private set; }
+
+        /// <summary>For smart axis features only (value sent to vJoy remains in range 0..32763)</summary>
+        public uint VJoyAxisZero { get; private set; }
+        public bool VJoyAxisIsThrottle { get; private set; }
+
+        public string SimVarName
+        {
+            get { return _simVarName; }
+            private set
+            {
+                _simVarName = value;
+                IsThrottle = _simVarName.StartsWith("GENERAL ENG THROTTLE LEVER POSITION");
+                foreach (var v in EngineSimVars)
+                    if (v == _simVarName)
+                        ForAllEngines = true;
+            }
+        }
+        public string SimVarUnit { get; private set; }
+        public double SimVarMin
+        {
+            get { return _simVarMin; }
+            private set
+            {
+                if (_simVarMin != value && value <= _simVarMax)
+                {
+                    _simVarMin = value;
+                    NotifyPropertyChanged();
+                    NotifyPropertyChanged("SimVarNegativeScaleString");
+                    NotifyPropertyChanged("SimVarPositiveScaleString");
+                }
+            }
+        }
+        public double SimVarMax
+        {
+            get { return _simVarMax; }
+            private set
+            {
+                if (_simVarMax != value && value >= _simVarMin)
+                {
+                    _simVarMax = value;
+                    NotifyPropertyChanged();
+                    NotifyPropertyChanged("SimVarNegativeScaleString");
+                    NotifyPropertyChanged("SimVarPositiveScaleString");
+                }
+            }
+        }
+        public Brush SimVarNegativeColor { get; private set; }
+        public Brush SimVarPositiveColor { get; private set; }
+        public Brush SimVarPositiveDetentColor { get; private set; }
+        public double AllowedExternalChangePerSec
+        {
+            get { return _allowedExternalChangePerSec; }
+            set
+            {
+                _allowedExternalChangePerSec = Math.Max(0, Math.Min(20, value));
+            }
+        }
+
+        /// <summary>A filter of mouse buttons down encoded as a combination of RAWMOUSE.RI_MOUSE</summary>
+        public RAWMOUSE.RI_MOUSE MouseButtonsFilter { get { return _mouseButtonsFilter; } set { if (_mouseButtonsFilter != value) { _mouseButtonsFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("MouseButtonsText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("IsVisible"); NotifyPropertyChanged("Text"); } } }
+        public Key KeyboardKeyDownFilter { get { return _keyboardKeyDownFilter; } set { if (_keyboardKeyDownFilter != value) { _keyboardKeyDownFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("KeyboardKeyText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("IsVisible"); NotifyPropertyChanged("Text"); } } }
+        public Controller.Buttons ControllerButtonsFilter { get { return _controllerButtonsFilter; } set { if (_controllerButtonsFilter != value) { _controllerButtonsFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("ControllerButtonsText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("IsVisible"); NotifyPropertyChanged("Text"); } } }
+        public ushort ControllerManufacturerId { get; set; }
+        public ushort ControllerProductId { get; set; }
+
+        // Read only properties
+
         public string Text
         {
             get
@@ -424,6 +465,24 @@ namespace HandOnMouse
         public bool IsTrim { get { return AxisForTrim.ContainsKey(Name); } }
         public string TrimmedAxisName { get { return AxisForTrim.ContainsKey(Name) ? AxisForTrim[Name] : "Not Available"; } }
 
+        public double SimVarScale { get { return _simVarMax - _simVarMin; } }
+        public double SimVarIncrement
+        {
+            get
+            {
+                var u = SimVarUnit.ToLowerInvariant();
+                return
+                    u == "number" || u == "bool" ? 1 :
+                    SimVarScale / Settings.Default.ContinuousSimVarIncrements;
+            }
+        }
+        public double SimVarNegativeScale { get { var zero = VJoyAxisZero > 0 ? VJoyAxisZero : 0; return _simVarMin < zero ? _simVarMax < zero ? 1 : (zero - _simVarMin) / SimVarScale : 0; } }
+        public double SimVarPositiveScale { get { var zero = VJoyAxisZero > 0 ? VJoyAxisZero : 0; var positiveDetent = PositiveDetent > 0 ? PositiveDetent : _simVarMax; return (positiveDetent - zero) / SimVarScale; } }
+        public double SimVarPositiveDetentScale { get { var zero = VJoyAxisZero > 0 ? VJoyAxisZero : 0; var positiveDetent = PositiveDetent > 0 ? PositiveDetent : _simVarMax; return _simVarMax > positiveDetent ? _simVarMin > positiveDetent ? 1 : (_simVarMax - positiveDetent) / SimVarScale : 0; } }
+        public string SimVarNegativeScaleString { get { return string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", SimVarNegativeScale); } }
+        public string SimVarPositiveScaleString { get { return string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", SimVarPositiveScale); } }
+        public string SimVarPositiveDetentScaleString { get { return string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", SimVarPositiveDetentScale); } }
+
         public string VJoyAxisName
         {
             get
@@ -447,97 +506,6 @@ namespace HandOnMouse
                     return "";
                 } 
             }
-        }
-        public uint VJoyId { get; private set; }
-        public HID_USAGES VJoyAxis { get; private set; }
-
-        /// <summary>For smart axis features only (value sent to vJoy remains in range 0..32763)</summary>
-        public uint VJoyAxisZero { get; private set; }
-        public bool VJoyAxisIsThrottle { get; private set; }
-
-        public string SimVarName 
-        { 
-            get { return _simVarName; } 
-            private set 
-            { 
-                _simVarName = value; 
-                IsThrottle = _simVarName.StartsWith("GENERAL ENG THROTTLE LEVER POSITION");
-                foreach (var v in EngineSimVars)
-                    if (v == _simVarName)
-                        ForAllEngines = true;
-            }
-        }
-        public string SimVarUnit { get; private set; }
-        public double SimVarIncrement 
-        { 
-            get 
-            {
-                var u = SimVarUnit.ToLowerInvariant(); 
-                return 
-                    u == "number" || u == "bool" ? 1 :
-                    SimVarScale / Settings.Default.ContinuousSimVarIncrements; 
-            } 
-        }
-        public double SimVarMin
-        {
-            get { return _simVarMin; }
-            private set
-            {
-                if (_simVarMin != value && value <= _simVarMax)
-                {
-                    _simVarMin = value;
-                    NotifyPropertyChanged();
-                    NotifyPropertyChanged("SimVarNegativeScaleString");
-                    NotifyPropertyChanged("SimVarPositiveScaleString");
-                }
-            }
-        }
-        public double SimVarMax
-        {
-            get { return _simVarMax; }
-            private set
-            {
-                if (_simVarMax != value && value >= _simVarMin)
-                {
-                    _simVarMax = value;
-                    NotifyPropertyChanged();
-                    NotifyPropertyChanged("SimVarNegativeScaleString");
-                    NotifyPropertyChanged("SimVarPositiveScaleString");
-                }
-            }
-        }
-        public double SimVarScale { get { return _simVarMax - _simVarMin; } }
-        public double SimVarNegativeScale       { get { var zero = VJoyAxisZero > 0 ? VJoyAxisZero : 0; return _simVarMin < zero ? _simVarMax < zero ? 1 : (zero-_simVarMin)/SimVarScale : 0; } }
-        public double SimVarPositiveScale       { get { var zero = VJoyAxisZero > 0 ? VJoyAxisZero : 0; var positiveDetent = PositiveDetent > 0 ? PositiveDetent : _simVarMax; return (positiveDetent-zero)/SimVarScale; } }
-        public double SimVarPositiveDetentScale { get { var zero = VJoyAxisZero > 0 ? VJoyAxisZero : 0; var positiveDetent = PositiveDetent > 0 ? PositiveDetent : _simVarMax; return _simVarMax > positiveDetent ? _simVarMin > positiveDetent ? 1 : (_simVarMax-positiveDetent)/SimVarScale : 0; } }
-        public string SimVarNegativeScaleString       { get { return string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", SimVarNegativeScale); } }
-        public string SimVarPositiveScaleString       { get { return string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", SimVarPositiveScale); } }
-        public string SimVarPositiveDetentScaleString { get { return string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", SimVarPositiveDetentScale); } }
-        public Brush SimVarNegativeColor { get; private set; }
-        public Brush SimVarPositiveColor { get; private set; }
-        public Brush SimVarPositiveDetentColor { get; private set; }
-        public double SimVarValue
-        {
-            get { return _simVarValue; }
-            private set
-            {
-                _simVarValue = Math.Max(SimVarMin, Math.Min(SimVarMax, value));
-            }
-        }
-        public double SimVarChange
-        {
-            get { return _simVarChange; }
-            private set
-            {
-                var newValue = Math.Max(SimVarMin - SimVarValue, Math.Min(SimVarMax - SimVarValue, value));
-                newValue = SimVarIncrement * (int)(newValue / SimVarIncrement);
-                _simVarChange = newValue;
-            }
-        }
-
-        public double Value
-        {
-            get { return _simVarValue + _simVarChange; }
         }
 
         public bool IsVisible { get { return _isAvailable && TriggerText != null && !_isHidden; } }
@@ -588,20 +556,11 @@ namespace HandOnMouse
         public double DecreaseScaleTimeSecs { get { return _decreaseScaleTimeSecs; } set { _decreaseScaleTimeSecs = value; NotifyPropertyChanged(); } }
         public bool IsThrottle { get; private set; }
         public bool ForAllEngines { get; private set; }
-        /// <summary>A filter of mouse buttons down encoded as a combination of RAWMOUSE.RI_MOUSE</summary>
-        
-        public RAWMOUSE.RI_MOUSE MouseButtonsFilter { get { return _mouseButtonsFilter; } set { if (_mouseButtonsFilter != value) { _mouseButtonsFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("MouseButtonsText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("IsVisible"); NotifyPropertyChanged("Text"); } } }
 
-        public Key KeyboardKeyDownFilter { get { return _keyboardKeyDownFilter; } set { if (_keyboardKeyDownFilter != value) { _keyboardKeyDownFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("KeyboardKeyText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("IsVisible"); NotifyPropertyChanged("Text"); } } }
-
-        public Controller.Buttons ControllerButtonsFilter { get { return _controllerButtonsFilter; } set { if (_controllerButtonsFilter != value) { _controllerButtonsFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("ControllerButtonsText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("IsVisible"); NotifyPropertyChanged("Text"); } } }
-        public ushort ControllerManufacturerId { get; set; }
-        public ushort ControllerProductId { get; set; }
-
-        // R/W properties
+        // Updated properties
 
         public bool IsActive { get; set; }
-        public double CurrentChange 
+        public double InputChange 
         {
             get { return _change; }
             set
@@ -621,16 +580,54 @@ namespace HandOnMouse
                 }
             }
         }
-        public bool IgnoreSimValues { get; set; }
+        public double SimVarChange
+        {
+            get { return _simVarChange; }
+            private set
+            {
+                var newValue = Math.Max(SimVarMin - SimVarValue, Math.Min(SimVarMax - SimVarValue, value));
+                newValue = SimVarIncrement * (int)(newValue / SimVarIncrement);
+                _simVarChange = newValue;
+            }
+        }
+        public double SimVarValue
+        {
+            get { return _simVarValue; }
+            private set
+            {
+                _simVarValue = Math.Max(SimVarMin, Math.Min(SimVarMax, value));
+            }
+        }
+        public double Value
+        {
+            get { return _simVarValue + _simVarChange; }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         // Methods
 
-        // Events:
-        // RawInput:
-        //    buttons: Change+=lastOffset ; SimVarOffset=Change%SimVarIncrement
-        //   !buttons: Change=0
-        // SimConnect:
-        //   SimVarValue = simValue+SimVarOffset ; SimVarOffset=0
+        /// <seealso cref="https://www.plantuml.com/plantuml/uml/"/>
+        //! @startuml
+        //! Mouse -> HOM : Mouse_Move\n(trigger, move)
+        //! HOM -> Sim : RequestData(...,SIM_FRAME)
+        //! HOM <- Timer : Timer_Tick\n(decrease)
+        //! alt AllowedExternalChange > 0 && _connected && ...
+        //! HOM -> Sim : RequestData(...,ONCE)
+        //! ...
+        //! Mouse -> HOM : Mouse_Move
+        //! Sim -> HOM : SimConnect_OnRecvData\n(newSimValue)
+        //! end
+        //! rnote over HOM
+        //! homChange = UpdateSimVarValue(simValue, extChange,...)
+        //! endrnote
+        //! alt homChange<>0
+        //! HOM -> Sim : SimConnect.SetDataOnSimObject(simValue+homChange)
+        //! end
+        //! Mouse -> HOM : Mouse_Move
+        //! HOM <- Timer : Timer_Tick
+        //! Mouse -> HOM : Mouse_Move
+        //! @enduml
 
         public string UpdateTrigger()
         {
@@ -665,52 +662,82 @@ namespace HandOnMouse
                 !plugged ? $"Controller mapped to {Name} not plugged: {Controller.Get(ControllerManufacturerId, ControllerProductId)?.Name}" :
                 null;
         }
-        public void UpdateMove(Vector move)
+        public string UpdateMove(Vector move)
         {
-            // Ignore smallest of changes in XY directions to avoid changing 2 Axis at the same time and increase the effect of SmartIncreaseDirection
-            if (Math.Abs(move.X) < Math.Abs(move.Y))
-                move.X = 0;
-            else
-                move.Y = 0;
-
-            var d = IncreaseDirection;
-            double change = // between negative/positive detent(s)
-                    d == Direction.Push ? -move.Y :
-                    d == Direction.Draw ? move.Y :
-                    d == Direction.Right ? move.X : -move.X;
-            var d2 = IncreaseDirection2;
-            if (change == 0 && d2 != null)
-                change =
-                    d2 == Direction.Push ? -move.Y :
-                    d2 == Direction.Draw ? move.Y :
-                    d2 == Direction.Right ? move.X : -move.X;
-
-            var inDetent =
-                (IsThrottle && Math.Abs(Value) < SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100) ||
-                (VJoyAxisIsThrottle && VJoyAxisZero > 0 && Math.Abs(Value - VJoyAxisZero) < SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100) ||
-                (PositiveDetent > 0 && Math.Abs(Value - PositiveDetent) < SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100);
-            var negativeDetent =
-                (IsThrottle && Value < 0) ||
-                (VJoyAxisIsThrottle && VJoyAxisZero > 0 && Value < VJoyAxisZero);
-            var positiveDetent =
-                PositiveDetent > 0 && PositiveDetent < Value;
-            var orthogonal = d == Direction.Push || d == Direction.Draw ? Direction.Right : Direction.Draw;
-            
-            if (inDetent && move.X != 0 && orthogonal == Direction.Right)
-                change = -move.X;
-            else if (inDetent && move.Y != 0 && orthogonal == Direction.Draw)
-                change = -move.Y;
-            else if (negativeDetent && change <= 0)
-                change = orthogonal == Direction.Right ? -move.X : -move.Y;
-            else if (positiveDetent && change >= 0)
-                change = orthogonal == Direction.Right ? -move.X : -move.Y;
-
-            if (Settings.Default.Sensitivity > 0)
+            var errors = UpdateTrigger();
+            if (errors == null)
             {
-                CurrentChange += SmartSensitivity * change / (Settings.Default.Sensitivity * 100);
-                SimVarChange = SimVarScale * CurrentChange;
-                NotifyPropertyChanged("Value");
+                if (IsActive)
+                {
+                    // Ignore smallest of changes in XY directions to avoid changing 2 Axis at the same time and increase the effect of SmartIncreaseDirection
+                    if (Math.Abs(move.X) < Math.Abs(move.Y))
+                        move.X = 0;
+                    else
+                        move.Y = 0;
+
+                    var d = IncreaseDirection;
+                    double change = // between negative/positive detent(s)
+                            d == Direction.Push ? -move.Y :
+                            d == Direction.Draw ? move.Y :
+                            d == Direction.Right ? move.X : -move.X;
+                    var d2 = IncreaseDirection2;
+                    if (change == 0 && d2 != null)
+                        change =
+                            d2 == Direction.Push ? -move.Y :
+                            d2 == Direction.Draw ? move.Y :
+                            d2 == Direction.Right ? move.X : -move.X;
+
+                    var inDetent =
+                        (IsThrottle && Math.Abs(Value) < SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100) ||
+                        (VJoyAxisIsThrottle && VJoyAxisZero > 0 && Math.Abs(Value - VJoyAxisZero) < SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100) ||
+                        (PositiveDetent > 0 && Math.Abs(Value - PositiveDetent) < SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100);
+                    var negativeDetent =
+                        (IsThrottle && Value < 0) ||
+                        (VJoyAxisIsThrottle && VJoyAxisZero > 0 && Value < VJoyAxisZero);
+                    var positiveDetent =
+                        PositiveDetent > 0 && PositiveDetent < Value;
+                    var orthogonal = d == Direction.Push || d == Direction.Draw ? Direction.Right : Direction.Draw;
+            
+                    if (inDetent && move.X != 0 && orthogonal == Direction.Right)
+                        change = -move.X;
+                    else if (inDetent && move.Y != 0 && orthogonal == Direction.Draw)
+                        change = -move.Y;
+                    else if (negativeDetent && change <= 0)
+                        change = orthogonal == Direction.Right ? -move.X : -move.Y;
+                    else if (positiveDetent && change >= 0)
+                        change = orthogonal == Direction.Right ? -move.X : -move.Y;
+
+                    if (Settings.Default.Sensitivity > 0)
+                    {
+                        InputChange += SmartSensitivity * change / (Settings.Default.Sensitivity * 100);
+                        SimVarChange = SimVarScale * InputChange;
+                        NotifyPropertyChanged("Value");
+                    }
+                }
+                if (WaitButtonsReleased)
+                {
+                    if (!IsActive) // InputChange end
+                    {
+                        InputChange = 0;
+                        // Keeping the remainder for the current change would mysteriously:
+                        // - increase a subsequent move in the opposite direction after even a long time
+                        // - decrease a subsequent move in the same direction to potentially insignificant moves
+                        if (SimVarChange != 0)
+                            UpdateSimVarValue();
+                    }
+                }
+                else // !WaitButtonsReleased
+                {
+                    if (SimVarChange != 0) // InputChange end
+                    {
+                        InputChange = 0;
+                        // Since SimVarChange is proportional to InputChange modulo SimVarIncrement
+                        UpdateSimVarValue();
+                    }
+                }
+                ChangeColorForText = SimVarChange != 0 && InputChange == 0 ? Colors.Red : Axis.TextColorFromChange(InputChange);
             }
+            return errors;
         }
         public void UpdateTime(double intervalSecs)
         {
@@ -720,49 +747,54 @@ namespace HandOnMouse
                 SimVarChange = -Math.Sign(v) * Math.Min(Math.Abs(v), SimVarScale * intervalSecs / DecreaseScaleTimeSecs);
                 NotifyPropertyChanged("Value");
             }
+            if (SimVarChange != 0)
+            {
+                UpdateSimVarValue();
+            }
         }
 
-        /// <returns>True whenever valueInSim must be set to the updated SimVarValue</returns>
-        public bool UpdateSimVarValue(double valueInSim, double trimmedAxisChange = 0)
+        public void UpdateSimVarValue(double externalChange = 0, double trimmedAxisChange = 0)
         {
-            if (valueInSim < SimVarMin-SimVarIncrement)
+            if (!double.IsNaN(TrimmedAxis))
             {
-                CurrentChange = SimVarChange = 0; // Mouse input may be defined by the user for [SimVarMin..SimVarMax] range on purpose
-                return false;
+                TrimmedAxis -= trimmedAxisChange;
+                UpdateTrigger();
+                if (IsActive)
+                {
+                    trimmedAxisChange = SimVarScale * trimmedAxisChange / (1 - -1) /* position scale */;
+                }
             }
-            if (valueInSim > SimVarMax+SimVarIncrement)
-            {
-                CurrentChange = SimVarChange = 0; // Mouse input may be defined by the user for [SimVarMin..SimVarMax] range on purpose
-                return false;
-            }
-            bool changed = false;
-            if (SimVarValue != valueInSim)
-            {
-                SimVarValue = valueInSim;
-                changed = true;
-            }
-            if (SimVarChange != 0 && (!WaitButtonsReleased || CurrentChange == 0))
-            {
-                SimVarValue += SimVarChange;
-                SimVarChange = 0;
-                changed = true;
-            }
-            if (trimmedAxisChange != 0)
-            {
-                SimVarValue += SmartSensitivity * trimmedAxisChange;
-                changed = true;
-            }
-            if (changed)
-                NotifyPropertyChanged("Value");
 
-            if (VJoyId > 0)
+            var valueInSim = SimVarValue + externalChange;
+            if (valueInSim < -SimVarIncrement+SimVarMin || SimVarMax+SimVarIncrement < valueInSim)
             {
-                _vJoy?.SetAxis((int)SimVarValue, VJoyId, VJoyAxis);
-                return false;
+                InputChange = SimVarChange = 0; // to allow user to restrict HandOnMouse action to [SimVarMin..SimVarMax] range on purpose
             }
             else
             {
-                return SimVarValue != valueInSim;
+                var lastSimVarValue = SimVarValue;
+                var lastUpdateElapsedSecs = _lastUpdate.Elapsed.TotalSeconds;
+                if (externalChange != 0)
+                    _lastUpdate.Restart();
+
+                // HandOnMouse changes
+                if (SimVarChange != 0 && (!WaitButtonsReleased || InputChange == 0))
+                {
+                    SimVarValue += SimVarChange;
+                    SimVarChange = 0;
+                }
+                if (trimmedAxisChange != 0)
+                {
+                    SimVarValue += SmartSensitivity * trimmedAxisChange;
+                }
+
+                SimVarValue += externalChange * Math.Min(1, AllowedExternalChangePerSec * lastUpdateElapsedSecs);
+
+                if (Math.Abs(lastSimVarValue - SimVarValue) >= SimVarIncrement) 
+                    NotifyPropertyChanged("Value");
+
+                if (Math.Abs(SimVarValue - valueInSim) >= SimVarIncrement)
+                    NotifyPropertyChanged("SimVarValue");
             }
         }
         public void UpdateSimInfo(double simInfo)
@@ -779,14 +811,12 @@ namespace HandOnMouse
             }
         }
 
-        // Events
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
         // Implementation
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = "") => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
+        private Stopwatch _lastUpdate = new Stopwatch();
         private double _change;
+        private double _allowedExternalChangePerSec;
         private Color _color;
         private double _decreaseScaleTimeSecs;
         private bool _disableIncreaseDirection2;
