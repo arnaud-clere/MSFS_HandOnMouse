@@ -284,7 +284,6 @@ namespace HandOnMouse
             ChangeColorForText = Colors.Black;
             IncreaseDirection = Direction.Push;
             MouseButtonsFilter = RAWMOUSE.RI_MOUSE.Reserved;
-            TrimmedAxis = double.NaN;
             IsAvailable = true;
             AllowedExternalChangePerSec = 20;
         }
@@ -755,14 +754,11 @@ namespace HandOnMouse
 
         public void UpdateSimVarValue(double externalChange = 0, double trimmedAxisChange = 0)
         {
-            if (!double.IsNaN(TrimmedAxis))
+            if (trimmedAxisChange != 0)
             {
                 TrimmedAxis -= trimmedAxisChange;
                 UpdateTrigger();
-                if (IsActive)
-                {
-                    trimmedAxisChange = SimVarScale * trimmedAxisChange / (1 - -1) /* position scale */;
-                }
+                trimmedAxisChange = IsActive ? SimVarScale * trimmedAxisChange / (1 - -1) /* position scale */ : 0;
             }
 
             var valueInSim = SimVarValue + externalChange;
