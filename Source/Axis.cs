@@ -849,7 +849,7 @@ namespace HandOnMouse
                 }
                 catch (Exception e) { errors += section + "/" + i + ": " + e.Message + '\n'; }
             }
-            return Brushes.Transparent;
+            return Brushes.LightCyan;
         }
     }
 }
