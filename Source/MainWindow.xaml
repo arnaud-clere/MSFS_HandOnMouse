@@ -83,7 +83,7 @@
                                 Text="{Binding SimVarMin, UpdateSourceTrigger=PropertyChanged}"></TextBlock>
                         <TextBlock Width="40" DockPanel.Dock="Right" TextAlignment="Center"
                                 Text="{Binding SimVarMax, UpdateSourceTrigger=PropertyChanged}"></TextBlock>
-                        <Grid>
+                        <Grid Margin="0 3 0 0">
                             <Grid.RowDefinitions>
                                 <RowDefinition/>
                                 <RowDefinition/>
