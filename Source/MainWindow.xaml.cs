@@ -367,6 +367,10 @@ namespace HandOnMouse
             if (data.uEventID == (uint)Definitions.AircraftLoaded)
             {
                 Axis.MappingsRead(MappingFile()); // to reset axis info?!
+                foreach (var m in Axis.Mappings)
+                {
+                    m.PropertyChanged += new PropertyChangedEventHandler(Axis_SimVarValueChanged);
+                }
             }
             if (requestReverse)         RequestData(Definitions.ThrottleLowerLimit);
             if (requestSpeeds)          RequestData(Definitions.DesignCruiseSpeedFeetPerSec);
@@ -461,7 +465,6 @@ namespace HandOnMouse
                 Settings.Default.MappingFile = filePath.Replace(MappingsDir() + @"\", "");
                 foreach (var m in Axis.Mappings)
                 {
-                    m.PropertyChanged += new PropertyChangedEventHandler(Axis_SimVarValueChanged);
                     if (m.VJoyId > 0)
                     {
                         if (_vJoy == null)
@@ -500,6 +503,10 @@ namespace HandOnMouse
                         }
                     }
                 }
+            }
+            foreach (var m in Axis.Mappings)
+            {
+                m.PropertyChanged += new PropertyChangedEventHandler(Axis_SimVarValueChanged);
             }
             if (errors.Length > 0)
             {
