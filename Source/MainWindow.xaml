@@ -99,7 +99,7 @@
                                 Minimum="{Binding SimVarMin, UpdateSourceTrigger=PropertyChanged}" 
                                 Maximum="{Binding SimVarMax, UpdateSourceTrigger=PropertyChanged}">
                                 <ProgressBar.Foreground><SolidColorBrush Color="LightGray"/></ProgressBar.Foreground>
-                                <ProgressBar.Background><SolidColorBrush Color="DimGray"  /></ProgressBar.Background>
+                                <ProgressBar.Background><SolidColorBrush Color="Gray"     /></ProgressBar.Background>
                             </ProgressBar>
                             <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextAlignment="Left" FontWeight="DemiBold"
                                 Text="{Binding Text, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
