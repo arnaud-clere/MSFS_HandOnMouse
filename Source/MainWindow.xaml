@@ -3,13 +3,15 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:HandOnMouse"
     xmlns:properties="clr-namespace:HandOnMouse.Properties" 
-    Title="HandOnMouse" SizeToContent="Height" Width="300"
+    Title="HandOnMouse" SizeToContent="Height" Width="300" 
+    Icon="mouse.ico"
     WindowStyle="SingleBorderWindow"
     WindowStartupLocation="CenterScreen"
     ResizeMode="CanResizeWithGrip" MinWidth="240" MinHeight="75"
     SizeChanged="Window_SizeChanged"
     MouseDown="Window_MouseDown"
-    Closing="Window_Closing" Icon="mouse.ico">
+    KeyDown="Window_KeyDown"
+    Closing="Window_Closing">
     <Window.Background><SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlColorKey}}"/></Window.Background>
     <Window.Resources>
         <Style TargetType="TextBlock">

@@ -71,13 +71,14 @@ namespace HandOnMouse
         const int WM_USER_SIMCONNECT = (int)WM.USER + 2;
 
         /// <summary>SimConnect Requests and Data Definitions are actually defined dynamically for each Axis in Axis.Mappings</summary>
-        public enum Definitions { 
-            None = 0, 
-            AircraftLoaded = 2, 
-            IndicatedAirSpeedKnots = 3, 
-            DesignCruiseSpeedFeetPerSec = 4, 
-            EnginesCount = 5, 
-            BrakesAvailable = 6, 
+        public enum Definitions
+        {
+            None = 0,
+            AircraftLoaded = 2,
+            IndicatedAirSpeedKnots = 3,
+            DesignCruiseSpeedFeetPerSec = 4,
+            EnginesCount = 5,
+            BrakesAvailable = 6,
             SpoilerAvailable = 7,
             FlapsAvailable = 8,
             IsGearRetractable = 9,
@@ -95,7 +96,7 @@ namespace HandOnMouse
 
             _gaugeWindow.DataContext = DataContext = new ViewModel();
             _gaugeWindow.Show();
-    
+
             InitializeComponent();
 
             Settings.Default.PropertyChanged += new PropertyChangedEventHandler(Settings_Changed);
@@ -124,7 +125,7 @@ namespace HandOnMouse
             Mouse.Device.RawMouseMove += new Mouse.RawMouseMoveHandler(Mouse_Move);
 
             var simFrameTimer = new DispatcherTimer();
-            simFrameTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000/36);
+            simFrameTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000 / 36);
             simFrameTimer.Tick += new EventHandler(Timer_Tick);
             simFrameTimer.Start();
         }
@@ -152,10 +153,19 @@ namespace HandOnMouse
         {
             if (e.ChangedButton == MouseButton.Left) DragMove();
         }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.System && e.SystemKey == Key.F4)
+            {
+                e.Handled = true;
+            }
+        }
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            if (_simConnect != null)
+            if (_simConnect != null && _connected)
             {
+                MessageBox.Show("Please DISCONNECT before closing!", "HandOnMouse");
                 e.Cancel = true;
             }
             else
@@ -171,7 +181,7 @@ namespace HandOnMouse
         }
         private void Window_Minimize(object sender, RoutedEventArgs e)
         {
-            WindowState = WindowState.Minimized; 
+            WindowState = WindowState.Minimized;
         }
         private void Window_Help(object sender, RoutedEventArgs e)
         {
@@ -182,14 +192,14 @@ namespace HandOnMouse
         {
             var b = (Button)sender;
             var w = new AxisWindow((Axis)((Button)sender).Tag);
-            var midBottom = b.PointToScreen(new Point((b.Width - w.MinWidth)/2, b.Height+3));
+            var midBottom = b.PointToScreen(new Point((b.Width - w.MinWidth) / 2, b.Height + 3));
 
             var m = PresentationSource.FromVisual(this).CompositionTarget.TransformToDevice;
             var windowsToDeviceX = m.M11;
             var windowsToDeviceY = m.M22;
-            
+
             w.Owner = this;
-            w.Top  = midBottom.Y / windowsToDeviceY;
+            w.Top = midBottom.Y / windowsToDeviceY;
             w.Left = midBottom.X / windowsToDeviceX;
             w.ShowDialog();
         }
@@ -226,12 +236,12 @@ namespace HandOnMouse
                 Disconnect();
             }
         }
-        private enum RequestType { AxisValue = 0, SmartAxisValue = 1, Count = SmartAxisValue+1 }
+        private enum RequestType { AxisValue = 0, SmartAxisValue = 1, Count = SmartAxisValue + 1 }
         private Definitions RequestId(int i, RequestType requestType = RequestType.AxisValue)
         {
             return Definitions.Axis + i + Axis.Mappings.Count * (int)requestType;
         }
-        private Definitions ReadAxisValueId(int i) 
+        private Definitions ReadAxisValueId(int i)
         {
             var m = Axis.Mappings[i];
             var requestType =
@@ -243,14 +253,14 @@ namespace HandOnMouse
         {
             _connected = true;
             var appVersion = new Version(
-                (int)data.dwApplicationVersionMajor, 
-                (int)data.dwApplicationVersionMinor, 
-                (int)data.dwApplicationBuildMajor, 
+                (int)data.dwApplicationVersionMajor,
+                (int)data.dwApplicationVersionMinor,
+                (int)data.dwApplicationBuildMajor,
                 (int)data.dwApplicationBuildMinor);
             var simConnectVersion = new Version(
-                (int)data.dwSimConnectVersionMajor, 
-                (int)data.dwSimConnectVersionMinor, 
-                (int)data.dwSimConnectBuildMajor, 
+                (int)data.dwSimConnectVersionMajor,
+                (int)data.dwSimConnectVersionMinor,
+                (int)data.dwSimConnectBuildMajor,
                 (int)data.dwSimConnectBuildMinor);
             Trace.WriteLine($"Connected to: {data.szApplicationName} appVersion: {appVersion} simConnectVersion:{simConnectVersion}");
 
@@ -269,8 +279,8 @@ namespace HandOnMouse
                 {
                     if (m.TrimCounterCenteringMove && Axis.AxisForTrim.ContainsKey(m.SimVarName))
                     {
-                        RegisterData(RequestId(id), m.SimVarName, m.SimVarUnit, (float)(m.SimVarScale/Settings.Default.ContinuousSimVarIncrements));
-                        
+                        RegisterData(RequestId(id), m.SimVarName, m.SimVarUnit, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements));
+
                         _simConnect.AddToDataDefinition(ReadAxisValueId(id), m.SimVarName, m.SimVarUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
                         _simConnect.AddToDataDefinition(ReadAxisValueId(id), Axis.AxisForTrim[m.SimVarName], "Position", SIMCONNECT_DATATYPE.FLOAT64, (float)((1 - -1) / Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
                         _simConnect.RegisterDataDefineStruct<SmartTrimAxis>(ReadAxisValueId(id));
@@ -278,11 +288,11 @@ namespace HandOnMouse
                     }
                     else if (m.ForAllEngines)
                     {
-                        RegisterData(RequestId(id), m.SimVarName+":1", m.SimVarUnit, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements));
+                        RegisterData(RequestId(id), m.SimVarName + ":1", m.SimVarUnit, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements));
                         RequestData(RequestId(id), SIMCONNECT_PERIOD.SIM_FRAME);
-                        
+
                         for (uint engineId = 1; engineId < 5; engineId++)
-                            _simConnect.AddToDataDefinition(RequestId(id, RequestType.SmartAxisValue), m.SimVarName+":"+engineId, m.SimVarUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
+                            _simConnect.AddToDataDefinition(RequestId(id, RequestType.SmartAxisValue), m.SimVarName + ":" + engineId, m.SimVarUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
                         _simConnect.RegisterDataDefineStruct<SmartEngineAxis>(RequestId(id, RequestType.SmartAxisValue));
                     }
                     else
@@ -382,16 +392,16 @@ namespace HandOnMouse
                     m.PropertyChanged += new PropertyChangedEventHandler(Axis_SimVarValueChanged);
                 }
             }
-            if (requestReverse)         RequestData(Definitions.ThrottleLowerLimit);
-            if (requestSpeeds)          RequestData(Definitions.DesignCruiseSpeedFeetPerSec);
-            if (requestEngines)         RequestData(Definitions.EnginesCount);
-            if (requestBrakes)          RequestData(Definitions.BrakesAvailable);
-            if (requestSpoiler)         RequestData(Definitions.SpoilerAvailable);
-            if (requestGear)            RequestData(Definitions.IsGearRetractable);
-            if (requestFlaps)           RequestData(Definitions.FlapsAvailable);
-            if (requestElevatorTrim)    RequestData(Definitions.ElevatorTrimDisabled);
-            if (requestAileronTrim)     RequestData(Definitions.AileronTrimDisabled);
-            if (requestRudderTrim)      RequestData(Definitions.RudderTrimDisabled);
+            if (requestReverse) RequestData(Definitions.ThrottleLowerLimit);
+            if (requestSpeeds) RequestData(Definitions.DesignCruiseSpeedFeetPerSec);
+            if (requestEngines) RequestData(Definitions.EnginesCount);
+            if (requestBrakes) RequestData(Definitions.BrakesAvailable);
+            if (requestSpoiler) RequestData(Definitions.SpoilerAvailable);
+            if (requestGear) RequestData(Definitions.IsGearRetractable);
+            if (requestFlaps) RequestData(Definitions.FlapsAvailable);
+            if (requestElevatorTrim) RequestData(Definitions.ElevatorTrimDisabled);
+            if (requestAileronTrim) RequestData(Definitions.AileronTrimDisabled);
+            if (requestRudderTrim) RequestData(Definitions.RudderTrimDisabled);
         }
         private void SimConnect_OnRecvQuit(SimConnect sender, SIMCONNECT_RECV data)
         {
@@ -401,7 +411,7 @@ namespace HandOnMouse
         }
         public void Disconnect()
         {
-            if (_simConnect == null) 
+            if (_simConnect == null)
                 return;
 
             try
@@ -427,7 +437,7 @@ namespace HandOnMouse
         public void ChangeButtonStatus(bool active, Button b, bool enabled, string text)
         {
             b.BorderBrush = new SolidColorBrush(active ? Colors.DarkGreen : Colors.DarkRed);
-            b.Foreground  = new SolidColorBrush(active ? Colors.DarkGreen : Colors.DarkRed);
+            b.Foreground = new SolidColorBrush(active ? Colors.DarkGreen : Colors.DarkRed);
 
             if (!string.IsNullOrEmpty(text))
                 b.Content = text;
@@ -551,14 +561,14 @@ namespace HandOnMouse
                 if (errors != null && !displayedErrors.Contains(errors))
                 {
                     displayedErrors.Add(errors);
-                    Trace.WriteLine(errors); 
+                    Trace.WriteLine(errors);
                     MessageBox.Show(errors, "HandOnMouse");
                 }
             }
         }
         private void Timer_Tick(object sender, EventArgs e)
         {
-            Mouse_Move(new Vector(0,0)); // to at least detect a trigger change without mouse move
+            Mouse_Move(new Vector(0, 0)); // to at least detect a trigger change without mouse move
             foreach (var m in Axis.Mappings)
             {
                 m.UpdateTime(((DispatcherTimer)sender).Interval.TotalSeconds);
