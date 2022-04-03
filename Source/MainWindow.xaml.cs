@@ -39,6 +39,8 @@ namespace HandOnMouse
 
     public class ViewModel : INotifyPropertyChanged
     {
+        public string Status { get { return _status; } set { if (_status != value) { _status = value; NotifyPropertyChanged(); } } }
+
         public ObservableCollection<Axis> Mappings { get { return Axis.Mappings; } }
         public Brush StatusBrushForText
         {
@@ -56,6 +58,7 @@ namespace HandOnMouse
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = "") => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        private string _status = "HOM Status";
         private Brush _statusBrushForText = new SolidColorBrush(Colors.Gray);
     }
 
@@ -201,7 +204,14 @@ namespace HandOnMouse
 
                     ChangeButtonStatus(false, connectButton, true, "DISCONNECT");
 
-                    _simConnect.Text(SIMCONNECT_TEXT_TYPE.PRINT_BLACK, 2, Definitions.None, "HandOnMouse connected!");
+                    ((ViewModel)DataContext).Status = "HOM Connected!";
+                    var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+                    timer.Tick += (s, args) =>
+                    {
+                        ((ViewModel)DataContext).Status = "";
+                        timer.Stop();
+                    };
+                    timer.Start();
 
                     _simConnect.OnRecvOpen += new SimConnect.RecvOpenEventHandler(SimConnect_OnRecvOpen);
                     _simConnect.OnRecvQuit += new SimConnect.RecvQuitEventHandler(SimConnect_OnRecvQuit);
@@ -396,7 +406,7 @@ namespace HandOnMouse
 
             try
             {
-                _simConnect.Text(SIMCONNECT_TEXT_TYPE.PRINT_RED, 2, Definitions.None, "HandOnMouse disconnected!");
+                ((ViewModel)DataContext).Status = "HOM DISCONNECTED!";
                 _simConnect.Dispose();
                 _simConnect = null;
                 _connected = false;

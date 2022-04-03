@@ -22,6 +22,10 @@
         <BooleanToVisibilityConverter x:Key="B2V"/>
     </Window.Resources>
     <StackPanel x:Name="window" VerticalAlignment="Top" Margin="3">
+        <TextBlock Foreground="DarkOrange" TextAlignment="Left" FontWeight="DemiBold"
+                            FontSize="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeFontSize, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
+                            Text="{Binding Status, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+        </TextBlock>
         <ItemsControl Height="Auto" ItemsSource="{Binding Mappings}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
