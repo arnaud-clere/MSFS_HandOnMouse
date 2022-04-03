@@ -58,7 +58,7 @@ namespace HandOnMouse
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = "") => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        private string _status = "HOM Status";
+        private string _status = "HandOnMouse Gauges";
         private Brush _statusBrushForText = new SolidColorBrush(Colors.Gray);
     }
 
@@ -204,7 +204,7 @@ namespace HandOnMouse
 
                     ChangeButtonStatus(false, connectButton, true, "DISCONNECT");
 
-                    ((ViewModel)DataContext).Status = "HOM Connected!";
+                    ((ViewModel)DataContext).Status = "Connected";
                     var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
                     timer.Tick += (s, args) =>
                     {
@@ -406,7 +406,7 @@ namespace HandOnMouse
 
             try
             {
-                ((ViewModel)DataContext).Status = "HOM DISCONNECTED!";
+                ((ViewModel)DataContext).Status = "Disconnected";
                 _simConnect.Dispose();
                 _simConnect = null;
                 _connected = false;
