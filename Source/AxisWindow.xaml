@@ -2,8 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:HandOnMouse"
-        WindowStartupLocation="Manual" WindowStyle="ToolWindow"
-        Icon="mouse.ico" ShowInTaskbar="False"
+        WindowStartupLocation="Manual" WindowStyle="SingleBorderWindow"
+        Icon="Settings.png" ShowInTaskbar="False"
         ResizeMode="NoResize" SizeToContent="WidthAndHeight"
         MinWidth="432" MinHeight="224"
         Title="{Binding Axis.Name}">
@@ -68,11 +68,13 @@
                     Text="{Binding Axis.TriggerDeviceName, UpdateSourceTrigger=PropertyChanged}"/>
         </StackPanel></Border>
         <Border Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" Background="#FFF0FEFF"><StackPanel Orientation="Vertical" VerticalAlignment="Top">
-            <CheckBox 
+                <CheckBox Margin="3" Style="{StaticResource HideShow}"
                     IsChecked="{Binding Axis.IsHidden}"
-                    Content="Hide in compact mode even with trigger"
-                    ToolTip="For axis that should be hidden when '=' is clicked even if a trigger allows to actuate it"/>
-        </StackPanel></Border>
+                    Content="Hide/Show in Gauge window even with trigger"/>
+                <CheckBox Margin="3" Style="{StaticResource UnlockLock}"
+                    IsChecked="{Binding Axis.IsEnabled, UpdateSourceTrigger=PropertyChanged}"
+                    Content="Lock/Unlock mouse move input even with trigger"/>
+            </StackPanel></Border>
         <Border Grid.Column="0" Grid.Row="2" Background="#FFE0FEFF"><StackPanel>
             <TextBlock 
                     Text="2. MOVE Mouse to increase axis:"/>
@@ -83,7 +85,6 @@
             <StackPanel>
                 <ComboBox IsEditable="True" VerticalAlignment="Bottom"
                     Text="{Binding Axis.Sensitivity}">
-                    <ComboBoxItem ToolTip="No sensitivity">0</ComboBoxItem>
                     <ComboBoxItem>0.25</ComboBoxItem>
                     <ComboBoxItem>0.5</ComboBoxItem>
                     <ComboBoxItem ToolTip="Default sensitivity">1</ComboBoxItem>
@@ -105,7 +106,7 @@
                     <ComboBoxItem>5</ComboBoxItem>
                     <ComboBoxItem ToolTip="Up to the wole axis range (max-min) in less than a simulator frame (1/18 s)">20</ComboBoxItem>
                 </ComboBox>
-                <TextBlock  Foreground="Red"
+                <TextBlock
                     Text="Allowed external change rate (/s)"
                     ToolTip="To increase HandOnMouse accuracy or limit unexpected changes from the Simulator or another tool connected to it"/>
             </StackPanel>

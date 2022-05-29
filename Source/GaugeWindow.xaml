@@ -10,7 +10,7 @@
     Topmost="True"
     WindowStartupLocation="Manual"
     MouseDown="Window_MouseDown"
-    Icon="mouse.ico"
+    Icon="Mouse.ico"
     Top="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeTop, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
     Left="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeLeft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
     >

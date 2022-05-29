@@ -40,7 +40,8 @@ namespace HandOnMouse
     public class ViewModel : INotifyPropertyChanged
     {
         public string Status { get { return _status; } set { if (_status != value) { _status = value; NotifyPropertyChanged(); } } }
-
+        public bool GaugeVisible { get { return !Settings.Default.GaugeHidden; } }
+        public List<string> MappingFiles { get { var fs = new List<string>(); foreach(var f in new DirectoryInfo(MainWindow.MappingsDir()).GetFiles("*.ini")) { fs.Add(f.Name.Remove(f.Name.Length-f.Extension.Length)); } return fs; } }
         public ObservableCollection<Axis> Mappings { get { return Axis.Mappings; } }
         public Brush StatusBrushForText
         {
@@ -57,7 +58,8 @@ namespace HandOnMouse
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private void NotifyPropertyChanged([CallerMemberName] string propertyName = "") => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        public void NotifyPropertyChanged([CallerMemberName] string propertyName = "") => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        
         private string _status = "HandOnMouse Gauges";
         private Brush _statusBrushForText = new SolidColorBrush(Colors.Gray);
     }
@@ -66,7 +68,7 @@ namespace HandOnMouse
     public partial class MainWindow : Window
     {
         public static string MappingsDir() { return Path.Combine(Directory.GetCurrentDirectory(), "Mappings"); }
-        public static string MappingFile() { return Path.Combine(MappingsDir(), Settings.Default.MappingFile); }
+        public static string MappingFile() { return Path.ChangeExtension(Path.Combine(MappingsDir(), Settings.Default.MappingFile), ".ini"); }
 
         const int WM_USER_SIMCONNECT = (int)WM.USER + 2;
 
@@ -95,7 +97,10 @@ namespace HandOnMouse
             Trace.WriteLine($"MainWindow {DateTime.Now}");
 
             _gaugeWindow.DataContext = DataContext = new ViewModel();
-            _gaugeWindow.Show();
+            if (Settings.Default.GaugeHidden)
+                _gaugeWindow.Hide();
+            else
+                _gaugeWindow.Show();
 
             InitializeComponent();
 
@@ -148,6 +153,21 @@ namespace HandOnMouse
             {
                 ((ViewModel)DataContext).StatusBrushForText = new SolidColorBrush(_connected && Settings.Default.Sensitivity > 0 ? Colors.Black : Colors.Gray);
             }
+            if (e.PropertyName == "GaugeHidden")
+            {
+                ((ViewModel)DataContext).NotifyPropertyChanged("GaugeVisible");
+                if (Settings.Default.GaugeHidden)
+                    _gaugeWindow.Hide();
+                else
+                    _gaugeWindow.Show();
+            }
+            if (e.PropertyName == "MappingFile")
+            {
+                if (Settings.Default.GaugeHidden)
+                    _gaugeWindow.Hide();
+                else
+                    _gaugeWindow.Show();
+            }
         }
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -182,10 +202,6 @@ namespace HandOnMouse
         private void Window_Minimize(object sender, RoutedEventArgs e)
         {
             WindowState = WindowState.Minimized;
-        }
-        private void Window_Help(object sender, RoutedEventArgs e)
-        {
-            Process.Start("https://github.com/arnaud-clere/MSFS_HandOnMouse#version-21");
         }
 
         public void Axis_Click(object sender, RoutedEventArgs e)
@@ -445,6 +461,18 @@ namespace HandOnMouse
             b.IsEnabled = enabled;
         }
 
+        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_simConnect != null && _connected)
+            {
+                MessageBox.Show("Please DISCONNECT before changing mappings!", "HandOnMouse");
+                e.Handled = false;
+            }
+            else if (e.AddedItems.Count > 0)
+            {
+                TryReadMappings(e.AddedItems[0].ToString());
+            }
+        }
         public void Window_File(object sender, RoutedEventArgs e)
         {
             if (_simConnect != null && _connected)
@@ -465,8 +493,9 @@ namespace HandOnMouse
                 }
             }
         }
-        private void TryReadMappings(string filePath = null)
+        private bool TryReadMappings(string filePath = null)
         {
+            filePath = Path.ChangeExtension(filePath, ".ini");
             if (filePath != null && !Path.IsPathRooted(filePath))
             {
                 filePath = Path.Combine(MappingsDir(), filePath);
@@ -476,13 +505,15 @@ namespace HandOnMouse
                 filePath = MappingFile();
             }
             var errors = Axis.MappingsRead(filePath);
+            var revert = false;
             if (Axis.Mappings.Count == 0 && filePath != MappingFile()) // revert to previous file
             {
                 Axis.MappingsRead(MappingFile());
+                revert = true;
             }
             else
             {
-                Settings.Default.MappingFile = filePath.Replace(MappingsDir() + @"\", "");
+                Settings.Default.MappingFile = Path.ChangeExtension(filePath.Replace(MappingsDir() + @"\", ""), null);
                 foreach (var m in Axis.Mappings)
                 {
                     if (m.VJoyId > 0)
@@ -534,6 +565,7 @@ namespace HandOnMouse
                 Trace.WriteLine(message);
                 MessageBox.Show(message, "HandOnMouse");
             }
+            return revert;
         }
 
         private IntPtr RawInput_Handler(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)

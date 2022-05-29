@@ -127,31 +127,31 @@
     <None Include="LICENSE">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\G602.ini">
+    <None Include="Mappings\Logitech G602 mouse for Aircrafts.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\vJoy.ini">
+    <None Include="Mappings\Mappings for Aircrafts without SimVars.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Thr+Yoke+Pedals.ini">
+    <None Include="Mappings\Generic mouse for Throttle+Yoke+Pedals.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Jet.ini">
+    <None Include="Mappings\Generic mouse for Jets.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\4xJet.ini">
+    <None Include="Mappings\Generic mouse for Jets %28x4%29.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Glider.ini">
+    <None Include="Mappings\Generic mouse for Gliders.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Custom.ini">
+    <None Include="Mappings\Mappings to customize.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Throttle+Mixt.ini">
+    <None Include="Mappings\Generic mouse for Throttle+Mixture.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Throttle+Prop.ini">
+    <None Include="Mappings\Generic mouse for Throttle+Propeller.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Properties\Settings.settings">
@@ -182,11 +182,15 @@
     <Content Include="G602_top.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Resource Include="Source\mouse_msfs.ico" />
+    <Resource Include="Source\Mouse.ico" />
     <Content Include="SimConnect.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Resource Include="Source\mouse.ico" />
+    <Resource Include="Source\Visible.png" />
+    <Resource Include="Source\Visible-off.png" />
+    <Resource Include="Source\Settings.png" />
+    <Resource Include="Source\Mouse-off.png" />
+    <Resource Include="Source\Mouse.png" />
     <Content Include="vJoyInterface.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

@@ -2,9 +2,6 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="HandOnMouse.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="MappingFile" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Throttle+Prop.ini</Value>
-    </Setting>
     <Setting Name="Sensitivity" Type="System.Double" Scope="User">
       <Value Profile="(Default)">4</Value>
     </Setting>
@@ -31,6 +28,12 @@
     </Setting>
     <Setting Name="GaugeLeft" Type="System.Double" Scope="User">
       <Value Profile="(Default)">10</Value>
+    </Setting>
+    <Setting Name="GaugeHidden" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="MappingFile" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Generic mouse for Throttle+Propeller</Value>
     </Setting>
   </Settings>
 </SettingsFile>

@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 
 [assembly: AssemblyTitle("HandOnMouse")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Addon to control MSFS axis using mouse gestures")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("HandOnMouse")]
@@ -28,4 +28,4 @@ using System.Windows;
 //      Patch Number
 //      Revision
 //
-[assembly: AssemblyVersion("2.1.1.*")]
+[assembly: AssemblyVersion("3.0.0.*")]

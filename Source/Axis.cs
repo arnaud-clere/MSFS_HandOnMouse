@@ -285,6 +285,7 @@ namespace HandOnMouse
             IncreaseDirection = Direction.Push;
             MouseButtonsFilter = RAWMOUSE.RI_MOUSE.Reserved;
             IsAvailable = true;
+            IsEnabled = true;
             AllowedExternalChangePerSec = 20;
         }
 
@@ -511,7 +512,8 @@ namespace HandOnMouse
         public bool IsAvailable { get { return _isAvailable; } set { if (_isAvailable != value) { _isAvailable = value; NotifyPropertyChanged(); NotifyPropertyChanged("IsVisible"); } } }
         public bool IsHidden { get { return _isHidden; } set { if (_isHidden != value) { _isHidden = value; NotifyPropertyChanged(); NotifyPropertyChanged("IsVisible"); } } }
         public bool WaitButtonsReleased { get { return _waitButtonsReleased; } set { if (_waitButtonsReleased != value) { _waitButtonsReleased = value; NotifyPropertyChanged(); } } }
-        public double Sensitivity { get { return _sensitivity; } set { if (_sensitivity != value) { _sensitivity = value; NotifyPropertyChanged(); } } }
+        public bool IsEnabled { get { return _isEnabled; } set { if (_isEnabled != value) { _isEnabled = value; NotifyPropertyChanged(); NotifyPropertyChanged("Sensitivity"); } } }
+        public double Sensitivity { get { return _isEnabled ? _sensitivity : 0; } set { if (_sensitivity != value) { _sensitivity = value; if (_sensitivity > 0) { _isEnabled = true; NotifyPropertyChanged("IsEnabled"); } NotifyPropertyChanged(); } } }
         public bool SensitivityAtCruiseSpeed { get { return _sensitivityAtCruiseSpeed; } set { if (_sensitivityAtCruiseSpeed != value) { _sensitivityAtCruiseSpeed = value; NotifyPropertyChanged(); } } }
         public double SmartSensitivity 
         { 
@@ -823,6 +825,7 @@ namespace HandOnMouse
         private RAWMOUSE.RI_MOUSE _mouseButtonsFilter;
         private Key _keyboardKeyDownFilter;
         private Controller.Buttons _controllerButtonsFilter;
+        private bool _isEnabled;
         private double _sensitivity;
         private bool _sensitivityAtCruiseSpeed;
         private string _simVarName;
