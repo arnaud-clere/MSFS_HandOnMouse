@@ -127,31 +127,31 @@
     <None Include="LICENSE">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Logitech G602 mouse for Aircrafts.ini">
+    <None Include="Mappings\Logitech G602.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Mappings for Aircrafts without SimVars.ini">
+    <None Include="Mappings\vJoy for Aircrafts with no SimVars.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Generic mouse for Throttle+Yoke+Pedals.ini">
+    <None Include="Mappings\Generic 3 Throttle+Yoke+Pedals.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Generic mouse for Jets.ini">
+    <None Include="Mappings\Generic 5 Jets.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Generic mouse for Jets %28x4%29.ini">
+    <None Include="Mappings\Generic 6 Jets %28x4%29.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Generic mouse for Gliders.ini">
+    <None Include="Mappings\Generic 4 Gliders.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Mappings to customize.ini">
+    <None Include="Mappings\To customize.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Generic mouse for Throttle+Mixture.ini">
+    <None Include="Mappings\Generic 2 Throttle+Mixture.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Generic mouse for Throttle+Propeller.ini">
+    <None Include="Mappings\Generic 1 Throttle+Propeller.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Properties\Settings.settings">

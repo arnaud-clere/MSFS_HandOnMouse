@@ -129,9 +129,14 @@ namespace HandOnMouse
             }
             Mouse.Device.RawMouseMove += new Mouse.RawMouseMoveHandler(Mouse_Move);
 
+            var simConnectTimer = new DispatcherTimer();
+            simConnectTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000 / 36);
+            simConnectTimer.Tick += new EventHandler(SimConnectTimer_Tick);
+            simConnectTimer.Start();
+
             var simFrameTimer = new DispatcherTimer();
             simFrameTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000 / 36);
-            simFrameTimer.Tick += new EventHandler(Timer_Tick);
+            simFrameTimer.Tick += new EventHandler(SimFrameTimer_Tick);
             simFrameTimer.Start();
         }
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -147,6 +152,7 @@ namespace HandOnMouse
             }
             return hwnd;
         }
+
         private void Settings_Changed(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == "Sensitivity")
@@ -169,11 +175,11 @@ namespace HandOnMouse
                     _gaugeWindow.Show();
             }
         }
+
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left) DragMove();
         }
-
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.System && e.SystemKey == Key.F4)
@@ -183,7 +189,7 @@ namespace HandOnMouse
         }
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            if (_simConnect != null && _connected)
+            if (_connected)
             {
                 MessageBox.Show("Please DISCONNECT before closing!", "HandOnMouse");
                 e.Cancel = true;
@@ -194,10 +200,6 @@ namespace HandOnMouse
                 Settings.Default.Save();
                 Trace.WriteLine($"MainWindow Close {DateTime.Now}");
             }
-        }
-        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            if (e.WidthChanged && WindowState == WindowState.Normal) Left += e.PreviousSize.Width - e.NewSize.Width;
         }
         private void Window_Minimize(object sender, RoutedEventArgs e)
         {
@@ -222,36 +224,78 @@ namespace HandOnMouse
 
         public void Connect_Click(object sender, RoutedEventArgs e)
         {
-            if (_simConnect == null)
+            if (!TryConnect())
             {
-                try
-                {
-                    _simConnect = new SimConnect("HandOnMouse", _hwnd, WM_USER_SIMCONNECT, null, 0);
-
-                    ChangeButtonStatus(false, connectButton, true, "DISCONNECT");
-
-                    ((ViewModel)DataContext).Status = "Connected";
-                    var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
-                    timer.Tick += (s, args) =>
-                    {
-                        ((ViewModel)DataContext).Status = "";
-                        timer.Stop();
-                    };
-                    timer.Start();
-
-                    _simConnect.OnRecvOpen += new SimConnect.RecvOpenEventHandler(SimConnect_OnRecvOpen);
-                    _simConnect.OnRecvQuit += new SimConnect.RecvQuitEventHandler(SimConnect_OnRecvQuit);
-                    _simConnect.OnRecvEventFilename += new SimConnect.RecvEventFilenameEventHandler(SimConnect_OnRecvEventFilename);
-                    _simConnect.OnRecvException += new SimConnect.RecvExceptionEventHandler(SimConnect_OnRecvException);
-                    _simConnect.OnRecvSimobjectData += new SimConnect.RecvSimobjectDataEventHandler(SimConnect_OnRecvData);
-                }
-                catch (Exception ex) { Trace.WriteLine($"{ex.Message} at: {ex.StackTrace}"); }
-            }
-            else
-            {
-                Disconnect();
+                Settings.Default.AutoConnect = false;
+                TryDisconnect();
             }
         }
+
+        private bool TryConnect()
+        {
+            if (_simConnect == null)
+                return false;
+
+            try
+            {
+                _simConnect = new SimConnect("HandOnMouse", _hwnd, WM_USER_SIMCONNECT, null, 0);
+
+                _simConnect.OnRecvOpen += new SimConnect.RecvOpenEventHandler(SimConnect_OnRecvOpen);
+                _simConnect.OnRecvQuit += new SimConnect.RecvQuitEventHandler(SimConnect_OnRecvQuit);
+                _simConnect.OnRecvEventFilename += new SimConnect.RecvEventFilenameEventHandler(SimConnect_OnRecvEventFilename);
+                _simConnect.OnRecvException += new SimConnect.RecvExceptionEventHandler(SimConnect_OnRecvException);
+                _simConnect.OnRecvSimobjectData += new SimConnect.RecvSimobjectDataEventHandler(SimConnect_OnRecvData);
+
+                ChangeButtonStatus(false, connectButton, true, "DISCONNECT");
+                ((ViewModel)DataContext).StatusBrushForText = new SolidColorBrush(_connected && Settings.Default.Sensitivity > 0 ? Colors.Black : Colors.Gray);
+                ((ViewModel)DataContext).Status = "Connected";
+                EraseStatusAfter(TimeSpan.FromSeconds(3));
+            }
+            catch (Exception ex) { Trace.WriteLine($"{ex.Message} at: {ex.StackTrace}"); }
+
+            return _simConnect != null;
+        }
+        public bool TryDisconnect()
+        {
+            if (_simConnect != null)
+                return false;
+
+            try
+            {
+                _simConnect.Dispose();
+                _simConnect = null;
+                _connected = false;
+
+                ChangeButtonStatus(true, connectButton, true, "CONNECT");
+                ((ViewModel)DataContext).StatusBrushForText = new SolidColorBrush(Colors.DarkOrange);
+                ((ViewModel)DataContext).Status = "Disconnected";
+            }
+            catch (Exception ex) { Trace.WriteLine($"{ex.Message} at: {ex.StackTrace}"); }
+
+            return _simConnect == null;
+        }
+
+        private void EraseStatusAfter(TimeSpan grace)
+        {
+            var timer = new DispatcherTimer { Interval = grace };
+            timer.Tick += (s, args) =>
+            {
+                ((ViewModel)DataContext).Status = "";
+                timer.Stop();
+            };
+            timer.Start();
+        }
+        public void ChangeButtonStatus(bool active, Button b, bool enabled, string text)
+        {
+            b.BorderBrush = new SolidColorBrush(active ? Colors.DarkGreen : Colors.DarkRed);
+            b.Foreground = new SolidColorBrush(active ? Colors.DarkGreen : Colors.DarkRed);
+
+            if (!string.IsNullOrEmpty(text))
+                b.Content = text;
+
+            b.IsEnabled = enabled;
+        }
+
         private enum RequestType { AxisValue = 0, SmartAxisValue = 1, Count = SmartAxisValue + 1 }
         private Definitions RequestId(int i, RequestType requestType = RequestType.AxisValue)
         {
@@ -280,7 +324,7 @@ namespace HandOnMouse
                 (int)data.dwSimConnectBuildMinor);
             Trace.WriteLine($"Connected to: {data.szApplicationName} appVersion: {appVersion} simConnectVersion:{simConnectVersion}");
 
-            ((ViewModel)DataContext).StatusBrushForText = new SolidColorBrush(Settings.Default.Sensitivity > 0 ? Colors.Black : Colors.Gray);
+            ((ViewModel)DataContext).StatusBrushForText = new SolidColorBrush(_connected && Settings.Default.Sensitivity > 0 ? Colors.Black : Colors.Gray);
 
             requestFlaps = false;
             requestGear = false;
@@ -388,8 +432,9 @@ namespace HandOnMouse
         }
         private void RegisterData(Definitions id, string simVarName, string simVarType, float epsilon = 1)
         {
-            _simConnect.AddToDataDefinition(id, simVarName, simVarType, SIMCONNECT_DATATYPE.FLOAT64, epsilon, SimConnect.SIMCONNECT_UNUSED);
-            _simConnect.RegisterDataDefineStruct<double>(id);
+            Debug.Assert(_simConnect != null);
+            _simConnect?.AddToDataDefinition(id, simVarName, simVarType, SIMCONNECT_DATATYPE.FLOAT64, epsilon, SimConnect.SIMCONNECT_UNUSED);
+            _simConnect?.RegisterDataDefineStruct<double>(id);
         }
         private void RequestData(Definitions id, SIMCONNECT_PERIOD period = SIMCONNECT_PERIOD.ONCE)
         {
@@ -423,47 +468,20 @@ namespace HandOnMouse
         {
             Trace.WriteLine("Received quit");
 
-            Disconnect();
+            TryDisconnect();
         }
-        public void Disconnect()
-        {
-            if (_simConnect == null)
-                return;
-
-            try
-            {
-                ((ViewModel)DataContext).Status = "Disconnected";
-                _simConnect.Dispose();
-                _simConnect = null;
-                _connected = false;
-                ((ViewModel)DataContext).StatusBrushForText = new SolidColorBrush(Colors.Gray);
-
-                ChangeButtonStatus(true, connectButton, true, "CONNECT FS");
-            }
-            catch (Exception ex) { Trace.WriteLine($"{ex.Message} at: {ex.StackTrace}"); }
-        }
-
         private void SimConnect_OnRecvException(SimConnect sender, SIMCONNECT_RECV_EXCEPTION data)
         {
             SIMCONNECT_EXCEPTION e = (SIMCONNECT_EXCEPTION)data.dwException;
             Trace.WriteLine($"SIMCONNECT_RECV_EXCEPTION: {e} dwSendID: {data.dwSendID} dwIndex: {data.dwIndex}");
             ((ViewModel)DataContext).StatusBrushForText = new SolidColorBrush(Colors.Red);
-        }
-
-        public void ChangeButtonStatus(bool active, Button b, bool enabled, string text)
-        {
-            b.BorderBrush = new SolidColorBrush(active ? Colors.DarkGreen : Colors.DarkRed);
-            b.Foreground = new SolidColorBrush(active ? Colors.DarkGreen : Colors.DarkRed);
-
-            if (!string.IsNullOrEmpty(text))
-                b.Content = text;
-
-            b.IsEnabled = enabled;
+            ((ViewModel)DataContext).Status = e.ToString();
+            EraseStatusAfter(TimeSpan.FromSeconds(9));
         }
 
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_simConnect != null && _connected)
+            if (_connected && !TryDisconnect())
             {
                 MessageBox.Show("Please DISCONNECT before changing mappings!", "HandOnMouse");
                 e.Handled = false;
@@ -473,9 +491,9 @@ namespace HandOnMouse
                 TryReadMappings(e.AddedItems[0].ToString());
             }
         }
-        public void Window_File(object sender, RoutedEventArgs e)
+        public void Button_MappingFile(object sender, RoutedEventArgs e)
         {
-            if (_simConnect != null && _connected)
+            if (_connected && !TryDisconnect())
             {
                 MessageBox.Show("Please DISCONNECT before changing mappings!", "HandOnMouse");
             }
@@ -598,7 +616,12 @@ namespace HandOnMouse
                 }
             }
         }
-        private void Timer_Tick(object sender, EventArgs e)
+
+        private void SimConnectTimer_Tick(object sender, EventArgs e)
+        {
+            TryConnect();
+        }
+        private void SimFrameTimer_Tick(object sender, EventArgs e)
         {
             Mouse_Move(new Vector(0, 0)); // to at least detect a trigger change without mouse move
             foreach (var m in Axis.Mappings)
@@ -606,6 +629,7 @@ namespace HandOnMouse
                 m.UpdateTime(((DispatcherTimer)sender).Interval.TotalSeconds);
             }
         }
+
         private void Axis_SimVarValueChanged(object sender, PropertyChangedEventArgs p)
         {
             var m = (Axis)sender;

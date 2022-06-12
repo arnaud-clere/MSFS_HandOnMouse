@@ -145,13 +145,25 @@ namespace HandOnMouse.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Generic mouse for Throttle+Propeller")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Generic 1 Throttle+Propeller")]
         public string MappingFile {
             get {
                 return ((string)(this["MappingFile"]));
             }
             set {
                 this["MappingFile"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AutoConnect {
+            get {
+                return ((bool)(this["AutoConnect"]));
+            }
+            set {
+                this["AutoConnect"] = value;
             }
         }
     }

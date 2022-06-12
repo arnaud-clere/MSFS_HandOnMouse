@@ -193,6 +193,8 @@ namespace HandOnMouse
             m.SimVarPositiveColor = ReadColor(scaleColors, 1, section + "/SimVarNegativePositiveColors", ref errors);
             m.SimVarPositiveDetentColor = ReadColor(scaleColors, 2, section + "/SimVarNegativePositiveColors", ref errors);
 
+            m.ToolTip = Kernel32.ReadIni(customFilePath, "ToolTip", section);
+
             return errors;
         }
         static public string MappingsSaveCustom(string filePath, Axis m)
@@ -292,6 +294,10 @@ namespace HandOnMouse
         // Configurable properties
 
         public int Id { get { return Mappings.IndexOf(this); } }
+        public string ToolTip {
+            get { return _toolTip; }
+            set { _toolTip = value; }
+        }
 
         public uint VJoyId { get; set; }
         public HID_USAGES VJoyAxis { get; private set; }
@@ -612,7 +618,7 @@ namespace HandOnMouse
         //! @startuml
         //! Mouse -> HOM : Mouse_Move\n(trigger, move)
         //! HOM -> Sim : RequestData(...,SIM_FRAME)
-        //! HOM <- Timer : Timer_Tick\n(decrease)
+        //! HOM <- Timer : SimFrameTimer_Tick\n(decrease)
         //! alt AllowedExternalChange > 0 && _connected && ...
         //! HOM -> Sim : RequestData(...,ONCE)
         //! ...
@@ -626,7 +632,7 @@ namespace HandOnMouse
         //! HOM -> Sim : SimConnect.SetDataOnSimObject(simValue+homChange)
         //! end
         //! Mouse -> HOM : Mouse_Move
-        //! HOM <- Timer : Timer_Tick
+        //! HOM <- Timer : SimFrameTimer_Tick
         //! Mouse -> HOM : Mouse_Move
         //! @enduml
 
@@ -837,6 +843,7 @@ namespace HandOnMouse
         private bool _waitButtonsReleased;
         private bool _isHidden;
         private bool _isAvailable;
+        private string _toolTip;
 
         private static Brush ReadColor(string[] scaleColors, uint i, string section, ref string errors)
         {

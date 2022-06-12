@@ -33,7 +33,10 @@
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="MappingFile" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Generic mouse for Throttle+Propeller</Value>
+      <Value Profile="(Default)">Generic 1 Throttle+Propeller</Value>
+    </Setting>
+    <Setting Name="AutoConnect" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
     </Setting>
   </Settings>
 </SettingsFile>

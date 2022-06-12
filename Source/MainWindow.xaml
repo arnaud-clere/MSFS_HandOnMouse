@@ -3,12 +3,11 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:HandOnMouse"
     xmlns:properties="clr-namespace:HandOnMouse.Properties" 
-    Title="HandOnMouse" SizeToContent="Height" Width="300" 
+    Title="MSFS HandOnMouse" SizeToContent="Height" Width="300" 
     Icon="Mouse.ico"
     WindowStyle="SingleBorderWindow"
     WindowStartupLocation="CenterScreen"
-    ResizeMode="CanResizeWithGrip" MinWidth="240" MinHeight="75"
-    SizeChanged="Window_SizeChanged"
+    ResizeMode="NoResize" MinWidth="240" MinHeight="75"
     MouseDown="Window_MouseDown"
     KeyDown="Window_KeyDown"
     Closing="Window_Closing">
@@ -32,35 +31,17 @@
         </Style>
     </Window.Resources>
     <StackPanel x:Name="window" VerticalAlignment="Top" Margin="3 3 0 0">
-        <TextBlock>
-            <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse#readme">Instructions</Hyperlink> |
-            <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse#version-30">Release notes</Hyperlink> |
-            <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse/issues">Known issues</Hyperlink> |
-            <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse/blob/main/LICENSE">License</Hyperlink>
-        </TextBlock>
-        <DockPanel Margin="0 3 0 0">
-            <ComboBox DockPanel.Dock="Left" Margin="0 0 3 0" Width="50" IsEditable="True"
-                Text="{Binding Source={x:Static properties:Settings.Default}, Path=Sensitivity}">
-                <ComboBoxItem>16</ComboBoxItem>
-                <ComboBoxItem ToolTip="e.g. 800dpi/1in, 1600dpi/2in">8</ComboBoxItem>
-                <ComboBoxItem ToolTip="e.g. 800dpi/2in">4</ComboBoxItem>
-                <ComboBoxItem>2</ComboBoxItem>
-                <ComboBoxItem>1</ComboBoxItem>
-            </ComboBox>
-            <TextBlock>Mouse move sensitivity (100x res./range)</TextBlock>
-        </DockPanel>
-        <DockPanel Margin="0 3 0 0">
-            <Button DockPanel.Dock="Left" x:Name="connectButton" Width="100" Background="White" Foreground="DarkGreen" BorderBrush="DarkGreen" Click="Connect_Click">CONNECT FS</Button>
-            <CheckBox Margin="3 0 0 0" IsEnabled="False"
-                    IsChecked="False"
-                    Content="Auto (re)connect FS"
-                    ToolTip="Periodically tries to connect or reconnect to FS" Foreground="Red"/>
-        </DockPanel>
+        <TextBlock TextWrapping="Wrap">
+            Handle cockpit controls using mouse gestures (combined trigger and ↑↓←→ mouse move)</TextBlock>
+        <TextBlock Margin="0 6 0 0" TextWrapping="Wrap">
+            <Bold>1. Select and adjust predefined mappings below:</Bold></TextBlock>
         <DockPanel Margin="0 3 0 0">
             <CheckBox DockPanel.Dock="Left" Style="{StaticResource HideShow}"  
                     IsChecked="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeHidden, Mode=TwoWay}"
-                    ToolTip="Hide Gauge window "/>
-            <Button DockPanel.Dock="Right" Margin="3" Width="16" Height="16" BorderThickness="0" Click="Window_File">
+                    ToolTip="Hide Gauge window"/>
+            <Button DockPanel.Dock="Right" Margin="3" Width="16" Height="16" BorderThickness="0" 
+                    Click="Button_MappingFile"
+                    ToolTip="Customize mappings files">
                 <Image Source="Settings.png"/>
             </Button>
             <ComboBox Margin="3,0" IsEditable="True"
@@ -86,9 +67,11 @@
                                 IsChecked="{Binding IsEnabled, UpdateSourceTrigger=PropertyChanged}"
                                 ToolTip="Lock/Unlock mouse move input even if a trigger is defined"/>
                         <TextBlock DockPanel.Dock="Left" Width="35" FontSize="8" TextAlignment="Center" VerticalAlignment="Center"
-                                Text="{Binding SimVarMin, UpdateSourceTrigger=PropertyChanged}"></TextBlock>
+                                Text="{Binding SimVarMin, UpdateSourceTrigger=PropertyChanged}"
+                                ToolTip="{Binding SimVarUnit}"/>
                         <TextBlock DockPanel.Dock="Right" Width="35" FontSize="8" TextAlignment="Center" VerticalAlignment="Center"
-                                Text="{Binding SimVarMax, UpdateSourceTrigger=PropertyChanged}"></TextBlock>
+                                Text="{Binding SimVarMax, UpdateSourceTrigger=PropertyChanged}"
+                                ToolTip="{Binding SimVarUnit}"/>
                         <Grid Margin="0 3 0 0">
                             <Grid.RowDefinitions>
                                 <RowDefinition/>
@@ -101,7 +84,7 @@
                             </Grid.ColumnDefinitions>
                             <ProgressBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextBlock.TextAlignment="Left" BorderThickness="0" Foreground="White" Background="LightGray"
                                 Value="{Binding Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
-                                ToolTip="{Binding SimVarUnit, UpdateSourceTrigger=PropertyChanged}"
+                                ToolTip="{Binding ToolTip, UpdateSourceTrigger=PropertyChanged}"
                                 Minimum="{Binding SimVarMin, UpdateSourceTrigger=PropertyChanged}" 
                                 Maximum="{Binding SimVarMax, UpdateSourceTrigger=PropertyChanged}"/>
                             <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextAlignment="Left" FontWeight="DemiBold"
@@ -124,6 +107,8 @@
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
+        <TextBlock Margin="0 6 0 0" TextWrapping="Wrap">
+            <Bold>2. Adjust gauge window place and settings below:</Bold></TextBlock>
         <DockPanel Margin="0 3 0 0">
             <ComboBox DockPanel.Dock="Left" Margin="0 0 3 0" Width="50" IsEditable="True"
                 IsEnabled="{Binding GaugeVisible}"
@@ -147,5 +132,33 @@
             </ComboBox>
             <TextBlock>Gauge window text size (pt)</TextBlock>
         </DockPanel>
+        <DockPanel Margin="0 3 0 0">
+            <ComboBox DockPanel.Dock="Left" Margin="0 0 3 0" Width="50" IsEditable="True"
+                Text="{Binding Source={x:Static properties:Settings.Default}, Path=Sensitivity}">
+                <ComboBoxItem>16</ComboBoxItem>
+                <ComboBoxItem ToolTip="e.g. 800dpi/1in, 1600dpi/2in">8</ComboBoxItem>
+                <ComboBoxItem ToolTip="e.g. 800dpi/2in">4</ComboBoxItem>
+                <ComboBoxItem>2</ComboBoxItem>
+                <ComboBoxItem>1</ComboBoxItem>
+                <ComboBoxItem ToolTip="Disable mouse gestures">0</ComboBoxItem>
+            </ComboBox>
+            <TextBlock>Mouse move sensitivity (100x res./range)</TextBlock>
+        </DockPanel>
+        <TextBlock Margin="0 6 0 0" TextWrapping="Wrap">
+            <Bold>3. Auto connect/disconnect to MSFS:</Bold></TextBlock>
+        <DockPanel>
+            <Button DockPanel.Dock="Right" Margin="0 0 3 0" x:Name="connectButton" Width="100" Background="White" Foreground="DarkGreen" BorderBrush="DarkGreen" 
+                    Click="Connect_Click">
+                CONNECT</Button>
+            <CheckBox
+                    IsChecked="{Binding Source={x:Static properties:Settings.Default}, Path=AutoConnect, Mode=TwoWay}"
+                    Content="Auto (re)connect"
+                    ToolTip="Automatically (re)connects to MSFS via SimConnect (1Hz)"/>
+        </DockPanel>
+        <TextBlock Margin="3 6 3 3" TextAlignment="Center">
+            <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse#readme">Instructions</Hyperlink> |
+            <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse#version-30">Release notes</Hyperlink> |
+            <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse/issues">Known issues</Hyperlink> |
+            <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse/blob/main/LICENSE">License</Hyperlink></TextBlock>
     </StackPanel>
 </Window>
