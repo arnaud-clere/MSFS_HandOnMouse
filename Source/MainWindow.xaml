@@ -32,20 +32,15 @@
     </Window.Resources>
     <StackPanel x:Name="window" VerticalAlignment="Top" Margin="3 3 0 0">
         <TextBlock TextWrapping="Wrap">
-            Handle cockpit controls using mouse gestures (combined trigger and ↑↓←→ mouse move)</TextBlock>
-        <TextBlock Margin="0 6 0 0" TextWrapping="Wrap">
-            <Bold>1. Select and adjust predefined mappings below:</Bold></TextBlock>
+            Handle cockpit controls using mouse gestures:<LineBreak/>- a trigger (mouse Back/Forward/... or joystick button)<LineBreak/>- and a combined mouse move (←↑↓→)</TextBlock>
+        <TextBlock Margin="0 6 0 0" TextWrapping="Wrap" FontWeight="Bold">Select and adjust predefined mappings:</TextBlock>
         <DockPanel Margin="0 3 0 0">
-            <CheckBox DockPanel.Dock="Left" Style="{StaticResource HideShow}"  
-                    IsChecked="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeHidden, Mode=TwoWay}"
-                    ToolTip="Hide Gauge window"/>
             <Button DockPanel.Dock="Right" Margin="3" Width="16" Height="16" BorderThickness="0" 
                     Click="Button_MappingFile"
                     ToolTip="Customize mappings files">
                 <Image Source="Settings.png"/>
             </Button>
-            <ComboBox Margin="3,0" IsEditable="True"
-                    Foreground="{Binding StatusBrushForText, UpdateSourceTrigger=PropertyChanged}"
+            <ComboBox IsEditable="True"
                     Text="{Binding Source={x:Static properties:Settings.Default}, Path=MappingFile, Mode=TwoWay}"
                     ItemsSource="{Binding MappingFiles}"
                     SelectionChanged="ComboBox_SelectionChanged"/>
@@ -107,8 +102,25 @@
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
-        <TextBlock Margin="0 6 0 0" TextWrapping="Wrap">
-            <Bold>2. Adjust gauge window place and settings below:</Bold></TextBlock>
+        <TextBlock Margin="0 6 0 0" TextWrapping="Wrap" FontWeight="Bold">
+                    Connect to MSFS:</TextBlock>
+        <DockPanel>
+            <Button DockPanel.Dock="Right" Margin="0 0 3 0" x:Name="connectButton" Width="100" Background="White" Foreground="DarkGreen" BorderBrush="DarkGreen" 
+                    Click="Connect_Click">
+                    CONNECT</Button>
+            <CheckBox
+                    IsChecked="{Binding Source={x:Static properties:Settings.Default}, Path=AutoConnect, Mode=TwoWay}"
+                    Content="Auto (re)connect"
+                    ToolTip="Automatically (re)connects to MSFS via SimConnect (1Hz)"/>
+        </DockPanel>
+        <TextBlock Margin="0 6 0 0" TextWrapping="Wrap" FontWeight="Bold">
+                    Adjust overlay gauge window place and settings:</TextBlock>
+        <DockPanel Margin="0 3 0 0">
+            <CheckBox DockPanel.Dock="Left" Style="{StaticResource HideShow}"  
+                    IsChecked="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeHidden, Mode=TwoWay}"
+                    ToolTip="Hide Gauge window"/>
+            <TextBlock>Gauge window visibility</TextBlock>
+        </DockPanel>
         <DockPanel Margin="0 3 0 0">
             <ComboBox DockPanel.Dock="Left" Margin="0 0 3 0" Width="50" IsEditable="True"
                 IsEnabled="{Binding GaugeVisible}"
@@ -120,7 +132,7 @@
             </ComboBox>
             <TextBlock>Gauge bars opacity (ratio)</TextBlock>
         </DockPanel>
-        <DockPanel Margin="0 3 0 3">
+        <DockPanel Margin="0 3 0 0">
             <ComboBox DockPanel.Dock="Left" Margin="0 0 3 0" Width="50" IsEditable="True"
                 IsEnabled="{Binding GaugeVisible}"
                 Text="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeFontSize, Mode=TwoWay}">
@@ -144,18 +156,9 @@
             </ComboBox>
             <TextBlock>Mouse move sensitivity (100x res./range)</TextBlock>
         </DockPanel>
-        <TextBlock Margin="0 6 0 0" TextWrapping="Wrap">
-            <Bold>3. Auto connect/disconnect to MSFS:</Bold></TextBlock>
-        <DockPanel>
-            <Button DockPanel.Dock="Right" Margin="0 0 3 0" x:Name="connectButton" Width="100" Background="White" Foreground="DarkGreen" BorderBrush="DarkGreen" 
-                    Click="Connect_Click">
-                CONNECT</Button>
-            <CheckBox
-                    IsChecked="{Binding Source={x:Static properties:Settings.Default}, Path=AutoConnect, Mode=TwoWay}"
-                    Content="Auto (re)connect"
-                    ToolTip="Automatically (re)connects to MSFS via SimConnect (1Hz)"/>
-        </DockPanel>
-        <TextBlock Margin="3 6 3 3" TextAlignment="Center">
+        <TextBlock Margin="0 6 0 0" TextWrapping="Wrap" FontWeight="Bold">
+                Look for information:</TextBlock>
+        <TextBlock Margin="3 0 3 3" TextAlignment="Center">
             <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse#readme">Instructions</Hyperlink> |
             <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse#version-30">Release notes</Hyperlink> |
             <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse/issues">Known issues</Hyperlink> |

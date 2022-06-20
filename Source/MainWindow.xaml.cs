@@ -141,15 +141,19 @@ namespace HandOnMouse
         }
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
-            switch (msg)
+            try
             {
-                case WM_USER_SIMCONNECT:
-                    _simConnect?.ReceiveMessage(); // and dispatch to OnRecv... events
-                    break;
-                case (int)WM.INPUT:
-                    RawInput_Handler(hwnd, msg, wParam, lParam, ref handled);
-                    break;
+                switch (msg)
+                {
+                    case WM_USER_SIMCONNECT:
+                        _simConnect?.ReceiveMessage(); // and dispatch to OnRecv... events
+                        break;
+                    case (int)WM.INPUT:
+                        RawInput_Handler(hwnd, msg, wParam, lParam, ref handled);
+                        break;
+                }
             }
+            catch (Exception ex) { Trace.WriteLine($"{ex.Message} at: {ex.StackTrace}"); }
             return hwnd;
         }
 
@@ -224,16 +228,22 @@ namespace HandOnMouse
 
         public void Connect_Click(object sender, RoutedEventArgs e)
         {
-            if (!TryConnect())
+            if (TryConnect())
             {
-                Settings.Default.AutoConnect = false;
-                TryDisconnect();
+                _manuallyDisconnected = false;
+            }
+            else
+            {
+                if (TryDisconnect())
+                {
+                    _manuallyDisconnected = true;
+                }
             }
         }
 
         private bool TryConnect()
         {
-            if (_simConnect == null)
+            if (_simConnect != null)
                 return false;
 
             try
@@ -257,7 +267,7 @@ namespace HandOnMouse
         }
         public bool TryDisconnect()
         {
-            if (_simConnect != null)
+            if (_simConnect == null)
                 return false;
 
             try
@@ -280,6 +290,7 @@ namespace HandOnMouse
             var timer = new DispatcherTimer { Interval = grace };
             timer.Tick += (s, args) =>
             {
+                ((ViewModel)DataContext).StatusBrushForText = new SolidColorBrush(_connected && Settings.Default.Sensitivity > 0 ? Colors.Black : Colors.Gray);
                 ((ViewModel)DataContext).Status = "";
                 timer.Stop();
             };
@@ -474,9 +485,12 @@ namespace HandOnMouse
         {
             SIMCONNECT_EXCEPTION e = (SIMCONNECT_EXCEPTION)data.dwException;
             Trace.WriteLine($"SIMCONNECT_RECV_EXCEPTION: {e} dwSendID: {data.dwSendID} dwIndex: {data.dwIndex}");
-            ((ViewModel)DataContext).StatusBrushForText = new SolidColorBrush(Colors.Red);
-            ((ViewModel)DataContext).Status = e.ToString();
-            EraseStatusAfter(TimeSpan.FromSeconds(9));
+            if (e != SIMCONNECT_EXCEPTION.UNRECOGNIZED_ID)
+            {
+                ((ViewModel)DataContext).StatusBrushForText = new SolidColorBrush(Colors.Red);
+                ((ViewModel)DataContext).Status = e.ToString();
+                EraseStatusAfter(TimeSpan.FromSeconds(9));
+            }
         }
 
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -619,7 +633,19 @@ namespace HandOnMouse
 
         private void SimConnectTimer_Tick(object sender, EventArgs e)
         {
-            TryConnect();
+            if (_wasAutoConnect && !Settings.Default.AutoConnect)
+            {
+                _wasAutoConnect = false;
+            }
+            if (!_wasAutoConnect && Settings.Default.AutoConnect)
+            {
+                _wasAutoConnect = true;
+                _manuallyDisconnected = false;
+            }
+            if (!_manuallyDisconnected && Settings.Default.AutoConnect)
+            {
+                TryConnect();
+            }
         }
         private void SimFrameTimer_Tick(object sender, EventArgs e)
         {
@@ -764,6 +790,8 @@ namespace HandOnMouse
         SimConnect _simConnect;
         vJoy _vJoy;
         bool _connected = false;
+        bool _manuallyDisconnected = false;
+        bool _wasAutoConnect = false;
         GaugeWindow _gaugeWindow = new GaugeWindow();
 
         List<string> displayedErrors = new List<string>();
