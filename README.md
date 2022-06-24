@@ -13,14 +13,14 @@ MSFS Utility to keep your HandOnMouse for easier/better flying
 ## Quick setup guide
 
 1. Download the "MSFS_HandOnMouse_v*.zip" file from the [latest release](https://github.com/arnaud-clere/MSFS_HandOnMouse/releases/latest)
-2. Extract all files from the archive to a new folder of your choice
+2. Extract all the archive to a folder of your choice such as the Desktop
 Minor version upgrades, e.g. v3.2 over v3.1, can be extracted in the existing MSFS_HandOnMouse folder to upgrade the application and keep your settings)
 
 A few features require to [install vJoy virtual joystick driver](#vjoy-virtual-joystick-driver-installation)
 
 ## Quick start guide
 
-1. Run the "MSFS_HandOnMouse" application in the folder
+1. Run the "MSFS_HandOnMouse" application in the "MSFS_HandOnMouse_v*" extracted folder, and optionally pin the application to the taskbar 
 2. Select predefined mappings, adjust if needed (see ![](Source/Visible.png) ![](Source/Mouse.png) ![](Source/Settings.png) buttons)
 3. If needed, adjust the mouse sensitivity (depends on mouse resolution and desired range, beware that sensitivity will be reduced in interactions with MSFS)
 4. Connect automatically to MSFS (or manually if you prefer)
