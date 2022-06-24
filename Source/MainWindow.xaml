@@ -164,8 +164,8 @@
                 Look for more information and/or help if needed:</TextBlock>
         <TextBlock Margin="3 0 3 3" TextAlignment="Center">
             <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse#readme">Instructions</Hyperlink> |
-            <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse#version-30">Release notes</Hyperlink> |
+            <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse/blob/main/CHANGELOG.md#version-30">Release notes</Hyperlink> |
             <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse/issues">Known issues</Hyperlink> |
-            <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse/blob/main/LICENSE">License</Hyperlink></TextBlock>
+            <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse/blob/main/LICENSE.md">License</Hyperlink></TextBlock>
     </StackPanel>
 </Window>
