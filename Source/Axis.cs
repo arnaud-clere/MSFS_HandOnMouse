@@ -144,6 +144,7 @@ namespace HandOnMouse
             {
                 m.SimVarMin = 0;
                 m.SimVarMax = 32767;
+                m.SimVarUnit = "";
                 m.VJoyAxisZero = uint.Parse(Kernel32.ReadIni(filePath, "VJoyAxisZero", section, "0").Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture);
                 m.VJoyAxisIsThrottle = bool.Parse(Kernel32.ReadIni(filePath, "VJoyAxisIsThrottle", section, "False").Trim());
             }
@@ -164,7 +165,7 @@ namespace HandOnMouse
             m.SensitivityAtCruiseSpeed = bool.Parse(
                 Kernel32.ReadIni(customFilePath, "SensitivityAtCruiseSpeed", section, "False").Trim());
             m.AllowedExternalChangePerSec = Math.Max(0, Math.Min(20, double.Parse(
-                Kernel32.ReadIni(customFilePath, "AllowedExternalChangePerSec", section, "20"), NumberStyles.Float, CultureInfo.InvariantCulture)));
+                Kernel32.ReadIni(customFilePath, "AllowedExternalChangePerSec", section, m.IsThrottle ? "5" : "20"), NumberStyles.Float, CultureInfo.InvariantCulture)));
             var directions = Kernel32.ReadIni(customFilePath, "IncreaseDirection", section, "Push").Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             m.IncreaseDirection = (Direction)Enum.Parse(typeof(Direction), directions[0].Trim(), true);
             if (directions.Length > 1)
@@ -187,13 +188,12 @@ namespace HandOnMouse
 
             m.DisableIncreaseDirection2 = bool.Parse(Kernel32.ReadIni(customFilePath, "DisableIncreaseDirection2", section, "False").Trim());
             m.IsHidden = bool.Parse(Kernel32.ReadIni(customFilePath, "IsHidden", section, "False").Trim());
+            m.IsEnabled = bool.Parse(Kernel32.ReadIni(customFilePath, "IsEnabled", section, "True").Trim());
 
             var scaleColors = Kernel32.ReadIni(filePath, "SimVarNegativePositiveColors", section, "").Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
             m.SimVarNegativeColor = ReadColor(scaleColors, 0, section + "/SimVarNegativePositiveColors", ref errors);
             m.SimVarPositiveColor = ReadColor(scaleColors, 1, section + "/SimVarNegativePositiveColors", ref errors);
             m.SimVarPositiveDetentColor = ReadColor(scaleColors, 2, section + "/SimVarNegativePositiveColors", ref errors);
-
-            m.ToolTip = Kernel32.ReadIni(customFilePath, "ToolTip", section);
 
             return errors;
         }
@@ -225,6 +225,7 @@ namespace HandOnMouse
                     Kernel32.WriteIni(customFilePath, "WaitButtonsReleased", section, m.WaitButtonsReleased.ToString());
                     Kernel32.WriteIni(customFilePath, "PositiveDetent", section, m.PositiveDetent.ToString());
                     Kernel32.WriteIni(customFilePath, "IsHidden", section, m.IsHidden.ToString());
+                    Kernel32.WriteIni(customFilePath, "IsEnabled", section, m.IsEnabled.ToString());
                 }
                 catch (Exception e)
                 {
@@ -262,7 +263,7 @@ namespace HandOnMouse
                 (byte)(maxChangeColor.G * change),
                 (byte)(maxChangeColor.B * change));
         }
-        
+
         static public readonly IReadOnlyList<string> EngineSimVars = new string[] {
             "GENERAL ENG THROTTLE LEVER POSITION",
             "GENERAL ENG MIXTURE LEVER POSITION",
@@ -294,10 +295,6 @@ namespace HandOnMouse
         // Configurable properties
 
         public int Id { get { return Mappings.IndexOf(this); } }
-        public string ToolTip {
-            get { return _toolTip; }
-            set { _toolTip = value; }
-        }
 
         public uint VJoyId { get; set; }
         public HID_USAGES VJoyAxis { get; private set; }
@@ -326,10 +323,7 @@ namespace HandOnMouse
             {
                 if (_simVarMin != value && value <= _simVarMax)
                 {
-                    _simVarMin = value;
-                    NotifyPropertyChanged();
-                    NotifyPropertyChanged("SimVarNegativeScaleString");
-                    NotifyPropertyChanged("SimVarPositiveScaleString");
+                    _simVarMin = value; NotifyPropertyChanged(); NotifyPropertyChanged("SimVarNegativeScaleString"); NotifyPropertyChanged("SimVarPositiveScaleString");
                 }
             }
         }
@@ -340,10 +334,7 @@ namespace HandOnMouse
             {
                 if (_simVarMax != value && value >= _simVarMin)
                 {
-                    _simVarMax = value;
-                    NotifyPropertyChanged();
-                    NotifyPropertyChanged("SimVarNegativeScaleString");
-                    NotifyPropertyChanged("SimVarPositiveScaleString");
+                    _simVarMax = value; NotifyPropertyChanged(); NotifyPropertyChanged("SimVarNegativeScaleString"); NotifyPropertyChanged("SimVarPositiveScaleString");
                 }
             }
         }
@@ -360,9 +351,9 @@ namespace HandOnMouse
         }
 
         /// <summary>A filter of mouse buttons down encoded as a combination of RAWMOUSE.RI_MOUSE</summary>
-        public RAWMOUSE.RI_MOUSE MouseButtonsFilter { get { return _mouseButtonsFilter; } set { if (_mouseButtonsFilter != value) { _mouseButtonsFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("MouseButtonsText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("IsVisible"); NotifyPropertyChanged("Text"); } } }
-        public Key KeyboardKeyDownFilter { get { return _keyboardKeyDownFilter; } set { if (_keyboardKeyDownFilter != value) { _keyboardKeyDownFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("KeyboardKeyText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("IsVisible"); NotifyPropertyChanged("Text"); } } }
-        public Controller.Buttons ControllerButtonsFilter { get { return _controllerButtonsFilter; } set { if (_controllerButtonsFilter != value) { _controllerButtonsFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("ControllerButtonsText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("IsVisible"); NotifyPropertyChanged("Text"); } } }
+        public RAWMOUSE.RI_MOUSE MouseButtonsFilter { get { return _mouseButtonsFilter; } set { if (_mouseButtonsFilter != value) { _mouseButtonsFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("MouseButtonsText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("IsVisible"); NotifyPropertyChanged("Text"); NotifyPropertyChanged("InputText"); NotifyPropertyChanged("InputToolTip"); } } }
+        public Key KeyboardKeyDownFilter { get { return _keyboardKeyDownFilter; } set { if (_keyboardKeyDownFilter != value) { _keyboardKeyDownFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("KeyboardKeyText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("IsVisible"); NotifyPropertyChanged("Text"); NotifyPropertyChanged("InputText"); NotifyPropertyChanged("InputToolTip"); } } }
+        public Controller.Buttons ControllerButtonsFilter { get { return _controllerButtonsFilter; } set { if (_controllerButtonsFilter != value) { _controllerButtonsFilter = value; NotifyPropertyChanged(); NotifyPropertyChanged("ControllerButtonsText"); NotifyPropertyChanged("TriggerDeviceName"); NotifyPropertyChanged("TriggerText"); NotifyPropertyChanged("IsVisible"); NotifyPropertyChanged("Text"); NotifyPropertyChanged("InputText"); NotifyPropertyChanged("InputToolTip"); } } }
         public ushort ControllerManufacturerId { get; set; }
         public ushort ControllerProductId { get; set; }
 
@@ -372,37 +363,97 @@ namespace HandOnMouse
         {
             get
             {
-                var control = TriggerText;
-                if (TriggerText != null)
+                return Join(InputText, AxisText);
+            }
+        }
+        public string InputText
+        {
+            get
+            {
+                if (!IsEnabled)
+                    return "";
+
+                string s;
+                if (TriggerText == null)
                 {
-                    control += IncreaseDirectionText;
-                    if (TrimCounterCenteringMove) control += "+";
+                    s = "X";
                 }
                 else
                 {
-                    control = "X";
+                    s = Join(TriggerText, IncreaseDirectionText);
+                    if (TrimCounterCenteringMove) s += "+";
+                    if (WaitButtonsReleased)      s = $"({s})";
                 }
-                if (WaitButtonsReleased)
-                {
-                    control = "(" + control + ")";
-                }
-                var na = IsAvailable ? "" : "N/A ";
-                var axis = Name.Length > 0 ? Name.Replace("GENERAL ", "").Replace(" PCT", "").Replace(" POSITION", "").ToLowerInvariant() : "-";
-                return control + " " + na + axis;
+                return Join(s, IsAvailable ? "" : "N/A");
             }
         }
-        public string TriggerDeviceName 
-        { 
-            get 
-            { 
+        public string InputToolTip
+        {
+            get
+            {
+                var s = IsEnabled ? "" : "Unlock using the button on the left to enable the following mouse gesture:";
+                s = Join(s, $"To change {AxisToolTip} axis:", Environment.NewLine);
+                s = Join(s, !IsAvailable ? "(BEWARE it is not available!)" : "", Environment.NewLine);
+                s = Join(s, VJoyAxisName.Length > 0 ? "(BEWARE it requires installing vJoy driver)" : "", Environment.NewLine);
+                s += Environment.NewLine;
+                if (TriggerToolTip == null)
+                {
+                    s += "Define a trigger using the button on the right";
+                }
+                else
+                {
+                    s += $"1. PRESS {TriggerToolTip}{Environment.NewLine}";
+                    s += $"2. MOVE mouse to {IncreaseDirectionText} to increase axis";
+                    if (TrimCounterCenteringMove) s += " or move joystick to center";
+                    if (!WaitButtonsReleased)      s += " continuously";
+                    s += Environment.NewLine + "3. RELEASE";
+                    if (WaitButtonsReleased) s += " (axis will change now)";
+                }
+                return s;
+            }
+        }
+        public string AxisText
+        {
+            get
+            {
                 return 
+                    SimVarName.Length > 0 ? SimVarName.Replace("GENERAL ", "").Replace(" PCT", "").Replace(" POSITION", "").ToLowerInvariant() :
+                    VJoyAxisName.Length > 0 ? VJoyAxisName :
+                    "-";
+            }
+        }
+        public string AxisToolTip
+        {
+            get
+            {
+                return
+                    SimVarName.Length > 0 ? "SimVar " + SimVarName :
+                    VJoyAxisName.Length > 0 ? VJoyAxisName :
+                    "Unknown axis definition";
+            }
+        }
+        public string TriggerDeviceName
+        {
+            get
+            {
+                return
                     MouseButtonsText != null ? "Mouse" :
                     KeyboardKeyText != null ? "Keyboard" :
                     ControllerButtonsText != null ? Controller.Get(ControllerManufacturerId, ControllerProductId)?.Name :
-                    "None"; 
-            } 
+                    "None";
+            }
         }
         public string TriggerText { get { return MouseButtonsText ?? KeyboardKeyText ?? ControllerButtonsText; } }
+        public string TriggerToolTip
+        {
+            get
+            {
+                return 
+                    MouseButtonsToolTip ?? 
+                    (KeyboardKeyText != null ? KeyboardKeyText + " key" : null) ?? 
+                    (ControllerButtonsText != null ? TriggerDeviceName + " button(s) " + ControllerButtonsText : null);
+            }
+        }
         public string MouseButtonsText
         {
             get
@@ -426,6 +477,31 @@ namespace HandOnMouse
                 return btn;
             }
         }
+        public string MouseButtonsToolTip
+        {
+            get
+            {
+                string btn = null;
+                if (MouseButtonsFilter != RAWMOUSE.RI_MOUSE.Reserved)
+                {
+                    btn = "";
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.LEFT_BUTTON_DOWN  )) btn = Join(btn, "Left"   , "+");
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_DOWN)) btn = Join(btn, "Middle" , "+");
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_4_DOWN     )) btn = Join(btn, "Back"   , "+");
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_DOWN )) btn = Join(btn, "Right"  , "+");
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN     )) btn = Join(btn, "Forward", "+");
+                    var btnUp = "";
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.LEFT_BUTTON_UP  )) btnUp = Join(btnUp, "Left"   , "+");
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_UP)) btnUp = Join(btnUp, "Middle" , "+");
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_UP )) btnUp = Join(btnUp, "Right"  , "+");
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_4_UP     )) btnUp = Join(btnUp, "Back"   , "+");
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_5_UP     )) btnUp = Join(btnUp, "Forward", "+");
+                    if (btnUp.Length > 0) btn += " without " + btnUp;
+                    btn += " mouse button" + (btnUp.Length > 0 ? "s" : "");
+                }
+                return btn;
+            }
+        }
         public string KeyboardKeyText { get { return KeyboardKeyDownFilter != Key.None ? KeyboardKeyDownFilter.ToString() : null; } }
         public string ControllerButtonsText
         {
@@ -437,7 +513,7 @@ namespace HandOnMouse
                     for (uint n = 0; n < 8*sizeof(uint); n++)
                     {
                         var b = 1u << (int)n;
-                        if (ControllerButtonsFilter.HasFlag((Controller.Buttons)b)) 
+                        if (ControllerButtonsFilter.HasFlag((Controller.Buttons)b))
                             btn += n < 10 ?
                                 (char)(n+'1'):
                                 (char)(n+'A'-10);
@@ -451,9 +527,10 @@ namespace HandOnMouse
             get
             {
                 return
-                    IncreaseDirection == Direction.Left ? " ←" :
-                    IncreaseDirection == Direction.Push ? " ↑" :
-                    IncreaseDirection == Direction.Right ? " →" : " ↓";
+                    IncreaseDirection == Direction.Left ? "←" :
+                    IncreaseDirection == Direction.Push ? "↑" :
+                    IncreaseDirection == Direction.Right ? "→" : 
+                    "↓";
             }
         }
         public string IncreaseDirection2Text
@@ -462,9 +539,10 @@ namespace HandOnMouse
             {
                 return
                     DisableIncreaseDirection2 || IncreaseDirection2 == null ? "X" :
-                    IncreaseDirection2 == Direction.Left ? " ←" :
-                    IncreaseDirection2 == Direction.Push ? " ↑" :
-                    IncreaseDirection2 == Direction.Right ? " →" : " ↓";
+                    IncreaseDirection2 == Direction.Left ? "←" :
+                    IncreaseDirection2 == Direction.Push ? "↑" :
+                    IncreaseDirection2 == Direction.Right ? "→" : 
+                    "↓";
             }
         }
         public string Name { get { return SimVarName.Length > 0 ? SimVarName : VJoyAxisName; } }
@@ -510,54 +588,56 @@ namespace HandOnMouse
                 else
                 {
                     return "";
-                } 
+                }
             }
         }
 
         public bool IsVisible { get { return _isAvailable && TriggerText != null && !_isHidden; } }
-        public bool IsAvailable { get { return _isAvailable; } set { if (_isAvailable != value) { _isAvailable = value; NotifyPropertyChanged(); NotifyPropertyChanged("IsVisible"); } } }
+        public bool IsAvailable { get { return _isAvailable; } set { if (_isAvailable != value) { _isAvailable = value; NotifyPropertyChanged(); NotifyPropertyChanged("IsVisible"); NotifyPropertyChanged("InputText"); NotifyPropertyChanged("InputToolTip"); } } }
         public bool IsHidden { get { return _isHidden; } set { if (_isHidden != value) { _isHidden = value; NotifyPropertyChanged(); NotifyPropertyChanged("IsVisible"); } } }
         public bool WaitButtonsReleased { get { return _waitButtonsReleased; } set { if (_waitButtonsReleased != value) { _waitButtonsReleased = value; NotifyPropertyChanged(); } } }
-        public bool IsEnabled { get { return _isEnabled; } set { if (_isEnabled != value) { _isEnabled = value; NotifyPropertyChanged(); NotifyPropertyChanged("Sensitivity"); } } }
+        public bool IsEnabled { get { return _isEnabled; } set { if (_isEnabled != value) { _isEnabled = value; NotifyPropertyChanged(); NotifyPropertyChanged("Sensitivity"); NotifyPropertyChanged("Text"); NotifyPropertyChanged("InputText"); NotifyPropertyChanged("InputToolTip"); } } }
         public double Sensitivity { get { return _isEnabled ? _sensitivity : 0; } set { if (_sensitivity != value) { _sensitivity = value; if (_sensitivity > 0) { _isEnabled = true; NotifyPropertyChanged("IsEnabled"); } NotifyPropertyChanged(); } } }
         public bool SensitivityAtCruiseSpeed { get { return _sensitivityAtCruiseSpeed; } set { if (_sensitivityAtCruiseSpeed != value) { _sensitivityAtCruiseSpeed = value; NotifyPropertyChanged(); } } }
-        public double SmartSensitivity 
-        { 
-            get 
-            { 
+        public double SmartSensitivity
+        {
+            get
+            {
                 return SensitivityAtCruiseSpeed && DesignCruiseSpeedKnots > 0 ?
                     Sensitivity / Math.Max(0.5, // 0.5 Floor to keep some trim sensitivity at speeds < Vc/4
                         Math.Sqrt(IndicatedAirSpeedKnots / DesignCruiseSpeedKnots)) : // Sqrt to balance aerodynamic trim forces which grow with Velocity^2
-                    Sensitivity; 
-            } 
+                    Sensitivity;
+            }
         }
-        public bool TrimCounterCenteringMove { get { return _trimCounterCenteringMove; } set { if (_trimCounterCenteringMove != value) { _trimCounterCenteringMove = value; NotifyPropertyChanged(); } } }
+        public bool TrimCounterCenteringMove { get { return _trimCounterCenteringMove; } set { if (_trimCounterCenteringMove != value) { _trimCounterCenteringMove = value; NotifyPropertyChanged(); NotifyPropertyChanged("InputText"); NotifyPropertyChanged("InputToolTip"); } } }
         public bool DisableThrottleReverse { get { return _disableThrottleReverse; } set { if (_disableThrottleReverse != value) { _disableThrottleReverse = value; NotifyPropertyChanged(); } } }
         public double PositiveDetent { get { return _positiveDetentPercent; } set { if (_positiveDetentPercent != value) { _positiveDetentPercent = value; NotifyPropertyChanged(); } } }
         /// <summary>Last trimmed axis position in [-1..1] to compute moves centering to 0</summary>
         public double TrimmedAxis { get; set; }
-        public Direction IncreaseDirection { get { return _increaseDirection; } set { if (_increaseDirection != value) { _increaseDirection = value; NotifyPropertyChanged(); NotifyPropertyChanged("IncreaseDirectionText"); NotifyPropertyChanged("IncreaseDirection2"); NotifyPropertyChanged("IncreaseDirection2Text"); NotifyPropertyChanged("Text"); } } }
-        public Direction? IncreaseDirection2 
-        { 
-            get 
+        public Direction IncreaseDirection { get { return _increaseDirection; } set { if (_increaseDirection != value) { _increaseDirection = value; NotifyPropertyChanged(); NotifyPropertyChanged("IncreaseDirectionText"); NotifyPropertyChanged("IncreaseDirection2"); NotifyPropertyChanged("IncreaseDirection2Text"); NotifyPropertyChanged("Text"); NotifyPropertyChanged("InputText"); NotifyPropertyChanged("InputToolTip"); } } }
+        public Direction? IncreaseDirection2
+        {
+            get
             {
                 var decreaseDirection =
                     _increaseDirection == Direction.Draw ? Direction.Push :
                     _increaseDirection == Direction.Push ? Direction.Draw :
-                    _increaseDirection == Direction.Left ? Direction.Right : Direction.Left;
+                    _increaseDirection == Direction.Left ? Direction.Right : 
+                    Direction.Left;
                 return
-                    (_increaseDirection2 == _increaseDirection || _increaseDirection2 == decreaseDirection) ? null :
-                    _increaseDirection2; 
-            } 
-            set 
-            { 
-                if (_increaseDirection2 != value) 
-                { 
-                    _increaseDirection2 = value; 
-                    NotifyPropertyChanged(); 
-                    NotifyPropertyChanged("IncreaseDirection2Text"); 
-                } 
-            } 
+                    (_increaseDirection2 != null && _increaseDirection2 != _increaseDirection && _increaseDirection2 != decreaseDirection) ? _increaseDirection2 :
+                    _increaseDirection == Direction.Draw ? Direction.Left :
+                    _increaseDirection == Direction.Push ? Direction.Right :
+                    _increaseDirection == Direction.Left ? Direction.Push :
+                    Direction.Draw;
+            }
+            set
+            {
+                if (_increaseDirection2 != value)
+                {
+                    _increaseDirection2 = value; NotifyPropertyChanged(); NotifyPropertyChanged("IncreaseDirection2Text");
+                }
+            }
         }
         public bool DisableIncreaseDirection2 { get { return _disableIncreaseDirection2; } set { _disableIncreaseDirection2 = value; NotifyPropertyChanged(); NotifyPropertyChanged("IncreaseDirection2Text"); } }
         public double DecreaseScaleTimeSecs { get { return _decreaseScaleTimeSecs; } set { _decreaseScaleTimeSecs = value; NotifyPropertyChanged(); } }
@@ -567,7 +647,7 @@ namespace HandOnMouse
         // Updated properties
 
         public bool IsActive { get; set; }
-        public double InputChange 
+        public double InputChange
         {
             get { return _change; }
             set
@@ -704,7 +784,7 @@ namespace HandOnMouse
                     var positiveDetent =
                         PositiveDetent > 0 && PositiveDetent < Value;
                     var orthogonal = d == Direction.Push || d == Direction.Draw ? Direction.Right : Direction.Draw;
-            
+
                     if (inDetent && move.X != 0 && orthogonal == Direction.Right)
                         change = -move.X;
                     else if (inDetent && move.Y != 0 && orthogonal == Direction.Draw)
@@ -792,9 +872,9 @@ namespace HandOnMouse
                     SimVarValue += SmartSensitivity * trimmedAxisChange;
                 }
 
-                SimVarValue += externalChange * Math.Min(1, AllowedExternalChangePerSec * lastUpdateElapsedSecs);
+                SimVarValue += externalChange * Math.Min(1, AllowedExternalChangePerSec * Math.Min(0.1, lastUpdateElapsedSecs)); // in case MSFS would not update SimVar during a pause or configuration
 
-                if (Math.Abs(lastSimVarValue - SimVarValue) >= SimVarIncrement) 
+                if (Math.Abs(lastSimVarValue - SimVarValue) >= SimVarIncrement)
                     NotifyPropertyChanged("Value");
 
                 if (Math.Abs(SimVarValue - valueInSim) >= SimVarIncrement)
@@ -843,7 +923,6 @@ namespace HandOnMouse
         private bool _waitButtonsReleased;
         private bool _isHidden;
         private bool _isAvailable;
-        private string _toolTip;
 
         private static Brush ReadColor(string[] scaleColors, uint i, string section, ref string errors)
         {
@@ -856,6 +935,15 @@ namespace HandOnMouse
                 catch (Exception e) { errors += section + "/" + i + ": " + e.Message + '\n'; }
             }
             return Brushes.LightCyan;
+        }
+
+        private static string Join(string a, string b, string sep = " ")
+        {
+            Debug.Assert(a != null && b != null);
+            return
+                a +
+                (a.Length > 0 && b.Length > 0 ? sep : "") +
+                b;
         }
     }
 }

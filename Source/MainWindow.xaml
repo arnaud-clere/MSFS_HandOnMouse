@@ -33,7 +33,8 @@
     <StackPanel x:Name="window" VerticalAlignment="Top" Margin="3 3 0 0">
         <TextBlock TextWrapping="Wrap">
             Handle cockpit controls using mouse gestures:<LineBreak/>- a trigger (mouse Back/Forward/... or joystick button)<LineBreak/>- and a combined mouse move (←↑↓→)</TextBlock>
-        <TextBlock Margin="0 6 0 0" TextWrapping="Wrap" FontWeight="Bold">Select and adjust predefined mappings:</TextBlock>
+        <TextBlock Margin="0 6 0 0" TextWrapping="Wrap" FontWeight="Bold">
+            Select predefined mappings, adjust if needed:</TextBlock>
         <DockPanel Margin="0 3 0 0">
             <Button DockPanel.Dock="Right" Margin="3" Width="16" Height="16" BorderThickness="0" 
                     Click="Button_MappingFile"
@@ -49,21 +50,23 @@
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <DockPanel Margin="0 3 0 0">
+                        <CheckBox DockPanel.Dock="Left" Style="{StaticResource HideShow}" 
+                                IsChecked="{Binding IsHidden, UpdateSourceTrigger=PropertyChanged}"
+                                ToolTip="Hide/Show in Gauge window even if a trigger is defined"/>
+                        <TextBlock DockPanel.Dock="Left" Width="35" FontSize="8" TextAlignment="Center" VerticalAlignment="Center"
+                                Text="{Binding SimVarMin, UpdateSourceTrigger=PropertyChanged}"
+                                ToolTip="{Binding SimVarUnit}"/>
                         <Button DockPanel.Dock="Right" Margin="0,0,3,0" Height="16" Width="16" BorderThickness="0"
                                 ToolTip="Define trigger, mouse move direction, and other options"
                                 Tag="{Binding}"
                                 Click="Axis_Click">
-                            <Image Source="Settings.png"/>
-                        </Button>
-                        <CheckBox DockPanel.Dock="Left" Style="{StaticResource HideShow}" 
-                                IsChecked="{Binding IsHidden, UpdateSourceTrigger=PropertyChanged}"
-                                ToolTip="Hide/Show in Gauge window even if a trigger is defined"/>
-                        <CheckBox DockPanel.Dock="Left" Style="{StaticResource UnlockLock}" 
+                                <Image Source="Settings.png"/></Button>
+                        <TextBlock DockPanel.Dock="Right" Width="50" VerticalAlignment="Center"
+                                Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"
+                                ToolTip="{Binding InputToolTip}"/>
+                        <CheckBox DockPanel.Dock="Right" Style="{StaticResource UnlockLock}" 
                                 IsChecked="{Binding IsEnabled, UpdateSourceTrigger=PropertyChanged}"
                                 ToolTip="Lock/Unlock mouse move input even if a trigger is defined"/>
-                        <TextBlock DockPanel.Dock="Left" Width="35" FontSize="8" TextAlignment="Center" VerticalAlignment="Center"
-                                Text="{Binding SimVarMin, UpdateSourceTrigger=PropertyChanged}"
-                                ToolTip="{Binding SimVarUnit}"/>
                         <TextBlock DockPanel.Dock="Right" Width="35" FontSize="8" TextAlignment="Center" VerticalAlignment="Center"
                                 Text="{Binding SimVarMax, UpdateSourceTrigger=PropertyChanged}"
                                 ToolTip="{Binding SimVarUnit}"/>
@@ -79,11 +82,10 @@
                             </Grid.ColumnDefinitions>
                             <ProgressBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextBlock.TextAlignment="Left" BorderThickness="0" Foreground="White" Background="LightGray"
                                 Value="{Binding Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
-                                ToolTip="{Binding ToolTip, UpdateSourceTrigger=PropertyChanged}"
                                 Minimum="{Binding SimVarMin, UpdateSourceTrigger=PropertyChanged}" 
                                 Maximum="{Binding SimVarMax, UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextAlignment="Left" FontWeight="DemiBold"
-                                Text="{Binding Text, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextAlignment="Left"
+                                Text="{Binding AxisText, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
                                 <TextBlock.Foreground>
                                     <SolidColorBrush Color="{Binding ChangeColorForText, UpdateSourceTrigger=PropertyChanged}"/>
                                 </TextBlock.Foreground>
@@ -114,12 +116,25 @@
                     ToolTip="Automatically (re)connects to MSFS via SimConnect (1Hz)"/>
         </DockPanel>
         <TextBlock Margin="0 6 0 0" TextWrapping="Wrap" FontWeight="Bold">
-                    Adjust overlay gauge window place and settings:</TextBlock>
+                    Drag HandOnMouse Gauges window to its place<LineBreak/>
+                    and/or adjust its settings if needed:</TextBlock>
         <DockPanel Margin="0 3 0 0">
             <CheckBox DockPanel.Dock="Left" Style="{StaticResource HideShow}"  
                     IsChecked="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeHidden, Mode=TwoWay}"
                     ToolTip="Hide Gauge window"/>
-            <TextBlock>Gauge window visibility</TextBlock>
+            <TextBlock><Run Text="Hide/Show "/><Run Text="Gauge"/><Run Text="s"/><Run Text=" window"/></TextBlock>
+        </DockPanel>
+        <DockPanel Margin="0 3 0 0">
+            <ComboBox DockPanel.Dock="Left" Margin="0 0 3 0" Width="50" IsEditable="True"
+                IsEnabled="{Binding GaugeVisible}"
+                Text="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeFontSize, Mode=TwoWay}">
+                <ComboBoxItem>16</ComboBoxItem>
+                <ComboBoxItem>14</ComboBoxItem>
+                <ComboBoxItem>12</ComboBoxItem>
+                <ComboBoxItem>10</ComboBoxItem>
+                <ComboBoxItem>8</ComboBoxItem>
+            </ComboBox>
+            <TextBlock><Run Text="Gauge"/><Run Text="s"/><Run Text=" window text size (pt)"/></TextBlock>
         </DockPanel>
         <DockPanel Margin="0 3 0 0">
             <ComboBox DockPanel.Dock="Left" Margin="0 0 3 0" Width="50" IsEditable="True"
@@ -132,18 +147,7 @@
             </ComboBox>
             <TextBlock>Gauge bars opacity (ratio)</TextBlock>
         </DockPanel>
-        <DockPanel Margin="0 3 0 0">
-            <ComboBox DockPanel.Dock="Left" Margin="0 0 3 0" Width="50" IsEditable="True"
-                IsEnabled="{Binding GaugeVisible}"
-                Text="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeFontSize, Mode=TwoWay}">
-                <ComboBoxItem>16</ComboBoxItem>
-                <ComboBoxItem>14</ComboBoxItem>
-                <ComboBoxItem>12</ComboBoxItem>
-                <ComboBoxItem>10</ComboBoxItem>
-                <ComboBoxItem>8</ComboBoxItem>
-            </ComboBox>
-            <TextBlock>Gauge window text size (pt)</TextBlock>
-        </DockPanel>
+        <TextBlock Margin="0 6 0 0" TextWrapping="Wrap" FontWeight="Bold"><Run Text="Adjust mouse move sensitivity "/><Run Text="if "/><Run Text="needed:"/></TextBlock>
         <DockPanel Margin="0 3 0 0">
             <ComboBox DockPanel.Dock="Left" Margin="0 0 3 0" Width="50" IsEditable="True"
                 Text="{Binding Source={x:Static properties:Settings.Default}, Path=Sensitivity}">
@@ -157,7 +161,7 @@
             <TextBlock>Mouse move sensitivity (100x res./range)</TextBlock>
         </DockPanel>
         <TextBlock Margin="0 6 0 0" TextWrapping="Wrap" FontWeight="Bold">
-                Look for information:</TextBlock>
+                Look for more information and/or help if needed:</TextBlock>
         <TextBlock Margin="3 0 3 3" TextAlignment="Center">
             <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse#readme">Instructions</Hyperlink> |
             <Hyperlink NavigateUri="https://github.com/arnaud-clere/MSFS_HandOnMouse#version-30">Release notes</Hyperlink> |

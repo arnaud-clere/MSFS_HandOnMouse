@@ -6,7 +6,7 @@
         Icon="Settings.png" ShowInTaskbar="False"
         ResizeMode="NoResize" SizeToContent="WidthAndHeight"
         MinWidth="432" MinHeight="224"
-        Title="{Binding Axis.Name}">
+        Title="{Binding Axis.AxisToolTip, StringFormat='{}To change {0} axis:'}">
     <Window.Resources>
         <Style TargetType="Border">
             <Setter Property="Margin" Value="0,0,0,3" />
@@ -46,7 +46,7 @@
         <Grid.RowDefinitions>
             <RowDefinition/>
             <RowDefinition/>
-            <RowDefinition Height="120"/>
+            <RowDefinition Height="95"/>
             <RowDefinition/>
             <RowDefinition/>
         </Grid.RowDefinitions>
@@ -97,33 +97,13 @@
                     IsChecked="{Binding Axis.SensitivityAtCruiseSpeed}"
                     Content="Sensitivity smartly increases with IAS/Vc"
                     ToolTip="For axis which efficacy depend on IAS: aileron, trims..."/>
-            <StackPanel>
-                <ComboBox IsEditable="True" VerticalAlignment="Bottom"
-                    Text="{Binding Axis.AllowedExternalChangePerSec}">
-                    <ComboBoxItem ToolTip="None (HandOnMouse prohibits other inputs)">0</ComboBoxItem>
-                    <ComboBoxItem ToolTip="Up to the wole axis range (max-min) in 5s">0.2</ComboBoxItem>
-                    <ComboBoxItem ToolTip="Up to the wole axis range (max-min) in 1s">1</ComboBoxItem>
-                    <ComboBoxItem>5</ComboBoxItem>
-                    <ComboBoxItem ToolTip="Up to the wole axis range (max-min) in less than a simulator frame (1/18 s)">20</ComboBoxItem>
-                </ComboBox>
-                <TextBlock
-                    Text="Allowed external change rate (/s)"
-                    ToolTip="To increase HandOnMouse accuracy or limit unexpected changes from the Simulator or another tool connected to it"/>
-            </StackPanel>
-            <StackPanel>
-                <ComboBox IsEditable="True" VerticalAlignment="Bottom"
-                    Text="{Binding Axis.DecreaseScaleTimeSecs}">
-                    <ComboBoxItem ToolTip="Stay in position when released">0</ComboBoxItem>
-                    <ComboBoxItem>0.25</ComboBoxItem>
-                    <ComboBoxItem>0.5</ComboBoxItem>
-                    <ComboBoxItem>1</ComboBoxItem>
-                    <ComboBoxItem>2</ComboBoxItem>
-                    <ComboBoxItem ToolTip="Quickly go to neutral when released">4</ComboBoxItem>
-                </ComboBox>
-                <TextBlock 
-                    Text="Time (s) to decrease to neutral (0)"
-                    ToolTip="For axis that should go to neutral when released: rudder, brakes..."/>
-            </StackPanel>
+                <CheckBox 
+                    IsEnabled="{Binding Axis.IsTrim}"
+                    IsChecked="{Binding Axis.TrimCounterCenteringMove}" 
+                    ToolTip="For trim axis that should oppose centering moves of related axis"
+                    Content="Oppose centering moves of axis below:"/>
+                <TextBlock FontWeight="Bold" HorizontalAlignment="Center" Margin="0"
+                    Text="{Binding Axis.TrimmedAxisName}"></TextBlock>
             </StackPanel></Border>
         <Border Grid.Column="2" Grid.Row="2" Background="#FFE0FEFF">
             <StackPanel Orientation="Vertical" VerticalAlignment="Top">
@@ -152,24 +132,44 @@
                     Text="Detent position (%) on max side"
                     ToolTip="For axis where max (positive) position should be protected with a detent: auto/throttle..."/>
                 </StackPanel>
-            <CheckBox 
-                    IsEnabled="{Binding Axis.IsTrim}"
-                    IsChecked="{Binding Axis.TrimCounterCenteringMove}" 
-                    ToolTip="For trim axis that should oppose centering moves of related axis"
-                    Content="Oppose centering moves of axis below:"/>
-            <TextBlock FontWeight="Bold" HorizontalAlignment="Center" Margin="0"
-                    Text="{Binding Axis.TrimmedAxisName}"></TextBlock>
             </StackPanel></Border>
         <Border Grid.Column="0" Grid.Row="3" Background="#FFF0FEFF">
             <TextBlock
                     Text="3. RELEASE Trigger(s)"/>
         </Border>
-        <Border Grid.Column="1" Grid.Row="3" Grid.ColumnSpan="2" Background="#FFF0FEFF">
+        <Border Grid.Column="1" Grid.Row="3" Grid.ColumnSpan="2" Background="#FFF0FEFF"><StackPanel Orientation="Vertical" VerticalAlignment="Top">
             <CheckBox
                     IsChecked="{Binding Axis.WaitButtonsReleased}" 
-                    Content="Wait for trigger release to actuate axis" 
+                    Content="Wait for trigger release to change axis" 
                     ToolTip="For axis that should be adjusted and confirmed before it is actually moved"/>
-        </Border>
+            <StackPanel>
+                <ComboBox IsEditable="True" VerticalAlignment="Bottom"
+                    Text="{Binding Axis.DecreaseScaleTimeSecs}">
+                    <ComboBoxItem ToolTip="Stay in position when released">0</ComboBoxItem>
+                    <ComboBoxItem>0.25</ComboBoxItem>
+                    <ComboBoxItem>0.5</ComboBoxItem>
+                    <ComboBoxItem>1</ComboBoxItem>
+                    <ComboBoxItem>2</ComboBoxItem>
+                    <ComboBoxItem ToolTip="Quickly go to neutral when released">4</ComboBoxItem>
+                    </ComboBox>
+                <TextBlock 
+                    Text="Time (s) to decrease to neutral (0)"
+                    ToolTip="For axis that should go to neutral when released: rudder, brakes..."/>
+            </StackPanel>
+            <StackPanel>
+                <ComboBox IsEditable="True" VerticalAlignment="Bottom"
+                    Text="{Binding Axis.AllowedExternalChangePerSec}">
+                    <ComboBoxItem ToolTip="None (HandOnMouse prohibits other inputs)">0</ComboBoxItem>
+                    <ComboBoxItem ToolTip="Up to the wole axis range (max-min) in 5s">0.2</ComboBoxItem>
+                    <ComboBoxItem ToolTip="Up to the wole axis range (max-min) in 1s">1</ComboBoxItem>
+                    <ComboBoxItem ToolTip="Up to the wole axis range (max-min) in 0.2s">5</ComboBoxItem>
+                    <ComboBoxItem ToolTip="Any (HandOnMouse allows full change between 2 simulator frames)">20</ComboBoxItem>
+                    </ComboBox>
+                <TextBlock
+                    Text="Allowed external change rate (/s)"
+                    ToolTip="To increase HandOnMouse accuracy or limit unexpected changes from MSFS or another tool connected to it"/>
+            </StackPanel>
+        </StackPanel></Border>
         <Button Grid.Column="1" Grid.Row="0" TextBlock.Foreground="Red" 
                     Content="Reset all to default"
                     Click="Button_Reset"/>
