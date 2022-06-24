@@ -10,18 +10,23 @@ MSFS Utility to keep your HandOnMouse for easier/better flying
 > 
 > The solution I use for quite some time now is this small utility that connects to MSFS to **map critical actions to mouse moves combined with dedicated buttons pressed**.
 
-## Quick start guide
+## Quick setup guide
 
-A. Download the "MSFS_HandOnMouse_v*.zip" file from the [latest release](https://github.com/arnaud-clere/MSFS_HandOnMouse/releases/latest)
-B. Extract all files from the archive to a new folder of your choice
+1. Download the "MSFS_HandOnMouse_v*.zip" file from the [latest release](https://github.com/arnaud-clere/MSFS_HandOnMouse/releases/latest)
+2. Extract all files from the archive to a new folder of your choice
 Minor version upgrades, e.g. v3.2 over v3.1, can be extracted in the existing MSFS_HandOnMouse folder to upgrade the application and keep your settings)
+
+A few features require to [install vJoy virtual joystick driver](#vjoy-virtual-joystick-driver-installation)
+
+## Quick start guide
 
 1. Run the "MSFS_HandOnMouse" application in the folder
 2. Select predefined mappings, adjust if needed (see ![](Source/Visible.png) ![](Source/Mouse.png) ![](Source/Settings.png) buttons)
 3. If needed, adjust the mouse sensitivity (depends on mouse resolution and desired range, beware that sensitivity will be reduced in interactions with MSFS)
 4. Connect automatically to MSFS (or manually if you prefer)
 5. When connected to MSFS, check that you can change the chosen axis with the mouse
-Hover the mouse over the text right between ![](Source/Mouse.png) and ![](Source/Settings.png) buttons for detailed instruction.
+
+Hover the mouse over the text right between ![](Source/Mouse.png) and ![](Source/Settings.png) buttons for detailed instructions.
 
 Since many mouse are equipped with forward/backward buttons and these are not mapped by default to anything, the utility comes with "Generic *" mappings suited to various aircraft types using these buttons:
 Mouse Button(s)       | MSFS Control
@@ -36,16 +41,17 @@ Click ![](Source/Settings.png) to assign | **Elevator trim** (forward-backward m
 Otherwise, you can read on to use other buttons, control other Simulation Variables, etc.
 
 Enjoy, and let me know what you think!
+
 Arnaud
 
 ## Custom mappings
 
-Each mapping file (selected with top ![](Source/Settings.png) button) defines a fixed set of axis and the only way to add an axis is to edit the file (see comments in [To customize](Mappings/To customize.ini)).
+Each mapping file (selected with top ![](Source/Settings.png) button) defines a fixed set of axis and the only way to add an axis is to edit the file (see comments in [To customize](Mappings/To%20customize.ini)).
 However, starting with version 2, you can customize each axis option including its trigger, direction, and smart options without having to edit files.
 Indeed, the default mappings only use the mouse forward/backward buttons because they are not used by default but you can use the ![](Source/Settings.png) button in front of any axis to customize how it is mapped to your hardware. 
 
 For instance, if you only have a basic mouse without forward/backward buttons, you can map the axis to a key or a joystick button instead.
-On the contrary, if you have a gaming mouse with many buttons like the G602, you can map each axis of any bi-turboprop to distinct buttons (see [Logitech G602](Mappings/Logitech G602.ini)).
+On the contrary, if you have a gaming mouse with many buttons like the G602, you can map each axis of any bi-turboprop to distinct buttons (see [Logitech G602](Mappings/Logitech%20G602.ini)).
 
 *NB: Triggers are limited to the 5 standard mouse buttons, all keyboard keys, and 32 joystick buttons.*
 
@@ -117,7 +123,7 @@ Using any vJoy mapping requires to:
 ## Support planes incompatible with SimVars
 
 vJoy also allows to support planes not totally supporting SimVars like Aerosoft's CRJ, including some smart features (detents, autocentering)
-1. Select [vJoy for Aircrafts with no SimVars](Mappings/vJoy for Aircrafts with no SimVars.ini) possibly editing it to remove axis or features you do not need (say, rudder, brakes)
+1. Select [vJoy for Aircrafts with no SimVars](Mappings/vJoy%20for%20Aircrafts%20with%20no%20SimVars.ini) possibly editing it to remove axis or features you do not need (say, rudder, brakes)
 2. Map MSFS controls to vJoy device as below: 
 
 (beware to select "reverse" for the appropriate axis)
@@ -126,11 +132,11 @@ vJoy also allows to support planes not totally supporting SimVars like Aerosoft'
 To use reverse throttle with CRJ, you must use its tablet, access last "options" page and "calibrate throttle" to enable reverse range and set an Idle value close to the one below:
 ![](crj_reverse.jpg)
 
-## G602 mouse mappings
+## Logitech G602 mouse mappings
 
 The Logitech G602 mouse can replace a full quadrant with this utility and much more!
 1. Configure the following G Hub mappings
-2. Select [Logitech G602](Mappings/Logitech G602.ini) mappings file in MSFS_HandOnMouse
+2. Select [Logitech G602](Mappings/Logitech%20G602.ini) mappings file in MSFS_HandOnMouse
 And you are good to go with almost any aircraft from gliders to jets!
 
 Mouse Button(s)       | MSFS Control
