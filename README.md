@@ -120,6 +120,7 @@ Using any vJoy mapping requires to:
 1. Download vJoy driver: https://sourceforge.net/projects/vjoystick/files/Beta%202.x/2.1.9.1-160719/vJoySetup.exe/download
 2. Install it by running: vJoySetup.exe
 3. Map vJoy axis displayed by HandOnMouse to desired MSFS functions
+
 ## Support planes incompatible with SimVars
 
 vJoy also allows to support planes not totally supporting SimVars like Aerosoft's CRJ, including some smart features (detents, autocentering)
