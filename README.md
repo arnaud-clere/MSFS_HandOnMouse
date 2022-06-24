@@ -12,14 +12,18 @@ MSFS Utility to keep your HandOnMouse for easier/better flying
 
 ## Quick start guide
 
-0. Extract all files from the archive to a folder
-1. Run the MSFS_HandOnMouse application
-2. Test the mouse sensitivity and adjust as required (depends on mouse resolution and desired range, beware that sensitivity will be reduced in interactions with MSFS)
-3. Use the default mappings or click ![](Source/Settings.png) buttons to select or adjust mappings to suit your plane or habits
-4. Connect to MSFS and check that you can actuate the chosen controls with the mouse
-6. Either hide the application window with "-" button or keep it on top in a compact form with "=" button
+A. Download the "MSFS_HandOnMouse_v*.zip" file from the [latest release](https://github.com/arnaud-clere/MSFS_HandOnMouse/releases/latest)
+B. Extract all files from the archive to a new folder of your choice
+Minor version upgrades, e.g. v3.2 over v3.1, can be extracted in the existing MSFS_HandOnMouse folder to upgrade the application and keep your settings)
 
-Since many mouse are equipped with forward/backward buttons and these are not mapped by default to anything, the utility comes with preconfigured mappings suited to various aircraft types using these buttons:
+1. Run the "MSFS_HandOnMouse" application in the folder
+2. Select predefined mappings, adjust if needed (see ![](Source/Visible.png) ![](Source/Mouse.png) ![](Source/Settings.png) buttons)
+3. If needed, adjust the mouse sensitivity (depends on mouse resolution and desired range, beware that sensitivity will be reduced in interactions with MSFS)
+4. Connect automatically to MSFS (or manually if you prefer)
+5. When connected to MSFS, check that you can change the chosen axis with the mouse
+Hover the mouse over the text right between ![](Source/Mouse.png) and ![](Source/Settings.png) buttons for detailed instruction.
+
+Since many mouse are equipped with forward/backward buttons and these are not mapped by default to anything, the utility comes with "Generic *" mappings suited to various aircraft types using these buttons:
 Mouse Button(s)       | MSFS Control
 ---------------       | ------------
 **Forward alone**     | **Throttle** (forward-backward mouse move) and **Reverse Throttle** (protected by use of orthogonal mouse move)
@@ -36,12 +40,12 @@ Arnaud
 
 ## Custom mappings
 
-Each mapping file (selected with top ![](Source/Settings.png) button) defines a fixed set of axis and the only way to add an axis is to edit the file (see comments in Custom.ini file).
+Each mapping file (selected with top ![](Source/Settings.png) button) defines a fixed set of axis and the only way to add an axis is to edit the file (see comments in [To customize](Mappings/To customize.ini)).
 However, starting with version 2, you can customize each axis option including its trigger, direction, and smart options without having to edit files.
 Indeed, the default mappings only use the mouse forward/backward buttons because they are not used by default but you can use the ![](Source/Settings.png) button in front of any axis to customize how it is mapped to your hardware. 
 
-For instance, if you only have a basic mouse without forward/backward buttons, you can map the axis to another mouse/joystick button instead.
-On the contrary, if you have gaming mouse with many buttons like the G602, you can map each axis of any bi-turboprop to distinct buttons (see 2xThrottle+Prop.ini file).
+For instance, if you only have a basic mouse without forward/backward buttons, you can map the axis to a key or a joystick button instead.
+On the contrary, if you have a gaming mouse with many buttons like the G602, you can map each axis of any bi-turboprop to distinct buttons (see [Logitech G602](Mappings/Logitech G602.ini)).
 
 *NB: Triggers are limited to the 5 standard mouse buttons, all keyboard keys, and 32 joystick buttons.*
 
@@ -92,7 +96,7 @@ On a sloped runway you can quickly revert to forward throttle to make sure you r
 
 *NB: Move the mouse backward/forward in the reverse throttle range in case you configured forward throttle in a left/right direction*
 
-When using Jet.ini mappings, a detent is also set at 90% position to allow for better control over the auto-throttle positions. 
+When using "Generic * Jets*" mappings, a detent is also set at 90% position to allow for better control over the auto-throttle positions. 
 This should be adjusted though to better suit the detents available in each jet.
 
 ## Smart brakes 
@@ -101,27 +105,33 @@ Brake SimVars cannot be used for precise braking, so brakes are made available w
 A single trigger can be used in a smart way to control both right & left brakes:
 - backward mouse moves will brake on both sides
 - a left or right leaning mouse move will apply more brakes on the corresponding side
-- appled brakes will automatically return to neutral position when the corresponding trigger is released
+- applied brakes will automatically return to neutral position when the corresponding trigger is released
 
-vJoy axis can also be used to increase sensitivity to mouse movements since changes coming from MSFS are ignored.
+
+## vJoy virtual joystick driver installation
 
 Using any vJoy mapping requires to:
 1. Download vJoy driver: https://sourceforge.net/projects/vjoystick/files/Beta%202.x/2.1.9.1-160719/vJoySetup.exe/download
 2. Install it by running: vJoySetup.exe
 3. Map vJoy axis displayed by HandOnMouse to desired MSFS functions
-
 ## Support planes incompatible with SimVars
 
-vJoy.ini mappings uses vJoy including some smart features (detents, autocentering) to better support planes not totally supporting SimVars like Aerosoft's CRJ
-1. Select vJoy.ini possibly editing it to remove axis or features you do not need (say, rudder, brakes)
-2. Map MSFS controls to vJoy device as in: ![](vjoy_msfs.jpg) (beware to select "reverse" for the appropriate axis)
+vJoy also allows to support planes not totally supporting SimVars like Aerosoft's CRJ, including some smart features (detents, autocentering)
+1. Select [vJoy for Aircrafts with no SimVars](Mappings/vJoy for Aircrafts with no SimVars.ini) possibly editing it to remove axis or features you do not need (say, rudder, brakes)
+2. Map MSFS controls to vJoy device as below: 
 
-To use reverse throttle with CRJ, you must use its tablet, access last "options" page and "calibrate throttle" to enable reverse range and set an Idle value close to the one in: ![](crj_reverse.jpg)
+(beware to select "reverse" for the appropriate axis)
+![](vjoy_msfs.jpg) 
+
+To use reverse throttle with CRJ, you must use its tablet, access last "options" page and "calibrate throttle" to enable reverse range and set an Idle value close to the one below:
+![](crj_reverse.jpg)
 
 ## G602 mouse mappings
 
 The Logitech G602 mouse can replace a full quadrant with this utility and much more!
-Configure the following G Hub mappings, select G602.ini mappings file in MSFS_HandOnMouse, and you are good to go with almost any aircraft from gliders to jets!
+1. Configure the following G Hub mappings
+2. Select [Logitech G602](Mappings/Logitech G602.ini) mappings file in MSFS_HandOnMouse
+And you are good to go with almost any aircraft from gliders to jets!
 
 Mouse Button(s)       | MSFS Control
 ---------------       | ------------
@@ -135,58 +145,3 @@ Mouse Button(s)       | MSFS Control
 Click ![](Source/Settings.png) to assign | **Elevator trim** (forward-backward move) or **Aileron trim** (left-right move)
 
 ![](G602_left.jpg) ![](G602_top.jpg)
-
----
-
-## Version 3.0
-
-ALPHA version, testing with MSFS Sim Update 9 to do
-
-Please install in a separate place than version 2 as some user configuration settings changed. 
-Customized .ini mappings files from version 2 "Mappings" folder can be copied to the new version "Mappings" folder without change.
-* Improves mouse move sensitivity when connected
-* Adds control (in %/s) of axis changes from MSFS to avoid, e.g. throttle set to zero when exiting MSFS "options" menu
-* Improves main window to select predefined axis mappings more intuitively and hide/lock specific ones from the main window
-* Adds ability to hide topmost gauges window
-* Adds ability to lock specific axis
-* Adds standard gear icons for advanced settings instead of "..." buttons
-* Alt+F4 does not quit HandsOnMouse anymore when connected
-* Removes unreliable SimConnect in-sim Text messages that appeared indefinitely in specific conditions
-* Fixes sporadic input loss after loading an aircraft
-* Adds detection of missing trim axis for hiding mappings
-
-## Version 2.1
-
-* Improves axis window to understand options more intuitively
-* Adds ability to hide specific axis (those Not Available are hidden automatically)
-
-## Version 2.0
-
-* Adds support for triggering axis changes from HID compatible device buttons like joystick triggers
-* Adds configuration button to change mappings trigger, direction and smart options and save them to a user specific file or reset them to the defaults defined in the mappings file
-* Adds optional log file for troubleshooting if needed
-
-## Version 1.4
-
-* Adds vJoy.ini mappings using vJoy including some smart features (detents, autocentering) to better support planes not totally supporting SimVars like Aerosoft's CRJ
-
-## Version 1.3
-
-* Adds visual cues to reverse throttle and center of left/right axis
-* Adds other smart mappings, used in Thr+Yoke+Pedals.ini to replace a yoke or pedals : aileron, rudder and brakes
-
-## Version 1.2
-
-* Adds other smart mappings :
-- flaps maximum value adapts to the current aircraft
-- throttle minimum value adapts to the current aircraft to enable reverse throttle when available
-
-## Version 1.1
-
-* Adds smart trim mappings making it a lot easier and faster to trim an aircraft:
-- elevator/aileron trim sensitivity adapts to aircraft's IAS and design Vc to compensate higher aerodynamic forces for higher velocities 
-- elevator trim automatically compensates centering elevator inputs to compensate for the absence of Force-Feedback hardware
-
-## Version 1
-
-* Initial release
