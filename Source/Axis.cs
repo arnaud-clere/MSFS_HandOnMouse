@@ -186,7 +186,7 @@ namespace HandOnMouse
             m.PositiveDetent = double.Parse(
                 Kernel32.ReadIni(customFilePath, "PositiveDetent", section, "0"), NumberStyles.Float, CultureInfo.InvariantCulture);
 
-            m.DisableIncreaseDirection2 = bool.Parse(Kernel32.ReadIni(customFilePath, "DisableIncreaseDirection2", section, "False").Trim());
+            m.DisableDetents = bool.Parse(Kernel32.ReadIni(customFilePath, "DisableDetents", section, "False").Trim());
             m.IsHidden = bool.Parse(Kernel32.ReadIni(customFilePath, "IsHidden", section, "False").Trim());
             m.IsEnabled = bool.Parse(Kernel32.ReadIni(customFilePath, "IsEnabled", section, "True").Trim());
 
@@ -213,7 +213,7 @@ namespace HandOnMouse
                 {
                     Kernel32.WriteIni(customFilePath, "ControllerButtonsFilter", section, m.ControllerButtonsText == null ? "" : $"{m.ControllerManufacturerId}/{m.ControllerProductId}/{m.ControllerButtonsText}");
                     Kernel32.WriteIni(customFilePath, "DecreaseScaleTimeSecs", section, m.DecreaseScaleTimeSecs.ToString(CultureInfo.InvariantCulture));
-                    Kernel32.WriteIni(customFilePath, "DisableIncreaseDirection2", section, m.DisableIncreaseDirection2.ToString());
+                    Kernel32.WriteIni(customFilePath, "DisableDetents", section, m.DisableDetents.ToString());
                     Kernel32.WriteIni(customFilePath, "DisableThrottleReverse", section, m.DisableThrottleReverse.ToString());
                     Kernel32.WriteIni(customFilePath, "IncreaseDirection", section, $"{Enum.Format(typeof(Direction), m.IncreaseDirection, "G")} {(m.IncreaseDirection2 == null ? null : Enum.Format(typeof(Direction), m.IncreaseDirection2, "G"))}");
                     Kernel32.WriteIni(customFilePath, "KeyboardKeyDownFilter", section, m.KeyboardKeyDownFilter == Key.None ? "" : $"{m.KeyboardKeyDownFilter}");
@@ -380,7 +380,7 @@ namespace HandOnMouse
                 }
                 else
                 {
-                    s = Join(TriggerText, IncreaseDirectionText);
+                    s = Join(TriggerText, IncreaseDirectionText+IncreaseDirection2Text);
                     if (TrimCounterCenteringMove) s += "+";
                     if (WaitButtonsReleased)      s = $"({s})";
                 }
@@ -403,7 +403,7 @@ namespace HandOnMouse
                 else
                 {
                     s += $"1. PRESS {TriggerToolTip}{Environment.NewLine}";
-                    s += $"2. MOVE mouse to {IncreaseDirectionText} to increase axis";
+                    s += $"2. MOVE mouse to {IncreaseDirectionText}{IncreaseDirection2Text} to increase axis";
                     if (TrimCounterCenteringMove) s += " or move joystick to center";
                     if (!WaitButtonsReleased)      s += " continuously";
                     s += Environment.NewLine + "3. RELEASE";
@@ -522,29 +522,17 @@ namespace HandOnMouse
                 return btn;
             }
         }
-        public string IncreaseDirectionText
+        public string DirectionText(Direction? d, string nullText = "")
         {
-            get
-            {
-                return
-                    IncreaseDirection == Direction.Left ? "←" :
-                    IncreaseDirection == Direction.Push ? "↑" :
-                    IncreaseDirection == Direction.Right ? "→" : 
-                    "↓";
-            }
+            return d == null ? nullText :
+                d == Direction.Left ? "←" :
+                d == Direction.Push ? "↑" :
+                d == Direction.Right ? "→" :
+                "↓";
         }
-        public string IncreaseDirection2Text
-        {
-            get
-            {
-                return
-                    DisableIncreaseDirection2 || IncreaseDirection2 == null ? "X" :
-                    IncreaseDirection2 == Direction.Left ? "←" :
-                    IncreaseDirection2 == Direction.Push ? "↑" :
-                    IncreaseDirection2 == Direction.Right ? "→" : 
-                    "↓";
-            }
-        }
+        public string IncreaseDirectionText { get { return DirectionText(IncreaseDirection); } }
+        public string IncreaseDirection2Text { get { return DirectionText(IncreaseDirection2); } }
+        public string DetentDirectionText { get { return DisableDetents ? "X" : DirectionText(DetentDirection); } }
         public string Name { get { return SimVarName.Length > 0 ? SimVarName : VJoyAxisName; } }
         public bool IsTrim { get { return AxisForTrim.ContainsKey(Name); } }
         public string TrimmedAxisName { get { return AxisForTrim.ContainsKey(Name) ? AxisForTrim[Name] : "Not Available"; } }
@@ -625,11 +613,8 @@ namespace HandOnMouse
                     _increaseDirection == Direction.Left ? Direction.Right : 
                     Direction.Left;
                 return
-                    (_increaseDirection2 != null && _increaseDirection2 != _increaseDirection && _increaseDirection2 != decreaseDirection) ? _increaseDirection2 :
-                    _increaseDirection == Direction.Draw ? Direction.Left :
-                    _increaseDirection == Direction.Push ? Direction.Right :
-                    _increaseDirection == Direction.Left ? Direction.Push :
-                    Direction.Draw;
+                    (_increaseDirection2 == _increaseDirection || _increaseDirection2 == decreaseDirection) ? null : // not orthogonal to IncreaseDirection
+                    _increaseDirection2;
             }
             set
             {
@@ -639,7 +624,8 @@ namespace HandOnMouse
                 }
             }
         }
-        public bool DisableIncreaseDirection2 { get { return _disableIncreaseDirection2; } set { _disableIncreaseDirection2 = value; NotifyPropertyChanged(); NotifyPropertyChanged("IncreaseDirection2Text"); } }
+        public Direction DetentDirection { get { return IncreaseDirection2 ?? (_increaseDirection == Direction.Draw || _increaseDirection == Direction.Push ? Direction.Right : Direction.Push); } }
+        public bool DisableDetents { get { return _disableIncreaseDirection2; } set { _disableIncreaseDirection2 = value; NotifyPropertyChanged(); NotifyPropertyChanged("DetentDirectionText"); } }
         public double DecreaseScaleTimeSecs { get { return _decreaseScaleTimeSecs; } set { _decreaseScaleTimeSecs = value; NotifyPropertyChanged(); } }
         public bool IsThrottle { get; private set; }
         public bool ForAllEngines { get; private set; }
@@ -774,25 +760,28 @@ namespace HandOnMouse
                             d2 == Direction.Draw ? move.Y :
                             d2 == Direction.Right ? move.X : -move.X;
 
-                    var inDetent =
-                        (IsThrottle && Math.Abs(Value) < SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100) ||
-                        (VJoyAxisIsThrottle && VJoyAxisZero > 0 && Math.Abs(Value - VJoyAxisZero) < SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100) ||
-                        (PositiveDetent > 0 && Math.Abs(Value - PositiveDetent) < SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100);
-                    var negativeDetent =
-                        (IsThrottle && Value < 0) ||
-                        (VJoyAxisIsThrottle && VJoyAxisZero > 0 && Value < VJoyAxisZero);
-                    var positiveDetent =
-                        PositiveDetent > 0 && PositiveDetent < Value;
-                    var orthogonal = d == Direction.Push || d == Direction.Draw ? Direction.Right : Direction.Draw;
+                    if (!DisableDetents)
+                    {
+                        var inDetent =
+                            (IsThrottle && Math.Abs(Value) < SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100) ||
+                            (VJoyAxisIsThrottle && VJoyAxisZero > 0 && Math.Abs(Value - VJoyAxisZero) < SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100) ||
+                            (PositiveDetent > 0 && Math.Abs(Value - PositiveDetent) < SimVarScale * Settings.Default.ReverseDetentWidthInPercent / 100);
+                        var negativeDetent =
+                            (IsThrottle && Value < 0) ||
+                            (VJoyAxisIsThrottle && VJoyAxisZero > 0 && Value < VJoyAxisZero);
+                        var positiveDetent =
+                            PositiveDetent > 0 && PositiveDetent < Value;
+                        var orthogonal = DetentDirection;
 
-                    if (inDetent && move.X != 0 && orthogonal == Direction.Right)
-                        change = -move.X;
-                    else if (inDetent && move.Y != 0 && orthogonal == Direction.Draw)
-                        change = -move.Y;
-                    else if (negativeDetent && change <= 0)
-                        change = orthogonal == Direction.Right ? -move.X : -move.Y;
-                    else if (positiveDetent && change >= 0)
-                        change = orthogonal == Direction.Right ? -move.X : -move.Y;
+                        if (inDetent && move.X != 0 && orthogonal == Direction.Right)
+                            change = -move.X;
+                        else if (inDetent && move.Y != 0 && orthogonal == Direction.Draw)
+                            change = -move.Y;
+                        else if (negativeDetent && change <= 0)
+                            change = orthogonal == Direction.Right ? -move.X : -move.Y;
+                        else if (positiveDetent && change >= 0)
+                            change = orthogonal == Direction.Right ? -move.X : -move.Y;
+                    }
 
                     if (Settings.Default.Sensitivity > 0)
                     {

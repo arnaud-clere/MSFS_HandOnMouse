@@ -78,9 +78,11 @@
         <Border Grid.Column="0" Grid.Row="2" Background="#FFE0FEFF"><StackPanel>
             <TextBlock 
                     Text="2. MOVE Mouse to increase axis:"/>
-            <TextBlock FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
+            <TextBlock Margin="3,3,0,3" FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
                     Text="{Binding Axis.IncreaseDirectionText, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
-        </StackPanel></Border>
+            <TextBlock Margin="0,3,3,3" FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
+                    Text="{Binding Axis.IncreaseDirection2Text, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
+            </StackPanel></Border>
         <Border Grid.Column="1" Grid.Row="2" Background="#FFE0FEFF"><StackPanel Orientation="Vertical" VerticalAlignment="Top">
             <StackPanel>
                 <ComboBox IsEditable="True" VerticalAlignment="Bottom"
@@ -109,11 +111,11 @@
             <StackPanel Orientation="Vertical" VerticalAlignment="Top">
                 <StackPanel>
                     <CheckBox 
-                    IsChecked="{Binding Axis.DisableIncreaseDirection2}"
-                    Content="Disable smart detent direction:"
+                    IsChecked="{Binding Axis.DisableDetents}"
+                    Content="Disable smart detents using direction:"
                     ToolTip="For continuous axis where detents should be simulated by a orthogonal change in mouse move direction: throttle..."/>
                     <TextBlock FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
-                    Text="{Binding Axis.IncreaseDirection2Text, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
+                    Text="{Binding Axis.DetentDirectionText, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
                 </StackPanel>
                 <CheckBox
                     IsEnabled="{Binding Axis.IsThrottle}"

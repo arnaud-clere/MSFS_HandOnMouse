@@ -73,7 +73,7 @@
                         <Grid Margin="0 3 0 0">
                             <Grid.RowDefinitions>
                                 <RowDefinition/>
-                                <RowDefinition/>
+                                <RowDefinition Height="3"/>
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="{Binding SimVarNegativeScaleString      , UpdateSourceTrigger=PropertyChanged}"/><!--, StringFormat={}{0:0.##}*}"/>-->
@@ -91,13 +91,10 @@
                                 </TextBlock.Foreground>
                             </TextBlock>
                             <Rectangle Grid.Row="1" Grid.Column="0" 
-                                Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
                                 Fill="{Binding SimVarNegativeColor}"/>
                             <Rectangle Grid.Row="1" Grid.Column="1" 
-                                Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
                                 Fill="{Binding SimVarPositiveColor}"/>
                             <Rectangle Grid.Row="1" Grid.Column="2" 
-                                Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
                                 Fill="{Binding SimVarPositiveDetentColor}"/>
                         </Grid>
                     </DockPanel>
@@ -146,6 +143,17 @@
                 <ComboBoxItem>0.25</ComboBoxItem>
             </ComboBox>
             <TextBlock>Gauge bars opacity (ratio)</TextBlock>
+        </DockPanel>
+        <DockPanel Margin="0 3 0 0">
+            <ComboBox DockPanel.Dock="Left" Margin="0 0 3 0" Width="50" IsEditable="True"
+                IsEnabled="{Binding GaugeVisible}"
+                Text="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels, Mode=TwoWay}">
+                <ComboBoxItem ToolTip="No scale under gauges">0</ComboBoxItem>
+                <ComboBoxItem>1</ComboBoxItem>
+                <ComboBoxItem>2</ComboBoxItem>
+                <ComboBoxItem>3</ComboBoxItem>
+            </ComboBox>
+            <TextBlock>Gauge scales width (px)</TextBlock>
         </DockPanel>
         <TextBlock Margin="0 6 0 0" TextWrapping="Wrap" FontWeight="Bold"><Run Text="Adjust mouse move sensitivity "/><Run Text="if "/><Run Text="needed:"/></TextBlock>
         <DockPanel Margin="0 3 0 0">
