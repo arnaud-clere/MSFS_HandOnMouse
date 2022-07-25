@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -126,7 +127,7 @@ namespace winbase
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
         static extern int GetPrivateProfileString(string section, string key, string defaultValue, StringBuilder value, int maxLength, string filePath);
 
-        static public string ReadIni(string filePath, string key, string section = null, string defaultValue = "", int maxLength = 255)
+        static public string ReadIni(string filePath, string section, string key, string defaultValue = "", int maxLength = 255)
         {
             var value = new StringBuilder(maxLength);
             var read = GetPrivateProfileString(section, key, defaultValue, value, maxLength, filePath);
@@ -134,11 +135,32 @@ namespace winbase
             return value.ToString();
         }
 
+        static public object ReadIni<T>(string filePath, string section, string key, T defaultValue, ref string errors)
+        {
+            var read = ReadIni(filePath, section, key).Trim();
+            if (read == "")
+            {
+                return defaultValue;
+            }
+            try
+            {
+                if (defaultValue is bool) return bool.Parse(read);
+                else if (defaultValue is uint) return uint.Parse(read, NumberStyles.None, CultureInfo.InvariantCulture);
+                else if (defaultValue is double) return double.Parse(read, NumberStyles.Float, CultureInfo.InvariantCulture);
+                else return Enum.Parse(typeof(T), read);
+            }
+            catch (Exception e)
+            {
+                errors += $"[{section}]{key}={read} is invalid, using {defaultValue} instead: {e.Message}\r\n";
+                return defaultValue;
+            }
+        }
+
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         static extern bool WritePrivateProfileString(string section, string key, string value, string filePath);
         
-        static public bool WriteIni(string filePath, string key, string section, string value)
+        static public bool WriteIni(string filePath, string section, string key, string value)
         {
             return WritePrivateProfileString(section, key, value, filePath);
         }
@@ -180,7 +202,7 @@ namespace winuser
 
         public override string ToString()
         {
-            return string.Format("RawInputHeader\n dwType : {0}\n dwSize : {1}\n hDevice : {2}\n wParam : {3}", Type, Size, hDevice, wParam);
+            return string.Format("RawInputHeader\r\n dwType : {0}\r\n dwSize : {1}\r\n hDevice : {2}\r\n wParam : {3}", Type, Size, hDevice, wParam);
         }
     }
 

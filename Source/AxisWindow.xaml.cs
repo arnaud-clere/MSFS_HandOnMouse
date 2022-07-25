@@ -154,11 +154,11 @@ namespace HandOnMouse
 
         private void Button_Reset(object sender, RoutedEventArgs e)
         {
-            Axis.MappingsReset(MainWindow.MappingFile(), ((AxisViewModel)DataContext).Axis);
+            ((AxisViewModel)DataContext).Axis.Reset();
         }
         private void Button_Save(object sender, RoutedEventArgs e)
         {
-            Axis.MappingsSaveCustom(MainWindow.MappingFile(), ((AxisViewModel)DataContext).Axis);
+            ((AxisViewModel)DataContext).Axis.Save();
             Close();
         }
 

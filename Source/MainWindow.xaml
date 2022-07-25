@@ -41,6 +41,7 @@
                     ToolTip="Customize mappings files">
                 <Image Source="Settings.png"/>
             </Button>
+            <!-- FIXME Remove IsEditable by binding SelectedItem to a dedicated property -->
             <ComboBox IsEditable="True"
                     Text="{Binding Source={x:Static properties:Settings.Default}, Path=MappingFile, Mode=TwoWay}"
                     ItemsSource="{Binding MappingFiles}"
@@ -51,11 +52,11 @@
                 <DataTemplate>
                     <DockPanel Margin="0 3 0 0">
                         <CheckBox DockPanel.Dock="Left" Style="{StaticResource HideShow}" 
-                                IsChecked="{Binding IsHidden, UpdateSourceTrigger=PropertyChanged}"
+                                IsChecked="{Binding IsPersistentlyHidden, UpdateSourceTrigger=PropertyChanged}"
                                 ToolTip="Hide/Show in Gauge window even if a trigger is defined"/>
                         <TextBlock DockPanel.Dock="Left" Width="35" FontSize="8" TextAlignment="Center" VerticalAlignment="Center"
-                                Text="{Binding SimVarMin, UpdateSourceTrigger=PropertyChanged}"
-                                ToolTip="{Binding SimVarUnit}"/>
+                                Text="{Binding ValueMin, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.#}'}"
+                                ToolTip="{Binding ValueUnit}"/>
                         <Button DockPanel.Dock="Right" Margin="0,0,3,0" Height="16" Width="16" BorderThickness="0"
                                 ToolTip="Define trigger, mouse move direction, and other options"
                                 Tag="{Binding}"
@@ -65,25 +66,25 @@
                                 Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"
                                 ToolTip="{Binding InputToolTip}"/>
                         <CheckBox DockPanel.Dock="Right" Style="{StaticResource UnlockLock}" 
-                                IsChecked="{Binding IsEnabled, UpdateSourceTrigger=PropertyChanged}"
+                                IsChecked="{Binding IsPersistentlyEnabled, UpdateSourceTrigger=PropertyChanged}"
                                 ToolTip="Lock/Unlock mouse move input even if a trigger is defined"/>
                         <TextBlock DockPanel.Dock="Right" Width="35" FontSize="8" TextAlignment="Center" VerticalAlignment="Center"
-                                Text="{Binding SimVarMax, UpdateSourceTrigger=PropertyChanged}"
-                                ToolTip="{Binding SimVarUnit}"/>
+                                Text="{Binding ValueMax, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.#}'}"
+                                ToolTip="{Binding ValueUnit}"/>
                         <Grid Margin="0 3 0 0">
                             <Grid.RowDefinitions>
                                 <RowDefinition/>
                                 <RowDefinition Height="3"/>
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="{Binding SimVarNegativeScaleString      , UpdateSourceTrigger=PropertyChanged}"/><!--, StringFormat={}{0:0.##}*}"/>-->
-                                <ColumnDefinition Width="{Binding SimVarPositiveScaleString      , UpdateSourceTrigger=PropertyChanged}"/><!--, StringFormat={}{0:0.##}*}"/>-->
-                                <ColumnDefinition Width="{Binding SimVarPositiveDetentScaleString, UpdateSourceTrigger=PropertyChanged}"/><!--, StringFormat={}{0:0.##}*}"/>-->
+                                <ColumnDefinition Width="{Binding NegativeScaleString, UpdateSourceTrigger=PropertyChanged}"/>
+                                <ColumnDefinition Width="{Binding PositiveScaleString, UpdateSourceTrigger=PropertyChanged}"/>
+                                <ColumnDefinition Width="{Binding MaxScaleString     , UpdateSourceTrigger=PropertyChanged}"/>
                             </Grid.ColumnDefinitions>
                             <ProgressBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextBlock.TextAlignment="Left" BorderThickness="0" Foreground="White" Background="LightGray"
-                                Value="{Binding Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
-                                Minimum="{Binding SimVarMin, UpdateSourceTrigger=PropertyChanged}" 
-                                Maximum="{Binding SimVarMax, UpdateSourceTrigger=PropertyChanged}"/>
+                                Value="{Binding SimVarValue, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
+                                Minimum="{Binding ValueMin, UpdateSourceTrigger=PropertyChanged}" 
+                                Maximum="{Binding ValueMax, UpdateSourceTrigger=PropertyChanged}"/>
                             <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextAlignment="Left"
                                 Text="{Binding AxisText, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
                                 <TextBlock.Foreground>
@@ -91,11 +92,11 @@
                                 </TextBlock.Foreground>
                             </TextBlock>
                             <Rectangle Grid.Row="1" Grid.Column="0" 
-                                Fill="{Binding SimVarNegativeColor}"/>
+                                Fill="{Binding NegativeScaleColor}"/>
                             <Rectangle Grid.Row="1" Grid.Column="1" 
-                                Fill="{Binding SimVarPositiveColor}"/>
+                                Fill="{Binding PositiveScaleColor}"/>
                             <Rectangle Grid.Row="1" Grid.Column="2" 
-                                Fill="{Binding SimVarPositiveDetentColor}"/>
+                                Fill="{Binding MaxScaleColor}"/>
                         </Grid>
                     </DockPanel>
                 </DataTemplate>
@@ -116,15 +117,19 @@
                     Drag HandOnMouse Gauges window to its place<LineBreak/>
                     and/or adjust its settings if needed:</TextBlock>
         <DockPanel Margin="0 3 0 0">
+            <CheckBox DockPanel.Dock="Right" Style="{StaticResource CollapseExpand}"  
+                    IsChecked="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeSettingsVisible, Mode=TwoWay}"
+                    ToolTip="Collapse/Expand Gauge window settings"/>
             <CheckBox DockPanel.Dock="Left" Style="{StaticResource HideShow}"  
                     IsChecked="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeHidden, Mode=TwoWay}"
-                    ToolTip="Hide Gauge window"/>
+                    ToolTip="Hide/Show Gauge window"/>
             <TextBlock><Run Text="Hide/Show "/><Run Text="Gauge"/><Run Text="s"/><Run Text=" window"/></TextBlock>
         </DockPanel>
-        <DockPanel Margin="0 3 0 0">
+        <DockPanel Margin="0 3 0 0"
+                    Visibility="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeSettingsVisible, Converter={StaticResource B2V}}">
             <ComboBox DockPanel.Dock="Left" Margin="0 0 3 0" Width="50" IsEditable="True"
-                IsEnabled="{Binding GaugeVisible}"
-                Text="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeFontSize, Mode=TwoWay}">
+                    IsEnabled="{Binding GaugeVisible}"
+                    Text="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeFontSize, Mode=TwoWay}">
                 <ComboBoxItem>16</ComboBoxItem>
                 <ComboBoxItem>14</ComboBoxItem>
                 <ComboBoxItem>12</ComboBoxItem>
@@ -133,7 +138,8 @@
             </ComboBox>
             <TextBlock><Run Text="Gauge"/><Run Text="s"/><Run Text=" window text size (pt)"/></TextBlock>
         </DockPanel>
-        <DockPanel Margin="0 3 0 0">
+        <DockPanel Margin="0 3 0 0"
+                    Visibility="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeSettingsVisible, Converter={StaticResource B2V}}">
             <ComboBox DockPanel.Dock="Left" Margin="0 0 3 0" Width="50" IsEditable="True"
                 IsEnabled="{Binding GaugeVisible}"
                 Text="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeOpacity, Mode=TwoWay}">
@@ -144,7 +150,8 @@
             </ComboBox>
             <TextBlock>Gauge bars opacity (ratio)</TextBlock>
         </DockPanel>
-        <DockPanel Margin="0 3 0 0">
+        <DockPanel Margin="0 3 0 0"
+                Visibility="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeSettingsVisible, Converter={StaticResource B2V}}">
             <ComboBox DockPanel.Dock="Left" Margin="0 0 3 0" Width="50" IsEditable="True"
                 IsEnabled="{Binding GaugeVisible}"
                 Text="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels, Mode=TwoWay}">

@@ -69,6 +69,8 @@ namespace HandOnMouse
     {
         public static string MappingsDir() { return Path.Combine(Directory.GetCurrentDirectory(), "Mappings"); }
         public static string MappingFile() { return Path.ChangeExtension(Path.Combine(MappingsDir(), Settings.Default.MappingFile), ".ini"); }
+        public static Controller.Buttons SimJoystickButtons { get; private set; }
+        public static bool vJoyIsAvailable { get; private set; }
 
         const int WM_USER_SIMCONNECT = (int)WM.USER + 2;
 
@@ -76,6 +78,7 @@ namespace HandOnMouse
         public enum Definitions
         {
             None = 0,
+            JoystickButtonPressed = 1,
             AircraftLoaded = 2,
             IndicatedAirSpeedKnots = 3,
             DesignCruiseSpeedFeetPerSec = 4,
@@ -89,7 +92,9 @@ namespace HandOnMouse
             ElevatorTrimDisabled = 12,
             AileronTrimDisabled = 13,
             RudderTrimDisabled = 14,
-            Axis = 15
+            ElevatorTrimMinDegrees = 15,
+            ElevatorTrimMaxDegrees = 16,
+            Axis = 17
         }
 
         public MainWindow()
@@ -252,6 +257,7 @@ namespace HandOnMouse
 
                 _simConnect.OnRecvOpen += new SimConnect.RecvOpenEventHandler(SimConnect_OnRecvOpen);
                 _simConnect.OnRecvQuit += new SimConnect.RecvQuitEventHandler(SimConnect_OnRecvQuit);
+                _simConnect.OnRecvEvent += new SimConnect.RecvEventEventHandler(SimConnect_OnRecvEvent);
                 _simConnect.OnRecvEventFilename += new SimConnect.RecvEventFilenameEventHandler(SimConnect_OnRecvEventFilename);
                 _simConnect.OnRecvException += new SimConnect.RecvExceptionEventHandler(SimConnect_OnRecvException);
                 _simConnect.OnRecvSimobjectData += new SimConnect.RecvSimobjectDataEventHandler(SimConnect_OnRecvData);
@@ -337,12 +343,13 @@ namespace HandOnMouse
 
             ((ViewModel)DataContext).StatusBrushForText = new SolidColorBrush(_connected && Settings.Default.Sensitivity > 0 ? Colors.Black : Colors.Gray);
 
-            requestFlaps = false;
-            requestGear = false;
-            requestSpoiler = false;
-            requestBrakes = false;
-            requestEngines = false;
-            requestSpeeds = false;
+            _requestFlaps = false;
+            _requestGear = false;
+            _requestSpoiler = false;
+            _requestBrakes = false;
+            _requestEngines = false;
+            _requestSpeeds = false;
+            _requestJoystickButtonInputEvents.Clear();
             for (int id = 0; id < Axis.Mappings.Count; id++)
             {
                 var m = Axis.Mappings[id];
@@ -350,45 +357,51 @@ namespace HandOnMouse
                 {
                     if (m.TrimCounterCenteringMove && Axis.AxisForTrim.ContainsKey(m.SimVarName))
                     {
-                        RegisterData(RequestId(id), m.SimVarName, m.SimVarUnit, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements));
+                        RegisterData(RequestId(id), m.SimVarName, m.ValueUnit, (float)m.ValueIncrement);
 
-                        _simConnect.AddToDataDefinition(ReadAxisValueId(id), m.SimVarName, m.SimVarUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
-                        _simConnect.AddToDataDefinition(ReadAxisValueId(id), Axis.AxisForTrim[m.SimVarName], "Position", SIMCONNECT_DATATYPE.FLOAT64, (float)((1 - -1) / Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
+                        _simConnect.AddToDataDefinition(ReadAxisValueId(id), m.SimVarName, m.ValueUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)m.ValueIncrement, SimConnect.SIMCONNECT_UNUSED);
+                        _simConnect.AddToDataDefinition(ReadAxisValueId(id), Axis.AxisForTrim[m.SimVarName], "Position", SIMCONNECT_DATATYPE.FLOAT64, (float)((1 - -1) / Math.Max(1, Settings.Default.ContinuousValueIncrements)), SimConnect.SIMCONNECT_UNUSED);
                         _simConnect.RegisterDataDefineStruct<SmartTrimAxis>(ReadAxisValueId(id));
                         RequestData(ReadAxisValueId(id), SIMCONNECT_PERIOD.SIM_FRAME);
                     }
                     else if (m.ForAllEngines)
                     {
-                        RegisterData(RequestId(id), m.SimVarName + ":1", m.SimVarUnit, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements));
+                        RegisterData(RequestId(id), m.SimVarName + ":1", m.ValueUnit, (float)m.ValueIncrement);
                         RequestData(RequestId(id), SIMCONNECT_PERIOD.SIM_FRAME);
 
                         for (uint engineId = 1; engineId < 5; engineId++)
-                            _simConnect.AddToDataDefinition(RequestId(id, RequestType.SmartAxisValue), m.SimVarName + ":" + engineId, m.SimVarUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements), SimConnect.SIMCONNECT_UNUSED);
+                            _simConnect.AddToDataDefinition(RequestId(id, RequestType.SmartAxisValue), m.SimVarName + ":" + engineId, m.ValueUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)m.ValueIncrement, SimConnect.SIMCONNECT_UNUSED);
                         _simConnect.RegisterDataDefineStruct<SmartEngineAxis>(RequestId(id, RequestType.SmartAxisValue));
                     }
                     else
                     {
-                        RegisterData(RequestId(id), m.SimVarName, m.SimVarUnit, (float)(m.SimVarScale / Settings.Default.ContinuousSimVarIncrements));
+                        RegisterData(RequestId(id), m.SimVarName, m.ValueUnit, (float)m.ValueIncrement);
                         RequestData(RequestId(id), SIMCONNECT_PERIOD.SIM_FRAME);
                     }
-                    if (m.IsThrottle && !m.DisableThrottleReverse) requestReverse = true;
-                    if (m.SimVarName == "FLAPS HANDLE INDEX") requestFlaps = true;
-                    if (m.SimVarName == "GEAR HANDLE POSITION") requestGear = true;
-                    if (m.SimVarName == "SPOILERS HANDLE POSITION") requestSpoiler = true;
-                    if (m.SimVarName.StartsWith("BRAKE LEFT POSITION") || m.SimVarName.StartsWith("BRAKE RIGHT POSITION")) requestBrakes = true;
-                    if (m.SimVarName.StartsWith("ELEVATOR TRIM")) requestElevatorTrim = true;
-                    if (m.SimVarName.StartsWith("AILERON TRIM")) requestAileronTrim = true;
-                    if (m.SimVarName.StartsWith("RUDDER TRIM")) requestRudderTrim = true;
-                    foreach (var v in Axis.EngineSimVars) if (m.SimVarName.StartsWith(v)) requestEngines = true;
-                    if (m.SensitivityAtCruiseSpeed) requestSpeeds = true;
+                    if (m.IsThrottle && !m.DisableThrottleReverse)          _requestReverse = true;
+                    if (m.SimVarName == "FLAPS HANDLE INDEX")               _requestFlaps = true;
+                    if (m.SimVarName == "GEAR HANDLE POSITION")             _requestGear = true;
+                    if (m.SimVarName == "SPOILERS HANDLE POSITION")         _requestSpoiler = true;
+                    if (m.SimVarName.StartsWith("BRAKE LEFT POSITION") || 
+                        m.SimVarName.StartsWith("BRAKE RIGHT POSITION"))    _requestBrakes = true;
+                    if (m.SimVarName.StartsWith("ELEVATOR TRIM"))           _requestElevatorTrim = true;
+                    if (m.SimVarName.StartsWith("AILERON TRIM"))            _requestAileronTrim = true;
+                    if (m.SimVarName.StartsWith("RUDDER TRIM"))             _requestRudderTrim = true;
+                    foreach (var v in Axis.EngineSimVars) 
+                        if (m.SimVarName.StartsWith(v))                     _requestEngines = true;
+                    if (m.SensitivityAtCruiseSpeed)                         _requestSpeeds = true;
+                }
+                if (m.SimJoystickButtonFilter > 0)
+                {
+                    _requestJoystickButtonInputEvents.Add(m.SimJoystickButtonFilter-1);
                 }
             }
-            if (requestReverse)
+            if (_requestReverse)
             {
                 RegisterData(Definitions.ThrottleLowerLimit, "THROTTLE LOWER LIMIT", "Percent" /* <0 */);
                 RequestData(Definitions.ThrottleLowerLimit);
             }
-            if (requestSpeeds)
+            if (_requestSpeeds)
             {
                 RegisterData(Definitions.IndicatedAirSpeedKnots, "AIRSPEED INDICATED", "Knots", 5);
                 RequestData(Definitions.IndicatedAirSpeedKnots, SIMCONNECT_PERIOD.SECOND);
@@ -396,27 +409,27 @@ namespace HandOnMouse
                 RegisterData(Definitions.DesignCruiseSpeedFeetPerSec, "DESIGN SPEED VC", "Feet per second", 5);
                 RequestData(Definitions.DesignCruiseSpeedFeetPerSec);
             }
-            if (requestEngines)
+            if (_requestEngines)
             {
                 RegisterData(Definitions.EnginesCount, "NUMBER OF ENGINES", "Number");
                 RequestData(Definitions.EnginesCount);
             }
-            if (requestBrakes)
+            if (_requestBrakes)
             {
                 RegisterData(Definitions.BrakesAvailable, "TOE BRAKES AVAILABLE", "Bool");
                 RequestData(Definitions.BrakesAvailable);
             }
-            if (requestSpoiler)
+            if (_requestSpoiler)
             {
                 RegisterData(Definitions.SpoilerAvailable, "SPOILER AVAILABLE", "Bool");
                 RequestData(Definitions.SpoilerAvailable);
             }
-            if (requestGear)
+            if (_requestGear)
             {
                 RegisterData(Definitions.IsGearRetractable, "IS GEAR RETRACTABLE", "Bool");
                 RequestData(Definitions.IsGearRetractable);
             }
-            if (requestFlaps)
+            if (_requestFlaps)
             {
                 RegisterData(Definitions.EnginesCount, "FLAPS AVAILABLE", "Bool");
                 RequestData(Definitions.FlapsAvailable);
@@ -424,20 +437,39 @@ namespace HandOnMouse
                 RegisterData(Definitions.FlapsNumHandlePosition, "FLAPS NUM HANDLE POSITIONS", "Number");
                 RequestData(Definitions.FlapsNumHandlePosition);
             }
-            if (requestElevatorTrim)
+            if (_requestElevatorTrim)
             {
+                RegisterData(Definitions.ElevatorTrimMinDegrees, "ELEVATOR TRIM DOWN LIMIT", "Degrees");
+                RegisterData(Definitions.ElevatorTrimMaxDegrees, "ELEVATOR TRIM UP LIMIT", "Degrees");
                 RegisterData(Definitions.ElevatorTrimDisabled, "ELEVATOR TRIM DISABLED", "Bool");
+                RequestData(Definitions.ElevatorTrimMinDegrees);
+                RequestData(Definitions.ElevatorTrimMaxDegrees);
                 RequestData(Definitions.ElevatorTrimDisabled);
             }
-            if (requestAileronTrim)
+            if (_requestAileronTrim)
             {
                 RegisterData(Definitions.AileronTrimDisabled, "AILERON TRIM DISABLED", "Bool");
                 RequestData(Definitions.AileronTrimDisabled);
             }
-            if (requestRudderTrim)
+            if (_requestRudderTrim)
             {
-                RegisterData(Definitions.RudderTrimDisabled, "RUDDER_TRIM_DISABLED", "Bool");
+                RegisterData(Definitions.RudderTrimDisabled, "RUDDER TRIM DISABLED", "Bool");
                 RequestData(Definitions.RudderTrimDisabled);
+            }
+            if (_requestJoystickButtonInputEvents.Count > 0)
+            {
+                _simConnect.MapClientEventToSimEvent(Definitions.None, "");
+                _simConnect.MapClientEventToSimEvent(Definitions.JoystickButtonPressed, "");
+                _simConnect.AddClientEventToNotificationGroup(Definitions.None, Definitions.None, true);
+                _simConnect.AddClientEventToNotificationGroup(Definitions.None, Definitions.JoystickButtonPressed, true);
+                _simConnect.SetNotificationGroupPriority(Definitions.None, 1000000);
+            }
+            foreach (var button in _requestJoystickButtonInputEvents)
+            {
+                for (uint i = 0; i < 10; i++) // joystick id can be > 0, so subscribe to any joystick id
+                {
+                    _simConnect.MapInputEventToClientEvent(Definitions.None, $"joystick:{i}:button:{button}", Definitions.JoystickButtonPressed, button, Definitions.None, button, false);
+                }
             }
             _simConnect.SubscribeToSystemEvent(Definitions.AircraftLoaded, "AircraftLoaded");
         }
@@ -452,28 +484,28 @@ namespace HandOnMouse
             Debug.Assert(_simConnect != null);
             _simConnect?.RequestDataOnSimObject(id, id, (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, period, period > SIMCONNECT_PERIOD.ONCE ? SIMCONNECT_DATA_REQUEST_FLAG.CHANGED : SIMCONNECT_DATA_REQUEST_FLAG.DEFAULT, 0, 0, 0);
         }
+        private void SimConnect_OnRecvEvent(SimConnect sender, SIMCONNECT_RECV_EVENT data)
+        {
+            Trace.WriteLine($"Received event: {data.uEventID} group: {data.uGroupID} data: {data.dwData}");
+
+            if (data.uEventID == (uint)Definitions.JoystickButtonPressed)
+            {
+                SimJoystickButtons |= (Controller.Buttons)(1u << (int)data.dwData);
+            }
+            else
+            {
+                SimJoystickButtons &= ~(Controller.Buttons)(1u << (int)data.dwData);
+            }
+        }
         private void SimConnect_OnRecvEventFilename(SimConnect sender, SIMCONNECT_RECV_EVENT_FILENAME data)
         {
             Trace.WriteLine($"Received event: {data.uEventID} szFileName: {data.szFileName}");
 
             if (data.uEventID == (uint)Definitions.AircraftLoaded)
             {
-                Axis.MappingsRead(MappingFile()); // to reset axis info?!
-                foreach (var m in Axis.Mappings)
-                {
-                    m.PropertyChanged += new PropertyChangedEventHandler(Axis_SimVarValueChanged);
-                }
+                TryDisconnect();
+                TryConnect();
             }
-            if (requestReverse) RequestData(Definitions.ThrottleLowerLimit);
-            if (requestSpeeds) RequestData(Definitions.DesignCruiseSpeedFeetPerSec);
-            if (requestEngines) RequestData(Definitions.EnginesCount);
-            if (requestBrakes) RequestData(Definitions.BrakesAvailable);
-            if (requestSpoiler) RequestData(Definitions.SpoilerAvailable);
-            if (requestGear) RequestData(Definitions.IsGearRetractable);
-            if (requestFlaps) RequestData(Definitions.FlapsAvailable);
-            if (requestElevatorTrim) RequestData(Definitions.ElevatorTrimDisabled);
-            if (requestAileronTrim) RequestData(Definitions.AileronTrimDisabled);
-            if (requestRudderTrim) RequestData(Definitions.RudderTrimDisabled);
         }
         private void SimConnect_OnRecvQuit(SimConnect sender, SIMCONNECT_RECV data)
         {
@@ -558,30 +590,31 @@ namespace HandOnMouse
                                 UInt32 dllVersion = 0, driverVersion = 0;
                                 if (!(_vJoy.DriverMatch(ref dllVersion, ref driverVersion) || (dllVersion == 536 && driverVersion == 537)))
                                 {
-                                    errors += m.SimVarName + ": " + $"vJoy DLL version {dllVersion} does not support installed vJoy driver version {driverVersion}\n";
+                                    errors += m.SimVarName + ": " + $"vJoy DLL version {dllVersion} does not support installed vJoy driver version {driverVersion}\r\n";
                                     _vJoy = null;
                                 }
                             }
                             else
                             {
-                                errors += m.SimVarName + ": " + $"vJoy driver not installed or not enabled\n";
+                                errors += m.SimVarName + ": " + $"vJoy driver not installed or not enabled\r\n";
                                 _vJoy = null;
                             }
                         }
+                        vJoyIsAvailable = _vJoy != null;
                         if (_vJoy?.AcquireVJD(m.VJoyId) != true)
                         {
-                            errors += m.SimVarName + ": " + $"vJoy axis {m.VJoyId} not acquired\n";
+                            errors += m.SimVarName + ": " + $"vJoy axis {m.VJoyId} not acquired\r\n";
                             m.IsAvailable = false;
                         }
                         var status = _vJoy?.GetVJDStatus(m.VJoyId);
                         if (status != VjdStat.VJD_STAT_OWN)
                         {
-                            errors += m.SimVarName + ": " + $"vJoy device {m.VJoyId} not available: {status}\n";
+                            errors += m.SimVarName + ": " + $"vJoy device {m.VJoyId} not available: {status}\r\n";
                             m.IsAvailable = false;
                         }
                         else if (_vJoy?.GetVJDAxisExist(m.VJoyId, m.VJoyAxis) != true)
                         {
-                            errors += m.SimVarName + ": " + $"vJoy device {m.VJoyId} axis {m.VJoyAxis} not found\n";
+                            errors += m.SimVarName + ": " + $"vJoy device {m.VJoyId} axis {m.VJoyAxis} not found\r\n";
                             m.IsAvailable = false;
                         }
                     }
@@ -593,7 +626,7 @@ namespace HandOnMouse
             }
             if (errors.Length > 0)
             {
-                var message = filePath + ":\n" + errors;
+                var message = filePath + ":\r\n" + errors;
                 Trace.WriteLine(message);
                 MessageBox.Show(message, "HandOnMouse");
             }
@@ -739,6 +772,18 @@ namespace HandOnMouse
                         if (m.SimVarName.StartsWith("ELEVATOR TRIM"))
                             m.IsAvailable = false;
                 }
+                else if (i == (int)Definitions.ElevatorTrimMinDegrees)
+                {
+                    foreach (var m in Axis.Mappings)
+                        if (m.SimVarName == "ELEVATOR TRIM POSITION")
+                            m.UpdateElevatorTrimMinValue((double)data.dwData[0]);
+                }
+                else if (i == (int)Definitions.ElevatorTrimMaxDegrees)
+                {
+                    foreach (var m in Axis.Mappings)
+                        if (m.SimVarName == "ELEVATOR TRIM POSITION")
+                            m.UpdateElevatorTrimMaxValue((double)data.dwData[0]);
+                }
                 else if (i == (int)Definitions.AileronTrimDisabled && (double)data.dwData[0] != 0)
                 {
                     foreach (var m in Axis.Mappings)
@@ -748,14 +793,22 @@ namespace HandOnMouse
                 else if (i == (int)Definitions.RudderTrimDisabled && (double)data.dwData[0] != 0)
                 {
                     foreach (var m in Axis.Mappings)
-                        if (m.SimVarName.StartsWith("RUDDER_TRIM"))
+                        if (m.SimVarName.StartsWith("RUDDER TRIM"))
                             m.IsAvailable = false;
                 }
-                else if ((i == (int)Definitions.ThrottleLowerLimit) ||
-                         (i == (int)Definitions.FlapsNumHandlePosition))
+                else if (i == (int)Definitions.ThrottleLowerLimit)
                 {
-                    foreach (var m in Axis.Mappings)
-                        m.UpdateSimInfo((double)data.dwData[0]);
+                    var n = (double)data.dwData[0];
+                    if (n < 0)
+                        foreach (var m in Axis.Mappings)
+                            m.UpdateThrottleLowerLimit((double)data.dwData[0]);
+                }
+                else if (i == (int)Definitions.FlapsNumHandlePosition)
+                {
+                    var n = (double)data.dwData[0];
+                    if (n >= 1)
+                        foreach (var m in Axis.Mappings)
+                            m.UpdateFlapsNumHandlePosition((uint)n);
                 }
                 else if ((int)Definitions.Axis <= i) // translate i to an Axis.Mappings index and requestType for processing
                 {
@@ -787,23 +840,26 @@ namespace HandOnMouse
         // Implementation
 
         IntPtr _hwnd;
+        GaugeWindow _gaugeWindow = new GaugeWindow();
+        List<string> displayedErrors = new List<string>();
+
         SimConnect _simConnect;
-        vJoy _vJoy;
         bool _connected = false;
         bool _manuallyDisconnected = false;
         bool _wasAutoConnect = false;
-        GaugeWindow _gaugeWindow = new GaugeWindow();
 
-        List<string> displayedErrors = new List<string>();
-        bool requestFlaps = false;
-        bool requestGear = false;
-        bool requestSpoiler = false;
-        bool requestBrakes = false;
-        bool requestEngines = false;
-        bool requestSpeeds = false;
-        bool requestReverse = false;
-        bool requestElevatorTrim = false;
-        bool requestAileronTrim = false;
-        bool requestRudderTrim = false;
+        bool _requestFlaps = false;
+        bool _requestGear = false;
+        bool _requestSpoiler = false;
+        bool _requestBrakes = false;
+        bool _requestEngines = false;
+        bool _requestSpeeds = false;
+        bool _requestReverse = false;
+        bool _requestElevatorTrim = false;
+        bool _requestAileronTrim = false;
+        bool _requestRudderTrim = false;
+        HashSet<uint> _requestJoystickButtonInputEvents = new HashSet<uint>();
+
+        vJoy _vJoy;
     }
 }

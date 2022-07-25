@@ -44,6 +44,9 @@
     <Optimize>true</Optimize>
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Source\Mouse.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.FlightSimulator.SimConnect, Version=11.0.62651.3, Culture=neutral, PublicKeyToken=baf445ffb3a06b5c, processorArchitecture=AMD64">
       <HintPath>$(MSFS_SDK)\SimConnect SDK\lib\managed\Microsoft.FlightSimulator.SimConnect.dll</HintPath>
@@ -127,31 +130,31 @@
     <None Include="LICENSE.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Mappings\1 Throttle+%28Prop or Mixt%29+Flaps+Gear.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Mappings\Logitech G602.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Mappings\vJoy for Aircrafts with no SimVars.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Generic 3 Throttle+Yoke+Pedals.ini">
+    <None Include="Mappings\4 Throttle+Yoke+Flaps+Gear.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Generic 5 Jets.ini">
+    <None Include="Mappings\5 Jets.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Generic 6 Jets %28x4%29.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\Generic 4 Gliders.ini">
+    <None Include="Mappings\6 Gliders.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Mappings\To customize.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Generic 2 Throttle+Mixture.ini">
+    <None Include="Mappings\2 Throttle+Prop+Mixt.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Generic 1 Throttle+Propeller.ini">
+    <None Include="Mappings\3 Throttle x 2.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Properties\Settings.settings">
@@ -173,10 +176,10 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="crj_reverse.jpg"/>
-    <Content Include="custom.jpg"/>
-    <Content Include="G602_left.jpg"/>
-    <Content Include="G602_top.jpg"/>
+    <Content Include="crj_reverse.jpg" />
+    <Content Include="custom.jpg" />
+    <Content Include="G602_left.jpg" />
+    <Content Include="G602_top.jpg" />
     <Resource Include="Source\Mouse.ico" />
     <Content Include="SimConnect.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -186,13 +189,15 @@
     <Resource Include="Source\Settings.png" />
     <Resource Include="Source\Mouse-off.png" />
     <Resource Include="Source\Mouse.png" />
+    <Resource Include="Source\Collapse.png" />
+    <Resource Include="Source\Expand.png" />
     <Content Include="vJoyInterface.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="vJoyInterfaceWrap.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="vjoy_msfs.jpg"/>
+    <Content Include="vjoy_msfs.jpg" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

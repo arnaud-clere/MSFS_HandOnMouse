@@ -152,3 +152,7 @@ Mouse Button(s)       | MSFS Control
 Click ![](Source/Settings.png) to assign | **Elevator trim** (forward-backward move) or **Aileron trim** (left-right move)
 
 ![](G602_left.jpg) ![](G602_top.jpg)
+
+# Known issues:
+
+See last known issues: https://github.com/arnaud-clere/MSFS_HandOnMouse/issues

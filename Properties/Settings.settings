@@ -5,10 +5,10 @@
     <Setting Name="Sensitivity" Type="System.Double" Scope="User">
       <Value Profile="(Default)">4</Value>
     </Setting>
-    <Setting Name="ContinuousSimVarIncrements" Type="System.Double" Scope="User">
+    <Setting Name="ContinuousValueIncrements" Type="System.Double" Scope="User">
       <Value Profile="(Default)">10000</Value>
     </Setting>
-    <Setting Name="ReverseDetentWidthInPercent" Type="System.Double" Scope="User">
+    <Setting Name="DetentWidthInPercent" Type="System.Double" Scope="User">
       <Value Profile="(Default)">1</Value>
     </Setting>
     <Setting Name="SimVarScaleHeightInPixels" Type="System.Int32" Scope="User">
@@ -33,10 +33,22 @@
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="MappingFile" Type="System.String" Scope="User">
-      <Value Profile="(Default)">Generic 1 Throttle+Propeller</Value>
+      <Value Profile="(Default)">1 Throttle+(Prop or Mixt)+Flaps+Gear</Value>
     </Setting>
     <Setting Name="AutoConnect" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="DetentFriction" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">10</Value>
+    </Setting>
+    <Setting Name="NegativeRangeFriction" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">10</Value>
+    </Setting>
+    <Setting Name="MaxRangeFriction" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">10</Value>
+    </Setting>
+    <Setting Name="GaugeSettingsVisible" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
     </Setting>
   </Settings>
 </SettingsFile>

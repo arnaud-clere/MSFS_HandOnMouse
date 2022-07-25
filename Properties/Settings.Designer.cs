@@ -12,7 +12,7 @@ namespace HandOnMouse.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.1.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "16.10.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -38,24 +38,24 @@ namespace HandOnMouse.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("10000")]
-        public double ContinuousSimVarIncrements {
+        public double ContinuousValueIncrements {
             get {
-                return ((double)(this["ContinuousSimVarIncrements"]));
+                return ((double)(this["ContinuousValueIncrements"]));
             }
             set {
-                this["ContinuousSimVarIncrements"] = value;
+                this["ContinuousValueIncrements"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("1")]
-        public double ReverseDetentWidthInPercent {
+        public double DetentWidthInPercent {
             get {
-                return ((double)(this["ReverseDetentWidthInPercent"]));
+                return ((double)(this["DetentWidthInPercent"]));
             }
             set {
-                this["ReverseDetentWidthInPercent"] = value;
+                this["DetentWidthInPercent"] = value;
             }
         }
         
@@ -145,7 +145,7 @@ namespace HandOnMouse.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Generic 1 Throttle+Propeller")]
+        [global::System.Configuration.DefaultSettingValueAttribute("1 Throttle+(Prop or Mixt)+Flaps+Gear")]
         public string MappingFile {
             get {
                 return ((string)(this["MappingFile"]));
@@ -164,6 +164,54 @@ namespace HandOnMouse.Properties {
             }
             set {
                 this["AutoConnect"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public double DetentFriction {
+            get {
+                return ((double)(this["DetentFriction"]));
+            }
+            set {
+                this["DetentFriction"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public double NegativeRangeFriction {
+            get {
+                return ((double)(this["NegativeRangeFriction"]));
+            }
+            set {
+                this["NegativeRangeFriction"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public double MaxRangeFriction {
+            get {
+                return ((double)(this["MaxRangeFriction"]));
+            }
+            set {
+                this["MaxRangeFriction"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool GaugeSettingsVisible {
+            get {
+                return ((bool)(this["GaugeSettingsVisible"]));
+            }
+            set {
+                this["GaugeSettingsVisible"] = value;
             }
         }
     }

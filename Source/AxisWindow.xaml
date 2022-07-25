@@ -6,7 +6,7 @@
         Icon="Settings.png" ShowInTaskbar="False"
         ResizeMode="NoResize" SizeToContent="WidthAndHeight"
         MinWidth="432" MinHeight="224"
-        Title="{Binding Axis.AxisToolTip, StringFormat='{}To change {0} axis:'}">
+        Title="{Binding Axis.AxisToolTip, StringFormat='To change {0}:'}">
     <Window.Resources>
         <Style TargetType="Border">
             <Setter Property="Margin" Value="0,0,0,3" />
@@ -68,25 +68,24 @@
                     Text="{Binding Axis.TriggerDeviceName, UpdateSourceTrigger=PropertyChanged}"/>
         </StackPanel></Border>
         <Border Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" Background="#FFF0FEFF"><StackPanel Orientation="Vertical" VerticalAlignment="Top">
-                <CheckBox Margin="3" Style="{StaticResource HideShow}"
+            <CheckBox Margin="3" Style="{StaticResource HideShow}"
                     IsChecked="{Binding Axis.IsHidden}"
                     Content="Hide/Show in Gauge window even with trigger"/>
-                <CheckBox Margin="3" Style="{StaticResource UnlockLock}"
+            <CheckBox Margin="3" Style="{StaticResource UnlockLock}"
                     IsChecked="{Binding Axis.IsEnabled, UpdateSourceTrigger=PropertyChanged}"
                     Content="Lock/Unlock mouse move input even with trigger"/>
             </StackPanel></Border>
         <Border Grid.Column="0" Grid.Row="2" Background="#FFE0FEFF"><StackPanel>
-            <TextBlock 
-                    Text="2. MOVE Mouse to increase axis:"/>
-            <TextBlock Margin="3,3,0,3" FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
+            <TextBlock
+                    Text="2. MOVE Mouse:"/>
+            <TextBlock Margin="0" FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
                     Text="{Binding Axis.IncreaseDirectionText, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
-            <TextBlock Margin="0,3,3,3" FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
-                    Text="{Binding Axis.IncreaseDirection2Text, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
             </StackPanel></Border>
         <Border Grid.Column="1" Grid.Row="2" Background="#FFE0FEFF"><StackPanel Orientation="Vertical" VerticalAlignment="Top">
             <StackPanel>
                 <ComboBox IsEditable="True" VerticalAlignment="Bottom"
-                    Text="{Binding Axis.Sensitivity}">
+                    Text="{Binding Axis.Sensitivity}"
+                    IsEnabled="{Binding Axis.IsEnabled}">
                     <ComboBoxItem>0.25</ComboBoxItem>
                     <ComboBoxItem>0.5</ComboBoxItem>
                     <ComboBoxItem ToolTip="Default sensitivity">1</ComboBoxItem>
@@ -112,11 +111,15 @@
                 <StackPanel>
                     <CheckBox 
                     IsChecked="{Binding Axis.DisableDetents}"
-                    Content="Disable smart detents using direction:"
-                    ToolTip="For continuous axis where detents should be simulated by a orthogonal change in mouse move direction: throttle..."/>
-                    <TextBlock FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
+                    Content="Disable smart detents"
+                    ToolTip="For continuous axis where detents can be simulated by a orthogonal change in mouse move direction: throttle..."/>
+                    <TextBlock>
+                    (move 
+                    <TextBlock Margin="0" FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
                     Text="{Binding Axis.DetentDirectionText, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
-                </StackPanel>
+                    to pass)
+                </TextBlock>
+                    </StackPanel>
                 <CheckBox
                     IsEnabled="{Binding Axis.IsThrottle}"
                     IsChecked="{Binding Axis.DisableThrottleReverse}"
@@ -141,7 +144,7 @@
         </Border>
         <Border Grid.Column="1" Grid.Row="3" Grid.ColumnSpan="2" Background="#FFF0FEFF"><StackPanel Orientation="Vertical" VerticalAlignment="Top">
             <CheckBox
-                    IsChecked="{Binding Axis.WaitButtonsReleased}" 
+                    IsChecked="{Binding Axis.WaitTriggerReleased}" 
                     Content="Wait for trigger release to change axis" 
                     ToolTip="For axis that should be adjusted and confirmed before it is actually moved"/>
             <StackPanel>
