@@ -27,20 +27,20 @@ namespace HandOnMouse
             {
                 return "File not found: " + filePath;
             }
+            string[] sections = Kernel32.ReadIni(filePath);
+            if (sections.Length == 0)
+            {
+                return "No mapping found: " + filePath;
+            }
             Mappings.Clear();
             var errors = "";
-            var stop = false;
-            for (int i = 0; !stop; i++)
+            foreach (var section in sections)
             {
                 var m = new Axis();
-                errors += m.Read(filePath, $"Axis{i + 1}");
+                errors += m.Read(filePath, section);
                 if (m.Name.Length > 0)
                 {
                     Mappings.Add(m);
-                }
-                else
-                {
-                    stop = true;
                 }
             }
             return errors;
@@ -70,11 +70,11 @@ namespace HandOnMouse
             var errors = "";
             try 
             {
-                SimJoystickButtonFilter = (uint)Kernel32.ReadIni(filePath, section, "SimJoystickButtonFilter", 0u, ref errors);
+                SimJoystickButtonFilter = (uint)Kernel32.ReadIni(AxisFilePath, section, "SimJoystickButtonFilter", 0u, ref errors);
 
                 var space = new char[] { ' ' };
                 var key = "VJoyAxis";
-                var vJoyNameAndId = Kernel32.ReadIni(filePath, section, key).Split(space, StringSplitOptions.RemoveEmptyEntries);
+                var vJoyNameAndId = Kernel32.ReadIni(AxisFilePath, section, key).Split(space, StringSplitOptions.RemoveEmptyEntries);
                 if (vJoyNameAndId.Length > 1)
                 {
                     try
@@ -116,13 +116,13 @@ namespace HandOnMouse
                     ValueUnit = "Increment";
                     ValueMin = 0;
                     ValueMax = 32767;
-                    VJoyAxisZero = (uint)Kernel32.ReadIni(filePath, section, "VJoyAxisZero", 0u, ref errors);
-                    VJoyAxisIsThrottle = (bool)Kernel32.ReadIni(filePath, section, "VJoyAxisIsThrottle", false, ref errors);
+                    VJoyAxisZero = (uint)Kernel32.ReadIni(customFilePath, section, "VJoyAxisZero", 0u, ref errors);
+                    VJoyAxisIsThrottle = (bool)Kernel32.ReadIni(AxisFilePath, section, "VJoyAxisIsThrottle", false, ref errors);
                 }
                 else
                 {
-                    SimVarName = Kernel32.ReadIni(filePath, section, "SimVarName").Trim().ToUpperInvariant();
-                    ValueUnit = Kernel32.ReadIni(filePath, section, "SimVarUnit", "Percent").Trim();
+                    SimVarName = Kernel32.ReadIni(AxisFilePath, section, "SimVarName").Trim().ToUpperInvariant();
+                    ValueUnit = Kernel32.ReadIni(AxisFilePath, section, "SimVarUnit", "Percent").Trim();
                     if (ValueUnit.ToLowerInvariant() == "bool")
                     {
                         ValueMin = 0;
@@ -130,18 +130,21 @@ namespace HandOnMouse
                     }
                     else
                     {
-                        var min = (double)Kernel32.ReadIni(filePath, section, "SimVarMin", 0.0, ref errors);
-                        var max = (double)Kernel32.ReadIni(filePath, section, "SimVarMax", 100.0, ref errors);
+                        var min = (double)Kernel32.ReadIni(AxisFilePath, section, "SimVarMin", 0.0, ref errors);
+                        var max = (double)Kernel32.ReadIni(AxisFilePath, section, "SimVarMax", 100.0, ref errors);
                         ValueMin = Math.Min(min, max);
                         ValueMax = Math.Max(min, max);
                     };
                     SimVarValue = Math.Max(0, ValueMin);
-                    TrimCounterCenteringMove = (bool)Kernel32.ReadIni(customFilePath, section, "TrimCounterCenteringMove", false, ref errors);
+                    TrimCounterCenteringMove = 
+                        (bool)Kernel32.ReadIni(customFilePath, section, "TrimCounterCenteringMove",
+                        (bool)Kernel32.ReadIni(AxisFilePath  , section, "TrimCounterCenteringMove", false, ref errors), ref errors);
                     DisableThrottleReverse = (bool)Kernel32.ReadIni(customFilePath, section, "DisableThrottleReverse", false, ref errors);
                 }
 
                 var btn = RAWMOUSE.RI_MOUSE.None;
-                var btnString = Kernel32.ReadIni(customFilePath, section, "MouseButtonsFilter").ToUpper().Split(new char[] { '-' });
+                var btnString = Kernel32.ReadIni(customFilePath, section, "MouseButtonsFilter",
+                                Kernel32.ReadIni(AxisFilePath  , section, "MouseButtonsFilter")).ToUpper().Split(new char[] { '-' });
                 if (btnString.Length > 0)
                 {
                     if (btnString[0].Contains("L")) btn |= RAWMOUSE.RI_MOUSE.LEFT_BUTTON_DOWN;
@@ -189,39 +192,51 @@ namespace HandOnMouse
 
                 KeyboardKeyDownFilter = (Key)Kernel32.ReadIni(customFilePath, section, "KeyboardKeyDownFilter", Key.None, ref errors);
 
-                Sensitivity = Math.Max(1 / 100, Math.Min(100, (double)Kernel32.ReadIni(customFilePath, section, "Sensitivity", 1.0, ref errors)));
-                SensitivityAtCruiseSpeed = (bool)Kernel32.ReadIni(customFilePath, section, "SensitivityAtCruiseSpeed", false, ref errors);
+                Sensitivity = Math.Max(1 / 100, Math.Min(100, 
+                    (double)Kernel32.ReadIni(customFilePath, section, "Sensitivity",
+                    (double)Kernel32.ReadIni(AxisFilePath  , section, "Sensitivity", 1.0, ref errors), ref errors)));
+                SensitivityAtCruiseSpeed = 
+                    (bool)Kernel32.ReadIni(customFilePath, section, "SensitivityAtCruiseSpeed",
+                    (bool)Kernel32.ReadIni(AxisFilePath  , section, "SensitivityAtCruiseSpeed", false, ref errors), ref errors);
                 AllowedExternalChangePerSec = Math.Max(0, Math.Min(20, (double)Kernel32.ReadIni(customFilePath, section, "AllowedExternalChangePerSec", IsThrottle ? 5.0 : 20.0, ref errors)));
 
-                key = "IncreaseDirection";
-                var directions = Kernel32.ReadIni(customFilePath, section, key, "Push").Split(space, StringSplitOptions.RemoveEmptyEntries);
-                IncreaseDirection = (Direction)Enum.Parse(typeof(Direction), directions[0].Trim(), true);
-                if (directions.Length > 1)
+                IncreaseDirection = (Direction)Enum.Parse(typeof(Direction), 
+                    Kernel32.ReadIni(customFilePath, section, "IncreaseDirection",
+                    Kernel32.ReadIni(AxisFilePath  , section, "IncreaseDirection", "Push")).Trim(), true);
+                key = "IncreaseDirection2";
+                var direction = 
+                    Kernel32.ReadIni(customFilePath, section, key,
+                    Kernel32.ReadIni(AxisFilePath  , section, key)).Trim();
+                try
                 {
-                    try
-                    {
-                        IncreaseDirection2 = (Direction)Enum.Parse(typeof(Direction), directions[1].Trim(), true);
-                    }
-                    catch (Exception e)
-                    {
-                        errors += $"[{section}]{key}={string.Join(" ", directions)} is invalid: {e.Message}\r\n";
-                    }
+                    if (direction != "")
+                        IncreaseDirection2 = (Direction)Enum.Parse(typeof(Direction), direction, true);
                 }
-                WaitTriggerReleased = (bool)Kernel32.ReadIni(customFilePath, section, "WaitTriggerReleased", false, ref errors);
-                DecreaseScaleTimeSecs = Math.Max(0, Math.Min(10, (double)Kernel32.ReadIni(customFilePath, section, "DecreaseScaleTimeSecs", 0.0, ref errors)));
+                catch (Exception e)
+                {
+                    errors += $"[{section}]{key}={direction} is invalid: {e.Message}\r\n";
+                }
+                WaitTriggerReleased = 
+                    (bool)Kernel32.ReadIni(customFilePath, section, "WaitTriggerReleased",
+                    (bool)Kernel32.ReadIni(AxisFilePath  , section, "WaitTriggerReleased", false, ref errors), ref errors);
+                DecreaseScaleTimeSecs = Math.Max(0, Math.Min(10, 
+                    (double)Kernel32.ReadIni(customFilePath, section, "DecreaseScaleTimeSecs",
+                    (double)Kernel32.ReadIni(AxisFilePath  , section, "DecreaseScaleTimeSecs", 0.0, ref errors), ref errors)));
 
                 PositiveDetent = (double)Kernel32.ReadIni(customFilePath, section, "PositiveDetent", 0.0, ref errors);
                 DisableDetents = (bool)Kernel32.ReadIni(customFilePath, section, "DisableDetents", false, ref errors);
 
-                var scaleColors = Kernel32.ReadIni(filePath, section, "NegativePositiveMaxScaleColors").Split(space, StringSplitOptions.RemoveEmptyEntries);
+                var scaleColors = Kernel32.ReadIni(AxisFilePath, section, "NegativePositiveMaxScaleColors").Split(space, StringSplitOptions.RemoveEmptyEntries);
                 NegativeScaleColor = ReadColor(scaleColors, 0, $"{section}[NegativePositiveMaxScaleColors]", ref errors);
                 PositiveScaleColor = ReadColor(scaleColors, 1, $"{section}[NegativePositiveMaxScaleColors]", ref errors);
                 MaxScaleColor = ReadColor(scaleColors, 2, $"{section}[NegativePositiveMaxScaleColors]", ref errors);
 
-                Description = Kernel32.ReadIni(filePath, section, "Description").Trim();
+                Description = Kernel32.ReadIni(AxisFilePath, section, "Description").Trim();
 
-                IsEnabled = (bool)Kernel32.ReadIni(customFilePath, section, "IsEnabled", true, ref errors);
-                IsHidden = (bool)Kernel32.ReadIni(customFilePath, section, "IsHidden", false, ref errors);
+                IsEnabled = (bool)Kernel32.ReadIni(customFilePath, section, "IsEnabled", 
+                            (bool)Kernel32.ReadIni(AxisFilePath  , section, "IsEnabled", true, ref errors), ref errors);
+                IsHidden  = (bool)Kernel32.ReadIni(customFilePath, section, "IsHidden",
+                            (bool)Kernel32.ReadIni(AxisFilePath  , section, "IsHidden", false, ref errors), ref errors);
             }
             catch (Exception e)
             {
@@ -248,7 +263,8 @@ namespace HandOnMouse
                     Kernel32.WriteIni(CustomFilePath, FileSection, "Sensitivity"                 , Sensitivity.ToString(CultureInfo.InvariantCulture));
                     Kernel32.WriteIni(CustomFilePath, FileSection, "SensitivityAtCruiseSpeed"    , SensitivityAtCruiseSpeed.ToString());
                     Kernel32.WriteIni(CustomFilePath, FileSection, "AllowedExternalChangePerSec" , AllowedExternalChangePerSec.ToString(CultureInfo.InvariantCulture));
-                    Kernel32.WriteIni(CustomFilePath, FileSection, "IncreaseDirection"           , $"{Enum.Format(typeof(Direction), IncreaseDirection, "G")} {(IncreaseDirection2 == null ? null : Enum.Format(typeof(Direction), IncreaseDirection2, "G"))}");
+                    Kernel32.WriteIni(CustomFilePath, FileSection, "IncreaseDirection"           , Enum.Format(typeof(Direction), IncreaseDirection, "G"));
+                    Kernel32.WriteIni(CustomFilePath, FileSection, "IncreaseDirection2"          , IncreaseDirection2 == null ? "" : Enum.Format(typeof(Direction), IncreaseDirection2, "G"));
                     Kernel32.WriteIni(CustomFilePath, FileSection, "WaitTriggerReleased"         , WaitTriggerReleased.ToString());
                     Kernel32.WriteIni(CustomFilePath, FileSection, "DecreaseScaleTimeSecs"       , DecreaseScaleTimeSecs.ToString(CultureInfo.InvariantCulture));
                     Kernel32.WriteIni(CustomFilePath, FileSection, "PositiveDetent"              , PositiveDetent.ToString());
@@ -287,7 +303,9 @@ namespace HandOnMouse
         public int Id => Mappings.IndexOf(this);
         public string FilePath { get; private set; }
         public string FileSection { get; private set; }
-        public string CustomFilePath => $"{FilePath}.{FileSection}";
+        public string CustomFilePath => $"{Path.ChangeExtension(FilePath, null)} {FileSection}.ini";
+        public string AxisFilePath => $"{Path.GetDirectoryName(FilePath)}\\_ {FileSection}.ini";
+        // TODO Plane specific file paths
 
         // Configurable properties
 

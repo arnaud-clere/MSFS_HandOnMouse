@@ -41,7 +41,7 @@ namespace HandOnMouse
     {
         public string Status { get { return _status; } set { if (_status != value) { _status = value; NotifyPropertyChanged(); } } }
         public bool GaugeVisible { get { return !Settings.Default.GaugeHidden; } }
-        public List<string> MappingFiles { get { var fs = new List<string>(); foreach(var f in new DirectoryInfo(MainWindow.MappingsDir()).GetFiles("*.ini")) { fs.Add(f.Name.Remove(f.Name.Length-f.Extension.Length)); } return fs; } }
+        public List<string> MappingFiles { get { var fs = new List<string>(); foreach(var f in new DirectoryInfo(MainWindow.MappingsDir()).GetFiles("*.cfg")) { fs.Add(f.Name.Remove(f.Name.Length-f.Extension.Length)); } return fs; } }
         public ObservableCollection<Axis> Mappings { get { return Axis.Mappings; } }
         public Brush StatusBrushForText
         {
@@ -68,7 +68,7 @@ namespace HandOnMouse
     public partial class MainWindow : Window
     {
         public static string MappingsDir() { return Path.Combine(Directory.GetCurrentDirectory(), "Mappings"); }
-        public static string MappingFile() { return Path.ChangeExtension(Path.Combine(MappingsDir(), Settings.Default.MappingFile), ".ini"); }
+        public static string MappingFile() { return Path.ChangeExtension(Path.Combine(MappingsDir(), Settings.Default.MappingFile), ".cfg"); }
         public static Controller.Buttons SimJoystickButtons { get; private set; }
         public static bool vJoyIsAvailable { get; private set; }
 
@@ -548,7 +548,7 @@ namespace HandOnMouse
                 var openFileDialog = new OpenFileDialog
                 {
                     InitialDirectory = MappingsDir(),
-                    Filter = "HandOnMouse mappings file (*.ini)|*.ini",
+                    Filter = "HandOnMouse mappings file (*.cfg)|*.cfg",
                     FilterIndex = 2
                 };
                 if (openFileDialog.ShowDialog() == true)
@@ -559,7 +559,7 @@ namespace HandOnMouse
         }
         private bool TryReadMappings(string filePath = null)
         {
-            filePath = Path.ChangeExtension(filePath, ".ini");
+            filePath = Path.ChangeExtension(filePath, ".cfg");
             if (filePath != null && !Path.IsPathRooted(filePath))
             {
                 filePath = Path.Combine(MappingsDir(), filePath);

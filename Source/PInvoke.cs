@@ -123,10 +123,25 @@ namespace winbase
 {
     static public class Kernel32
     {
+        [DllImport("kernel32.dll")]
+        private static extern int GetPrivateProfileString(int section, string key, string value, [MarshalAs(UnmanagedType.LPArray)] byte[] result, int size, string filePath);
+
         /// <see cref="https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getprivateprofilestring"/>
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
         static extern int GetPrivateProfileString(string section, string key, string defaultValue, StringBuilder value, int maxLength, string filePath);
 
+        static public string[] ReadIni(string filePath)
+        {
+            for (int capacity = 255; true; capacity *= 2)
+            {
+                byte[] result = new byte[capacity];
+                int size = GetPrivateProfileString(0, "", "", result, capacity, filePath);
+                if (size < capacity - 2)
+                {
+                    return Encoding.ASCII.GetString(result, 0, size - (size > 0 ? 1 : 0)).Split('\0');
+                }
+            }
+        }
         static public string ReadIni(string filePath, string section, string key, string defaultValue = "", int maxLength = 255)
         {
             var value = new StringBuilder(maxLength);
@@ -134,7 +149,6 @@ namespace winbase
             Debug.Assert(read == value.Length);
             return value.ToString();
         }
-
         static public object ReadIni<T>(string filePath, string section, string key, T defaultValue, ref string errors)
         {
             var read = ReadIni(filePath, section, key).Trim();

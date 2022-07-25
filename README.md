@@ -46,12 +46,12 @@ Arnaud
 
 ## Custom mappings
 
-Each mapping file (selected with top ![](Source/Settings.png) button) defines a fixed set of axis and the only way to add an axis is to edit the file (see comments in [To customize](Mappings/To%20customize.ini)).
+Each mapping file (selected with top ![](Source/Settings.png) button) defines a fixed set of axis and the only way to add an axis is to edit the file (see comments in [To customize](Mappings/To%20customize.cfg)).
 However, starting with version 2, you can customize each axis option including its trigger, direction, and smart options without having to edit files.
 Indeed, the default mappings only use the mouse forward/backward buttons because they are not used by default but you can use the ![](Source/Settings.png) button in front of any axis to customize how it is mapped to your hardware. 
 
 For instance, if you only have a basic mouse without forward/backward buttons, you can map the axis to a key or a joystick button instead.
-On the contrary, if you have a gaming mouse with many buttons like the G602, you can map each axis of any bi-turboprop to distinct buttons (see [Logitech G602](Mappings/Logitech%20G602.ini)).
+On the contrary, if you have a gaming mouse with many buttons like the G602, you can map each axis of any bi-turboprop to distinct buttons (see [Logitech G602](Mappings/Logitech%20G602.cfg)).
 
 *NB: Triggers are limited to the 5 standard mouse buttons, all keyboard keys, and 32 joystick buttons.*
 
@@ -124,7 +124,7 @@ Using any vJoy mapping requires to:
 ## Support planes incompatible with SimVars
 
 vJoy also allows to support planes not totally supporting SimVars like Aerosoft's CRJ, including some smart features (detents, autocentering)
-1. Select [vJoy for Aircrafts with no SimVars](Mappings/vJoy%20for%20Aircrafts%20with%20no%20SimVars.ini) possibly editing it to remove axis or features you do not need (say, rudder, brakes)
+1. Select [vJoy for Aircrafts with no SimVars](Mappings/vJoy%20for%20Aircrafts%20with%20no%20SimVars.cfg) possibly editing it to remove axis or features you do not need (say, rudder, brakes)
 2. Map MSFS controls to vJoy device as below: 
 
 (beware to select "reverse" for the appropriate axis)
@@ -137,7 +137,7 @@ To use reverse throttle with CRJ, you must use its tablet, access last "options"
 
 The Logitech G602 mouse can replace a full quadrant with this utility and much more!
 1. Configure the following G Hub mappings
-2. Select [Logitech G602](Mappings/Logitech%20G602.ini) mappings file in MSFS_HandOnMouse
+2. Select [Logitech G602](Mappings/Logitech%20G602.cfg) mappings file in MSFS_HandOnMouse
 And you are good to go with almost any aircraft from gliders to jets!
 
 Mouse Button(s)       | MSFS Control

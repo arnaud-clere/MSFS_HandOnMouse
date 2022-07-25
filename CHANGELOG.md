@@ -1,6 +1,10 @@
 # MSFS_HandOnMouse
 MSFS Utility to keep your HandOnMouse for easier/better flying
 
+## Version 3.1
+
+Incompatible changes to mappings file
+
 ## Version 3.0
 
 ALPHA version, testing with MSFS Sim Update 9 to do
