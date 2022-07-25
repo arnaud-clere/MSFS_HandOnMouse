@@ -83,6 +83,9 @@
       <DependentUpon>AxisWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Source\Controller.cs" />
+    <Compile Include="Source\Scale.xaml.cs">
+      <DependentUpon>Scale.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Source\Settings.cs" />
     <Compile Include="Source\TraceFile.cs" />
     <Page Include="Source\AxisWindow.xaml">
@@ -106,6 +109,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Source\Scale.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Source\PInvoke.cs" />
