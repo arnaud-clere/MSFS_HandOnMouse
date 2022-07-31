@@ -10,13 +10,19 @@ namespace HandOnMouse
         {
             InitializeComponent();
         }
-        protected override void OnSourceInitialized(EventArgs e)
-        {
-            base.OnSourceInitialized(e);
-        }
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left) DragMove();
+        }
+
+        private void Window_MouseEnter(object sender, MouseEventArgs e)
+        {
+            ((ViewModel)DataContext).GaugeOpacity = 0.1;
+        }
+
+        private void Window_MouseLeave(object sender, MouseEventArgs e)
+        {
+            ((ViewModel)DataContext).GaugeOpacity = 0;
         }
     }
 }

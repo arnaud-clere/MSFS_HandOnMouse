@@ -1,6 +1,7 @@
 ﻿using HandOnMouse.Properties;
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls.Primitives;
@@ -11,25 +12,27 @@ namespace HandOnMouse
 {
     public class AxisViewModel : INotifyPropertyChanged
     {
-        public AxisViewModel(Axis axis)
-        {
-            _axis = axis;
-        }
-        public Axis Axis { get { return _axis; } set { if (_axis != value) { _axis = value; NotifyPropertyChanged(); } } }
-        public string TriggerMoveHint { get { return _triggerMoveHint; } set { if (_triggerMoveHint != value) { _triggerMoveHint = value; NotifyPropertyChanged(); } } }
+        public Axis Axis { get => _axis; set { if (_axis != value) { _axis = value; NotifyPropertyChanged(); } } }
+        public string SimAircraftTitle { get => _simAircraftTitle; set { if (_simAircraftTitle != value) { _simAircraftTitle = value; NotifyPropertyChanged(); } } }
+        public bool IsSimAircraftKnown => SimAircraftTitle != null && SimAircraftTitle.Length > 0;
+        public bool IsForAircraft { get => _isForAircraft; set { if (_isForAircraft != value) { _isForAircraft = value; NotifyPropertyChanged(); } } }
+        public string TriggerMoveHint { get => _triggerMoveHint; set { if (_triggerMoveHint != value) { _triggerMoveHint = value; NotifyPropertyChanged(); } } }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = "") => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        
         private Axis _axis = null;
-        private string _triggerMoveHint = "Set options below:";
+        private bool _isForAircraft = false;
+        private string _simAircraftTitle = "";
+        private string _triggerMoveHint = "or just set options below:";
     }
 
     public partial class AxisWindow : Window
     {
-        public AxisWindow(Axis axis)
+        public AxisWindow(Axis axis, string simAircraftName)
         {
-            DataContext = new AxisViewModel(axis);
+            DataContext = new AxisViewModel { Axis = axis, SimAircraftTitle = simAircraftName };
             InitializeComponent();
             Mouse.Device.RawMouseMove += new Mouse.RawMouseMoveHandler(Mouse_Move);
             Keyboard.AddKeyDownHandler(this, new KeyEventHandler(Keyboard_KeyDown));
@@ -56,7 +59,7 @@ namespace HandOnMouse
             }
             else
             {
-                d.TriggerMoveHint = "Set options below:";
+                d.TriggerMoveHint = "or just set options below:";
             }
         }
 
@@ -123,7 +126,7 @@ namespace HandOnMouse
                     }
                     else if (!(Math.Abs(v.X) > 2*Math.Abs(v.Y) || Math.Abs(v.Y) > 2* Math.Abs(v.X)))
                     {
-                        d.TriggerMoveHint = "2. MOVE mouse firmly in F/B/L/R direction";
+                        d.TriggerMoveHint = "2. MOVE mouse firmly in ←↑↓→ direction";
                     }
                     else
                     {
@@ -136,7 +139,7 @@ namespace HandOnMouse
                             (_controllerTrigger != null &&
                             !_controllerTrigger.ButtonsPressed.HasFlag(m.ControllerButtonsFilter)))
                         {
-                            d.TriggerMoveHint = "Set options below:";
+                            d.TriggerMoveHint = "or just set options below:";
 
                             _controllerTrigger = null;
                             m.IncreaseDirection =
@@ -154,11 +157,23 @@ namespace HandOnMouse
 
         private void Button_Reset(object sender, RoutedEventArgs e)
         {
-            ((AxisViewModel)DataContext).Axis.Reset();
+            var d = (AxisViewModel)DataContext;
+            var errors = d.Axis.Reset(d.IsForAircraft ? d.SimAircraftTitle : "");
+            if (errors.Length > 0)
+            {
+                Trace.WriteLine(errors);
+                MessageBox.Show(errors, "HandOnMouse");
+            }
         }
         private void Button_Save(object sender, RoutedEventArgs e)
         {
-            ((AxisViewModel)DataContext).Axis.Save();
+            var d = (AxisViewModel)DataContext;
+            var errors = d.Axis.Save(d.IsForAircraft ? d.SimAircraftTitle : "");
+            if (errors.Length > 0)
+            {
+                Trace.WriteLine(errors);
+                MessageBox.Show(errors, "HandOnMouse");
+            }
             Close();
         }
 

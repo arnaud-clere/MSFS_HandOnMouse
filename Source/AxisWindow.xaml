@@ -37,7 +37,7 @@
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
     </Window.Resources>
-    <Grid >
+    <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1*"/>
             <ColumnDefinition Width="1*"/>
@@ -46,18 +46,37 @@
         <Grid.RowDefinitions>
             <RowDefinition/>
             <RowDefinition/>
-            <RowDefinition Height="95"/>
+            <RowDefinition/>
+            <RowDefinition Height="92"/>
             <RowDefinition/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <ToggleButton Grid.Column="0" Grid.Row="0" Focusable="False"
+        <CheckBox Grid.Column="0" Grid.Row="0" Content="For aircraft which title contains:"
+                    IsEnabled="{Binding IsSimAircraftKnown}"
+                    IsChecked="{Binding IsForAircraft}"/>
+        <TextBox Grid.Column="1" Grid.Row="0" Margin="3" VerticalAlignment="Center" FontWeight="SemiBold"
+                    IsEnabled="{Binding IsForAircraft}"
+                    Text="{Binding SimAircraftTitle}"/>
+        <Grid Grid.Column="2" Grid.Row="0" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Button TextBlock.Foreground="Red" 
+                    Content="Reset all to default"
+                    Click="Button_Reset"/>
+            <Button Grid.Column="1" TextBlock.Foreground="Green" 
+                    Content="Save all and close" 
+                    Click="Button_Save"/>
+        </Grid>
+        <ToggleButton Grid.Column="0" Grid.Row="1" Focusable="False"
                     Content="Set trigger and mouse move"
                     ToolTip="Once you press this button:&#x0a;1. press the desired mouse/keyboard/controller button/key (except main click)&#x0a;2. move mouse in direction where axis must increase&#x0a;3. release the trigger"
                     Name="SetTriggerButton"
                     Click="SetTriggerButton_Click"/>
-        <TextBlock Grid.Column="1" Grid.Row="0" FontWeight="SemiBold"
+        <TextBlock Grid.Column="1" Grid.Row="1" FontWeight="SemiBold" Grid.ColumnSpan="2"
                     Text="{Binding TriggerMoveHint}"/>
-        <Border Grid.Column="0" Grid.Row="1" Background="#FFF0FEFF"><StackPanel Orientation="Vertical">
+        <Border Grid.Column="0" Grid.Row="2" Background="#FFF0FEFF"><StackPanel Orientation="Vertical">
             <StackPanel>
                 <TextBlock 
                     Text="1. PRESS Trigger(s):"/>
@@ -67,7 +86,7 @@
             <TextBlock FontWeight="Bold" HorizontalAlignment="Center" Margin="0"
                     Text="{Binding Axis.TriggerDeviceName, UpdateSourceTrigger=PropertyChanged}"/>
         </StackPanel></Border>
-        <Border Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" Background="#FFF0FEFF"><StackPanel Orientation="Vertical" VerticalAlignment="Top">
+        <Border Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="2" Background="#FFF0FEFF"><StackPanel Orientation="Vertical" VerticalAlignment="Top">
             <CheckBox Margin="3" Style="{StaticResource HideShow}"
                     IsChecked="{Binding Axis.IsHidden}"
                     Content="Hide/Show in Gauge window even with trigger"/>
@@ -75,13 +94,13 @@
                     IsChecked="{Binding Axis.IsEnabled, UpdateSourceTrigger=PropertyChanged}"
                     Content="Lock/Unlock mouse move input even with trigger"/>
             </StackPanel></Border>
-        <Border Grid.Column="0" Grid.Row="2" Background="#FFE0FEFF"><StackPanel>
+        <Border Grid.Column="0" Grid.Row="3" Background="#FFE0FEFF"><StackPanel>
             <TextBlock
                     Text="2. MOVE Mouse:"/>
             <TextBlock Margin="0" FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
                     Text="{Binding Axis.IncreaseDirectionText, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
             </StackPanel></Border>
-        <Border Grid.Column="1" Grid.Row="2" Background="#FFE0FEFF"><StackPanel Orientation="Vertical" VerticalAlignment="Top">
+        <Border Grid.Column="1" Grid.Row="3" Background="#FFE0FEFF"><StackPanel Orientation="Vertical" VerticalAlignment="Top">
             <StackPanel>
                 <ComboBox IsEditable="True" VerticalAlignment="Bottom"
                     Text="{Binding Axis.Sensitivity}"
@@ -106,7 +125,7 @@
                 <TextBlock FontWeight="Bold" HorizontalAlignment="Center" Margin="0"
                     Text="{Binding Axis.TrimmedAxisName}"></TextBlock>
             </StackPanel></Border>
-        <Border Grid.Column="2" Grid.Row="2" Background="#FFE0FEFF">
+        <Border Grid.Column="2" Grid.Row="3" Background="#FFE0FEFF">
             <StackPanel Orientation="Vertical" VerticalAlignment="Top">
                 <StackPanel>
                     <CheckBox 
@@ -138,11 +157,11 @@
                     ToolTip="For axis where max (positive) position should be protected with a detent: auto/throttle..."/>
                 </StackPanel>
             </StackPanel></Border>
-        <Border Grid.Column="0" Grid.Row="3" Background="#FFF0FEFF">
+        <Border Grid.Column="0" Grid.Row="4" Background="#FFF0FEFF">
             <TextBlock
                     Text="3. RELEASE Trigger(s)"/>
         </Border>
-        <Border Grid.Column="1" Grid.Row="3" Grid.ColumnSpan="2" Background="#FFF0FEFF"><StackPanel Orientation="Vertical" VerticalAlignment="Top">
+        <Border Grid.Column="1" Grid.Row="4" Grid.ColumnSpan="2" Background="#FFF0FEFF"><StackPanel Orientation="Vertical" VerticalAlignment="Top">
             <CheckBox
                     IsChecked="{Binding Axis.WaitTriggerReleased}" 
                     Content="Wait for trigger release to change axis" 
@@ -175,11 +194,5 @@
                     ToolTip="To increase HandOnMouse accuracy or limit unexpected changes from MSFS or another tool connected to it"/>
             </StackPanel>
         </StackPanel></Border>
-        <Button Grid.Column="1" Grid.Row="0" TextBlock.Foreground="Red" 
-                    Content="Reset all to default"
-                    Click="Button_Reset"/>
-        <Button Grid.Column="2" Grid.Row="0" TextBlock.Foreground="Green" 
-                    Content="Save all and close" 
-                    Click="Button_Save"/>
     </Grid>
 </Window>

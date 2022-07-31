@@ -21,6 +21,7 @@ using Microsoft.FlightSimulator.SimConnect;
 using Microsoft.Win32;
 
 using HandOnMouse.Properties;
+using winbase;
 
 namespace HandOnMouse
 {
@@ -36,31 +37,31 @@ namespace HandOnMouse
         public double Engine3;
         public double Engine4;
     }
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+    public struct SimString
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst=256)]
+        public string value;
+    }
 
     public class ViewModel : INotifyPropertyChanged
     {
-        public string Status { get { return _status; } set { if (_status != value) { _status = value; NotifyPropertyChanged(); } } }
-        public bool GaugeVisible { get { return !Settings.Default.GaugeHidden; } }
+        public string Status { get => _status; set { if (_status != value) { _status = value; NotifyPropertyChanged(); } } }
+        public bool GaugeVisible => !Settings.Default.GaugeHidden;
+        public double GaugeWidth => Settings.Default.GaugeFontSize * 11; // works with "HandOnMouse Gauge" title which is approximately the longest text
+        public double GaugeOpacity { get => _gaugeOpacity; set { if (_gaugeOpacity != value) { _gaugeOpacity = value; NotifyPropertyChanged(); } } }
         public List<string> MappingFiles { get { var fs = new List<string>(); foreach(var f in new DirectoryInfo(MainWindow.MappingsDir()).GetFiles("*.cfg")) { fs.Add(f.Name.Remove(f.Name.Length-f.Extension.Length)); } return fs; } }
-        public ObservableCollection<Axis> Mappings { get { return Axis.Mappings; } }
-        public Brush StatusBrushForText
-        {
-            get { return _statusBrushForText; }
-            set
-            {
-                if (_statusBrushForText != value)
-                {
-                    _statusBrushForText = value;
-                    NotifyPropertyChanged();
-                }
-            }
-        }
+        public ObservableCollection<Axis> Mappings => Axis.Mappings;
+        public Brush StatusBrushForText { get => _statusBrushForText; set { if (_statusBrushForText != value) { _statusBrushForText = value; NotifyPropertyChanged(); } } }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public void NotifyPropertyChanged([CallerMemberName] string propertyName = "") => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        public void NotifyPropertyChanged([CallerMemberName] string name = "") => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         
-        private string _status = "HandOnMouse Gauges";
+        // Implementation
+
+        private string _status = "HandOnMouse Gauge";
+        private double _gaugeOpacity = 0;
         private Brush _statusBrushForText = new SolidColorBrush(Colors.Gray);
     }
 
@@ -69,6 +70,7 @@ namespace HandOnMouse
     {
         public static string MappingsDir() { return Path.Combine(Directory.GetCurrentDirectory(), "Mappings"); }
         public static string MappingFile() { return Path.ChangeExtension(Path.Combine(MappingsDir(), Settings.Default.MappingFile), ".cfg"); }
+        public static string SimAircraftTitle { get; private set; } = "";
         public static Controller.Buttons SimJoystickButtons { get; private set; }
         public static bool vJoyIsAvailable { get; private set; }
 
@@ -94,7 +96,8 @@ namespace HandOnMouse
             RudderTrimDisabled = 14,
             ElevatorTrimMinDegrees = 15,
             ElevatorTrimMaxDegrees = 16,
-            Axis = 17
+            AircraftTitle = 17,
+            Axis = 18
         }
 
         public MainWindow()
@@ -102,6 +105,7 @@ namespace HandOnMouse
             Trace.WriteLine($"MainWindow {DateTime.Now}");
 
             _gaugeWindow.DataContext = DataContext = new ViewModel();
+            _gaugeWindow.Width = ((ViewModel)DataContext).GaugeWidth;
             if (Settings.Default.GaugeHidden)
                 _gaugeWindow.Hide();
             else
@@ -164,20 +168,18 @@ namespace HandOnMouse
 
         private void Settings_Changed(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == "Sensitivity")
+            if (e.PropertyName == nameof(Settings.Default.Sensitivity))
             {
                 ((ViewModel)DataContext).StatusBrushForText = new SolidColorBrush(_connected && Settings.Default.Sensitivity > 0 ? Colors.Black : Colors.Gray);
             }
-            if (e.PropertyName == "GaugeHidden")
+            if (e.PropertyName == nameof(Settings.Default.GaugeFontSize))
             {
-                ((ViewModel)DataContext).NotifyPropertyChanged("GaugeVisible");
-                if (Settings.Default.GaugeHidden)
-                    _gaugeWindow.Hide();
-                else
-                    _gaugeWindow.Show();
+                // FIXME Binding ((ViewModel)DataContext).NotifyPropertyChanged(nameof(ViewModel.GaugeWidth));
+                _gaugeWindow.Width = ((ViewModel)DataContext).GaugeWidth;
             }
-            if (e.PropertyName == "MappingFile")
+            if (e.PropertyName == nameof(Settings.Default.GaugeHidden))
             {
+                // FIXME Binding ((ViewModel)DataContext).NotifyPropertyChanged(nameof(ViewModel.GaugeVisible));
                 if (Settings.Default.GaugeHidden)
                     _gaugeWindow.Hide();
                 else
@@ -215,10 +217,20 @@ namespace HandOnMouse
             WindowState = WindowState.Minimized;
         }
 
+        private void GaugePanel_MouseEnter(object sender, MouseEventArgs e)
+        {
+            ((ViewModel)DataContext).GaugeOpacity = 0.5;
+        }
+
+        private void GaugePanel_MouseLeave(object sender, MouseEventArgs e)
+        {
+            ((ViewModel)DataContext).GaugeOpacity = 0;
+        }
+
         public void Axis_Click(object sender, RoutedEventArgs e)
         {
             var b = (Button)sender;
-            var w = new AxisWindow((Axis)((Button)sender).Tag);
+            var w = new AxisWindow((Axis)((Button)sender).Tag, SimAircraftTitle);
             var midBottom = b.PointToScreen(new Point((b.Width - w.MinWidth) / 2, b.Height + 3));
 
             var m = PresentationSource.FromVisual(this).CompositionTarget.TransformToDevice;
@@ -472,6 +484,9 @@ namespace HandOnMouse
                 }
             }
             _simConnect.SubscribeToSystemEvent(Definitions.AircraftLoaded, "AircraftLoaded");
+            _simConnect.AddToDataDefinition(Definitions.AircraftTitle, "TITLE", null, SIMCONNECT_DATATYPE.STRING256, 0, SimConnect.SIMCONNECT_UNUSED);
+            _simConnect.RegisterDataDefineStruct<SimString>(Definitions.AircraftTitle);
+            RequestData(Definitions.AircraftTitle);
         }
         private void RegisterData(Definitions id, string simVarName, string simVarType, float epsilon = 1)
         {
@@ -568,11 +583,11 @@ namespace HandOnMouse
             {
                 filePath = MappingFile();
             }
-            var errors = Axis.MappingsRead(filePath);
+            var errors = Axis.MappingsRead(filePath, SimAircraftTitle);
             var revert = false;
             if (Axis.Mappings.Count == 0 && filePath != MappingFile()) // revert to previous file
             {
-                Axis.MappingsRead(MappingFile());
+                Axis.MappingsRead(MappingFile(), SimAircraftTitle);
                 revert = true;
             }
             else
@@ -720,7 +735,11 @@ namespace HandOnMouse
 
             try
             {
-                if (i == (int)Definitions.IndicatedAirSpeedKnots)
+                if (i == (int)Definitions.AircraftTitle)
+                {
+                    MainWindow.SimAircraftTitle = ((SimString)data.dwData[0]).value;
+                }
+                else if (i == (int)Definitions.IndicatedAirSpeedKnots)
                 {
                     Axis.IndicatedAirSpeedKnots = Math.Max(0, (double)data.dwData[0]);
                 }

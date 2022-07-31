@@ -155,4 +155,5 @@ Click ![](Source/Settings.png) to assign | **Elevator trim** (forward-backward m
 
 # Known issues:
 
+- SimVar with engine index not working
 See last known issues: https://github.com/arnaud-clere/MSFS_HandOnMouse/issues
