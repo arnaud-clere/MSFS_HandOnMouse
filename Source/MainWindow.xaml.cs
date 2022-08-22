@@ -443,7 +443,7 @@ namespace HandOnMouse
             }
             if (_requestFlaps)
             {
-                RegisterData(Definitions.EnginesCount, "FLAPS AVAILABLE", "Bool");
+                RegisterData(Definitions.FlapsAvailable, "FLAPS AVAILABLE", "Bool");
                 RequestData(Definitions.FlapsAvailable);
 
                 RegisterData(Definitions.FlapsNumHandlePosition, "FLAPS NUM HANDLE POSITIONS", "Number");

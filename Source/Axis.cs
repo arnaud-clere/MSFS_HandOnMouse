@@ -325,7 +325,7 @@ namespace HandOnMouse
         {
             Debug.Assert(Directory.Exists(dir));
             var found = "";
-            var prefix = $"{Path.ChangeExtension(file, null)}_{MappingName.Replace(":", " ")}_";
+            var prefix = $"{Path.ChangeExtension(file, null)}_{AxisName}_";
             foreach (var iniFile in new DirectoryInfo(dir).GetFiles(prefix+"*.ini"))
             {
                 var suffix = Path.ChangeExtension(iniFile.Name.Remove(0, prefix.Length), null);
