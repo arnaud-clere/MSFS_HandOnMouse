@@ -321,11 +321,11 @@ namespace HandOnMouse
         public string AxisFilePath(string aircraftPattern = null) => FindBestIniFileFor(aircraftPattern ?? MainWindow.SimAircraftTitle, Path.GetDirectoryName(MappingsFilePath));
 
         // TODO Plane specific file paths
-        private string FindBestIniFileFor(string aircraftPattern, string dir, string file = "")
+        private string FindBestIniFileFor(string aircraftPattern, string dir, string mappingsFile = "")
         {
             Debug.Assert(Directory.Exists(dir));
             var found = "";
-            var prefix = $"{Path.ChangeExtension(file, null)}_{AxisName}_";
+            var prefix = mappingsFile == "" ? $"_{AxisName}_" : $"{Path.ChangeExtension(mappingsFile, null)}_{MappingName.Replace(":", " ")}_";
             foreach (var iniFile in new DirectoryInfo(dir).GetFiles(prefix+"*.ini"))
             {
                 var suffix = Path.ChangeExtension(iniFile.Name.Remove(0, prefix.Length), null);
@@ -333,7 +333,7 @@ namespace HandOnMouse
                     found.Length < iniFile.Name.Length)
                     found = iniFile.Name;
             }
-            return Path.Combine(dir, found.Length > 0 ? found : file);
+            return Path.Combine(dir, found.Length > 0 ? found : mappingsFile);
         }
 
 // Configurable properties
@@ -649,13 +649,21 @@ public string Description { get; private set; }
         public bool IsActive { get => _isActive; set { if (_isActive != value) { _isActive = value; NotifyPropertyChanged(); } } }
         public double InputChange
         {
-            get => _inputChange;
-            private set { if (_inputChange != value) { _inputChange = value; NotifyPropertyChanged(); } }
+            get => Math.Max((ValueMin - SimVarValue) / ValueScale, Math.Min((ValueMax - SimVarValue) / ValueScale, Valid(_inputChange))); // for changes in ValueMin..ValueMax
+            private set {
+                value = Math.Max((ValueMin - SimVarValue) / ValueScale, Math.Min((ValueMax - SimVarValue) / ValueScale, Valid(value)));
+                if (InputChange != value) { _inputChange = value; NotifyPropertyChanged(); } 
+            }
         }
         public double SimVarChange
         {
-            get => Math.Max(ValueMin, Math.Min(ValueMax, _simVarChange + SimVarValue)) - SimVarValue; // for changes in ValueMin..ValueMax, SimVarValue
-            private set { value = (int)((Math.Max(ValueMin, Math.Min(ValueMax, Valid(value) + SimVarValue)) - SimVarValue) / ValueIncrement) * ValueIncrement; if (SimVarChange != value) { _simVarChange = value; NotifyPropertyChanged(); } } }
+            get => Math.Max(ValueMin, Math.Min(ValueMax, _simVarChange + SimVarValue)) - SimVarValue; // for changes in ValueMin..ValueMax
+            private set { 
+                value = Math.Max(ValueMin, Math.Min(ValueMax, Valid(value) + SimVarValue)) - SimVarValue;
+                value = (int)(value / ValueIncrement) * ValueIncrement;
+                if (SimVarChange != value) { _simVarChange = value; NotifyPropertyChanged(); } 
+            } 
+        }
         public double SimVarValue
         {
             get => Math.Max(ValueMin, Math.Min(ValueMax, _simVarValue)); // for changes in ValueMin..ValueMax
