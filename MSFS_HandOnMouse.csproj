@@ -166,7 +166,25 @@
     <None Include="Mappings\_Elevator_.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Mappings\_Flaps_Grand Caravan.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Mappings\_Gear_.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Mappings\_Propeller_Pilatus PC-6.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Mappings\_Propeller_DHC-6.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Mappings\_Propeller_Beechcraft King Air.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Mappings\_Propeller_Grand Caravan.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Mappings\_Throttle_Boeing F!A 18.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Mappings\_Throttle_VL-3 915.ini">
@@ -226,16 +244,13 @@
     <None Include="Mappings\To customize.cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\vJoy for Aircrafts with no SimVars.cfg">
+    <None Include="Mappings\Aircraft disabling SimVars.cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Mappings\4 Throttle+Yoke+Flaps+Gear.cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\5 Jets.cfg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\6 Gliders.cfg">
+    <None Include="Mappings\5 Throttle+Spoilers+Flaps+Gear.cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Mappings\2 Throttle+Prop+Mixt.cfg">

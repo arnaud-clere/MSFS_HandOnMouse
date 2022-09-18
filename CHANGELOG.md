@@ -3,11 +3,19 @@ MSFS Utility to keep your HandOnMouse for easier/better flying
 
 ## Version 3.1
 
-Incompatible changes to mappings file
+BETA version
+
+Please install in a separate place than version 2 as some user mappings files changed. 
+Customized .ini mappings files from version 3.1 "Mappings" folder CANNOT be copied to the new version "Mappings" folder.
+* Allows aircraft specific settings from mappings files and the user interface
+* Handle negative propeller range for turboprop feathering
+* Defines specific Throttle detents for: A320, CJ4, F/A 18E, VL3 915
+* Defines specific trim sensitivity for some aircrafts
+* Improves some more usability (Gauge window emphasized, more tooltips, etc.)
 
 ## Version 3.0
 
-ALPHA version, testing with MSFS Sim Update 9 to do
+ALPHA version
 
 Please install in a separate place than version 2 as some user configuration settings changed. 
 Customized .ini mappings files from version 2 "Mappings" folder can be copied to the new version "Mappings" folder without change.

@@ -126,7 +126,7 @@
             <CheckBox DockPanel.Dock="Left" Style="{StaticResource HideShow}"  
                     IsChecked="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeHidden, Mode=TwoWay}"
                     ToolTip="Hide/Show Gauge window"/>
-            <TextBlock><Run Text="Hide/Show "/><Run Text="Gauge"/><Run Text="s"/><Run Text=" window"/></TextBlock>
+            <TextBlock>Hide/Show Gauges window</TextBlock>
         </DockPanel>
         <DockPanel Margin="0 3 0 0"
                     Visibility="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeSettingsVisible, Converter={StaticResource B2V}}">
@@ -139,7 +139,7 @@
                 <ComboBoxItem>10</ComboBoxItem>
                 <ComboBoxItem>8</ComboBoxItem>
             </ComboBox>
-            <TextBlock><Run Text="Gauge"/><Run Text="s"/><Run Text=" window text size (pt)"/></TextBlock>
+            <TextBlock>Gauges window text size (pt)</TextBlock>
         </DockPanel>
         <DockPanel Margin="0 3 0 0"
                     Visibility="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeSettingsVisible, Converter={StaticResource B2V}}">
@@ -166,7 +166,7 @@
             <TextBlock>Gauge scales width (px)</TextBlock>
         </DockPanel>
         </StackPanel>
-        <TextBlock Margin="0 6 0 0" TextWrapping="Wrap" FontWeight="Bold"><Run Text="Adjust mouse move sensitivity "/><Run Text="if "/><Run Text="needed:"/></TextBlock>
+        <TextBlock Margin="0 6 0 0" TextWrapping="Wrap" FontWeight="Bold">Adjust mouse move sensitivity if needed:</TextBlock>
         <DockPanel Margin="0 3 0 0">
             <ComboBox DockPanel.Dock="Left" Margin="0 0 3 0" Width="50" IsEditable="True"
                 Text="{Binding Source={x:Static properties:Settings.Default}, Path=Sensitivity}">

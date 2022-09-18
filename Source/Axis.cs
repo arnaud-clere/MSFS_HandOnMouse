@@ -249,12 +249,13 @@ namespace HandOnMouse
         }
         public string Save(string aircraftPattern = "")
         {
+            aircraftPattern = aircraftPattern ?? "";
             if (Id < 0)
             {
                 return $"Cannot save axis not correctly read from: {MappingsFilePath}";
             }
             var errors = "";
-            var customFilePath = $"{Path.ChangeExtension(MappingsFilePath, null)}_{MappingName.Replace(":", " ")}_{aircraftPattern ?? ""}.ini";
+            var customFilePath = Path.ChangeExtension(MappingsFilePath, null)+ValidFileName($"_{MappingName}_{aircraftPattern}.ini");
             if (ExternalName.Length > 0)
             {
                 try
@@ -285,17 +286,17 @@ namespace HandOnMouse
         }
         public string Reset(string aircraftPattern)
         {
+            aircraftPattern = ValidFileName(aircraftPattern ?? "");
             if (Id < 0)
             {
                 return $"Cannot reset axis not correctly read from: {MappingsFilePath}";
             }
             var errors = "";
-            aircraftPattern = aircraftPattern ?? "";
             try
             {
                 var file = Path.GetFileName(MappingsFilePath);
                 var dir = Path.GetDirectoryName(MappingsFilePath);
-                var prefix = $"{Path.ChangeExtension(file, null)}_{MappingName.Replace(":"," ")}_";
+                var prefix = Path.ChangeExtension(file, null)+ValidFileName($"_{MappingName}_");
                 foreach (var iniFile in new DirectoryInfo(dir).GetFiles(prefix + "*.ini"))
                 {
                     if ((aircraftPattern=="" && prefix.Length == Path.ChangeExtension(iniFile.Name, null).Length) ||
@@ -319,13 +320,15 @@ namespace HandOnMouse
         public string MappingName { get; private set; }
         public string CustomFilePath(string aircraftPattern = null) => FindBestIniFileFor(aircraftPattern ?? MainWindow.SimAircraftTitle, Path.GetDirectoryName(MappingsFilePath), Path.GetFileName(MappingsFilePath));
         public string AxisFilePath(string aircraftPattern = null) => FindBestIniFileFor(aircraftPattern ?? MainWindow.SimAircraftTitle, Path.GetDirectoryName(MappingsFilePath));
+        public string ValidFileName(string fileName) { foreach (var c in Path.GetInvalidFileNameChars()) { fileName = fileName.Replace(c, '!'); } return fileName; }
 
         // TODO Plane specific file paths
         private string FindBestIniFileFor(string aircraftPattern, string dir, string mappingsFile = "")
         {
+            aircraftPattern = ValidFileName(aircraftPattern);
             Debug.Assert(Directory.Exists(dir));
             var found = "";
-            var prefix = mappingsFile == "" ? $"_{AxisName}_" : $"{Path.ChangeExtension(mappingsFile, null)}_{MappingName.Replace(":", " ")}_";
+            var prefix = mappingsFile == "" ? $"_{ValidFileName(AxisName)}_" : Path.ChangeExtension(mappingsFile, null)+ValidFileName($"_{MappingName}_");
             foreach (var iniFile in new DirectoryInfo(dir).GetFiles(prefix+"*.ini"))
             {
                 var suffix = Path.ChangeExtension(iniFile.Name.Remove(0, prefix.Length), null);
