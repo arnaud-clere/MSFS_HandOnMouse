@@ -117,11 +117,11 @@ namespace HandOnMouse
                     ValueUnit = "Increment";
                     ValueMin = 0;
                     ValueMax = 32767;
-                    VJoyAxisZero = (uint)Kernel32.ReadIni(customFilePath, section, "VJoyAxisZero", 0u, ref errors);
-                    VJoyAxisIsThrottle = (bool)Kernel32.ReadIni(AxisFilePath(), AxisName, "VJoyAxisIsThrottle", false, ref errors);
+                    ValueZero = (uint)Kernel32.ReadIni(customFilePath, section, "VJoyAxisZero", 0u, ref errors);
                 }
                 else
                 {
+                    ValueZero = 0;
                     SimVarName = Kernel32.ReadIni(AxisFilePath(), AxisName, "SimVarName").Trim().ToUpperInvariant() + AxisSuffix;
                     ValueUnit = Kernel32.ReadIni(AxisFilePath(), AxisName, "SimVarUnit", "Percent").Trim();
                     if (ValueUnit.ToLowerInvariant() == "bool")
@@ -140,7 +140,6 @@ namespace HandOnMouse
                     TrimCounterCenteringMove = 
                         (bool)Kernel32.ReadIni(customFilePath, section, "TrimCounterCenteringMove",
                         (bool)Kernel32.ReadIni(AxisFilePath(), AxisName, "TrimCounterCenteringMove", false, ref errors), ref errors);
-                    DisableThrottleReverse = (bool)Kernel32.ReadIni(customFilePath, section, "DisableThrottleReverse", false, ref errors);
                 }
 
                 var btn = RAWMOUSE.RI_MOUSE.None;
@@ -199,7 +198,7 @@ namespace HandOnMouse
                 SensitivityAtCruiseSpeed = 
                     (bool)Kernel32.ReadIni(customFilePath, section, "SensitivityAtCruiseSpeed",
                     (bool)Kernel32.ReadIni(AxisFilePath(), AxisName, "SensitivityAtCruiseSpeed", false, ref errors), ref errors);
-                AllowedExternalChangePerSec = Math.Max(0, Math.Min(20, (double)Kernel32.ReadIni(customFilePath, section, "AllowedExternalChangePerSec", IsThrottle ? 5.0 : 20.0, ref errors)));
+                AllowedExternalChangePerSec = Math.Max(0, Math.Min(20, (double)Kernel32.ReadIni(customFilePath, section, "AllowedExternalChangePerSec", IsThrottleSimVar ? 5.0 : 20.0, ref errors)));
 
                 IncreaseDirection = (Direction)Enum.Parse(typeof(Direction), 
                     Kernel32.ReadIni(customFilePath, section, "IncreaseDirection",
@@ -224,15 +223,18 @@ namespace HandOnMouse
                     (double)Kernel32.ReadIni(customFilePath, section, "DecreaseScaleTimeSecs",
                     (double)Kernel32.ReadIni(AxisFilePath(), AxisName, "DecreaseScaleTimeSecs", 0.0, ref errors), ref errors)));
 
+                NegativeDetent = 
+                    (double)Kernel32.ReadIni(customFilePath, section, "NegativeDetent",
+                    (double)Kernel32.ReadIni(AxisFilePath(), AxisName, "NegativeDetent", 100.0, ref errors), ref errors);
                 PositiveDetent = 
                     (double)Kernel32.ReadIni(customFilePath, section, "PositiveDetent",
-                    (double)Kernel32.ReadIni(AxisFilePath(), AxisName, "PositiveDetent", 0.0, ref errors), ref errors);
-                DisableDetents = (bool)Kernel32.ReadIni(customFilePath, section, "DisableDetents", false, ref errors);
+                    (double)Kernel32.ReadIni(AxisFilePath(), AxisName, "PositiveDetent", 100.0, ref errors), ref errors);
 
-                var scaleColors = Kernel32.ReadIni(AxisFilePath(), AxisName, "NegativePositiveMaxScaleColors").Split(space, StringSplitOptions.RemoveEmptyEntries);
-                NegativeScaleColor = ReadColor(scaleColors, 0, $"{section}[NegativePositiveMaxScaleColors]", ref errors);
-                PositiveScaleColor = ReadColor(scaleColors, 1, $"{section}[NegativePositiveMaxScaleColors]", ref errors);
-                MaxScaleColor = ReadColor(scaleColors, 2, $"{section}[NegativePositiveMaxScaleColors]", ref errors);
+                var scaleColors = Kernel32.ReadIni(AxisFilePath(), AxisName, "MinNegativePositiveMaxScaleColors").Split(space, StringSplitOptions.RemoveEmptyEntries);
+                MinScaleColor      = ReadColor(scaleColors, 0, $"{section}[MinNegativePositiveMaxScaleColors]", ref errors);
+                NegativeScaleColor = ReadColor(scaleColors, 1, $"{section}[MinNegativePositiveMaxScaleColors]", ref errors);
+                PositiveScaleColor = ReadColor(scaleColors, 2, $"{section}[MinNegativePositiveMaxScaleColors]", ref errors);
+                MaxScaleColor      = ReadColor(scaleColors, 3, $"{section}[MinNegativePositiveMaxScaleColors]", ref errors);
 
                 Description = Kernel32.ReadIni(AxisFilePath(), AxisName, "Description").Trim();
 
@@ -264,7 +266,6 @@ namespace HandOnMouse
                     Kernel32.WriteIni(customFilePath, MappingName, "ControllerButtonsFilter"     , ControllerButtonsText == null ? "" : $"{ControllerManufacturerId}/{ControllerProductId}/{ControllerButtonsText}");
                     Kernel32.WriteIni(customFilePath, MappingName, "KeyboardKeyDownFilter"       , KeyboardKeyDownFilter == Key.None ? "" : $"{KeyboardKeyDownFilter}");
                     Kernel32.WriteIni(customFilePath, MappingName, "TrimCounterCenteringMove"    , TrimCounterCenteringMove.ToString());
-                    Kernel32.WriteIni(customFilePath, MappingName, "DisableThrottleReverse"      , DisableThrottleReverse.ToString());
                     Kernel32.WriteIni(customFilePath, MappingName, "Sensitivity"                 , Sensitivity.ToString(CultureInfo.InvariantCulture));
                     Kernel32.WriteIni(customFilePath, MappingName, "SensitivityAtCruiseSpeed"    , SensitivityAtCruiseSpeed.ToString());
                     Kernel32.WriteIni(customFilePath, MappingName, "AllowedExternalChangePerSec" , AllowedExternalChangePerSec.ToString(CultureInfo.InvariantCulture));
@@ -272,8 +273,8 @@ namespace HandOnMouse
                     Kernel32.WriteIni(customFilePath, MappingName, "IncreaseDirection2"          , IncreaseDirection2 == null ? "" : Enum.Format(typeof(Direction), IncreaseDirection2, "G"));
                     Kernel32.WriteIni(customFilePath, MappingName, "WaitTriggerReleased"         , WaitTriggerReleased.ToString());
                     Kernel32.WriteIni(customFilePath, MappingName, "DecreaseScaleTimeSecs"       , DecreaseScaleTimeSecs.ToString(CultureInfo.InvariantCulture));
+                    Kernel32.WriteIni(customFilePath, MappingName, "NegativeDetent"              , NegativeDetent.ToString());
                     Kernel32.WriteIni(customFilePath, MappingName, "PositiveDetent"              , PositiveDetent.ToString());
-                    Kernel32.WriteIni(customFilePath, MappingName, "DisableDetents"              , DisableDetents.ToString());
                     Kernel32.WriteIni(customFilePath, MappingName, "IsEnabled"                   , IsEnabled.ToString());
                     Kernel32.WriteIni(customFilePath, MappingName, "IsHidden"                    , IsHidden.ToString());
                 }
@@ -346,8 +347,7 @@ public string Description { get; private set; }
         public uint VJoyId { get; private set; }
         public HID_USAGES VJoyAxis { get; private set; }
         /// <summary>For smart axis features only (value sent to vJoy remains in range 0..32763)</summary>
-        public uint VJoyAxisZero { get; private set; }
-        public bool VJoyAxisIsThrottle { get; private set; }
+        public uint ValueZero { get; private set; }
 
         public string SimVarName
         {
@@ -355,7 +355,7 @@ public string Description { get; private set; }
             private set
             {
                 _simVarName = value;
-                IsThrottle = _simVarName.StartsWith("GENERAL ENG THROTTLE LEVER POSITION");
+                IsThrottleSimVar = _simVarName.StartsWith("GENERAL ENG THROTTLE LEVER POSITION");
                 foreach (var v in EngineSimVars)
                     if (v == _simVarName)
                         ForAllEngines = true;
@@ -369,6 +369,7 @@ public string Description { get; private set; }
 
         public string ValueUnit { get; private set; } = "Percent";
 
+        public Brush MinScaleColor { get; private set; }
         public Brush NegativeScaleColor { get; private set; }
         public Brush PositiveScaleColor { get; private set; }
         public Brush MaxScaleColor { get; private set; }
@@ -407,9 +408,8 @@ public string Description { get; private set; }
         public bool SensitivityAtCruiseSpeed { get => _sensitivityAtCruiseSpeed; set { if (_sensitivityAtCruiseSpeed != value) { _sensitivityAtCruiseSpeed = value; NotifyPropertyChanged(); } } }
         public bool WaitTriggerReleased { get => _waitTriggerReleased; set { if (_waitTriggerReleased != value) { _waitTriggerReleased = value; NotifyPropertyChanged(); } } }
         public bool TrimCounterCenteringMove { get => _trimCounterCenteringMove; set { if (_trimCounterCenteringMove != value) { _trimCounterCenteringMove = value; NotifyPropertyChanged(); } } }
-        public bool DisableThrottleReverse { get => _disableThrottleReverse; set { if (_disableThrottleReverse != value) { _disableThrottleReverse = value; NotifyPropertyChanged(); } } }
+        public double NegativeDetent { get => _negativeDetentPercent; set { if (_negativeDetentPercent != value) { _negativeDetentPercent = value; NotifyPropertyChanged(); } } }
         public double PositiveDetent { get => _positiveDetentPercent; set { if (_positiveDetentPercent != value) { _positiveDetentPercent = value; NotifyPropertyChanged(); } } }
-        public bool DisableDetents { get => _disableIncreaseDirection2; set { _disableIncreaseDirection2 = value; NotifyPropertyChanged(); } }
         public double DecreaseScaleTimeSecs { get => _decreaseScaleTimeSecs; set { _decreaseScaleTimeSecs = value; NotifyPropertyChanged(); } }
 
         public double ValueMin
@@ -484,7 +484,7 @@ public string Description { get; private set; }
 
         /// <summary>Last trimmed axis position in [-1..1] to compute moves centering to 0</summary>
         public double TrimmedAxis { get; set; }
-        public bool IsThrottle { get; private set; }
+        public bool IsThrottleSimVar { get; private set; }
         public bool ForAllEngines { get; private set; }
 
         // Dynamically modifiable Read only properties
@@ -620,7 +620,7 @@ public string Description { get; private set; }
         public string IncreaseDirectionText => DirectionText(IncreaseDirection);
         public string IncreaseDirection2Text => DirectionText(IncreaseDirection2);
         public Direction DetentDirection => IncreaseDirection2 ?? (_increaseDirection == Direction.Draw || _increaseDirection == Direction.Push ? Direction.Right : Direction.Push);
-        public string DetentDirectionText => DisableDetents ? "X" : DirectionText(DetentDirection);
+        public string DetentDirectionText => DirectionText(DetentDirection);
         public double ValueScale => ValueMax > ValueMin ? ValueMax - ValueMin : 1; // to avoid division by 0
         public double ValueIncrement
         {
@@ -632,9 +632,11 @@ public string Description { get; private set; }
                     ValueScale / Math.Max(1, Settings.Default.ContinuousValueIncrements); // to avoid division by 0
             }
         }
-        public double NegativeScale { get { var zero = VJoyAxisZero > 0 ? VJoyAxisZero : 0; return ValueMin < zero ? ValueMax < zero ? 1 : (zero - ValueMin) / ValueScale : 0; } }
-        public double PositiveScale { get { var zero = VJoyAxisZero > 0 ? VJoyAxisZero : 0; var positiveDetent = PositiveDetent > 0 ? PositiveDetent : ValueMax; return (positiveDetent - zero) / ValueScale; } }
-        public double MaxScale { get { var zero = VJoyAxisZero > 0 ? VJoyAxisZero : 0; var positiveDetent = PositiveDetent > 0 ? PositiveDetent : ValueMax; return ValueMax > positiveDetent ? ValueMin > positiveDetent ? 1 : (ValueMax - positiveDetent) / ValueScale : 0; } }
+        public double MinScale => (ValueMin*NegativeDetent/100 - ValueMin) / ValueScale;
+        public double NegativeScale => (ValueZero - ValueMin*NegativeDetent/100) / ValueScale;
+        public double PositiveScale => (ValueMax*PositiveDetent/100 - ValueZero) / ValueScale;
+        public double MaxScale => (ValueMax - ValueMax*PositiveDetent/100) / ValueScale;
+        public string MinScaleString => string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", MinScale);
         public string NegativeScaleString => string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", NegativeScale);
         public string PositiveScaleString => string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", PositiveScale);
         public string MaxScaleString => string.Format(CultureInfo.InvariantCulture, "{0:0.##}*", MaxScale);
@@ -753,7 +755,7 @@ public string Description { get; private set; }
                         move.Y = 0;
 
                     double change = ChangeIn(IncreaseDirection, move);
-                    if (DisableDetents)
+                    if (NegativeDetent == 100 && PositiveDetent == 100)
                     {
                         var d2 = IncreaseDirection2;
                         if (change == 0 && d2 != null)
@@ -761,16 +763,14 @@ public string Description { get; private set; }
                     }
                     else
                     {
-                        var closeToNegativeDetent =
-                            (IsThrottle && Math.Abs(Value) < ValueScale * Settings.Default.DetentWidthInPercent / 100) ||
-                            (VJoyAxisIsThrottle && VJoyAxisZero > 0 && Math.Abs(Value - VJoyAxisZero) < ValueScale * Settings.Default.DetentWidthInPercent / 100);
-                        var closeToPositiveDetent =
-                            PositiveDetent > 0 && Math.Abs(Value - PositiveDetent) < ValueScale * Settings.Default.DetentWidthInPercent / 100;
-                        var belowNegativeDetent =
-                            (IsThrottle && Value < 0) ||
-                            (VJoyAxisIsThrottle && VJoyAxisZero > 0 && Value < VJoyAxisZero);
-                        var abovePositiveDetent =
-                            0 < PositiveDetent && PositiveDetent < Value;
+                        var closeToNegativeDetent = NegativeDetent < 100 && 
+                            (Math.Abs(Value-ValueZero - (ValueMin-ValueZero)*NegativeDetent/100) 
+                            < ValueScale * Settings.Default.DetentWidthInPercent / 100);
+                        var closeToPositiveDetent = PositiveDetent < 100 && 
+                            (Math.Abs(Value-ValueZero - (ValueMax-ValueZero)*PositiveDetent/100) 
+                            < ValueScale * Settings.Default.DetentWidthInPercent / 100);
+                        var belowNegativeDetent = (Value-ValueZero) < ((ValueMin-ValueZero)*NegativeDetent/100);
+                        var abovePositiveDetent = (Value-ValueZero) > ((ValueMax-ValueZero)*PositiveDetent/100);
 
                         if (belowNegativeDetent)
                             change /= Settings.Default.NegativeRangeFriction;
@@ -827,7 +827,7 @@ public string Description { get; private set; }
         {
             if (!IsAvailable || !IsEnabled) return;
 
-            var v = VJoyAxisZero > 0 ? Value - VJoyAxisZero : Value;
+            var v = ValueZero > 0 ? Value - ValueZero : Value;
             if (!IsActive && DecreaseScaleTimeSecs > 0 && v != 0)
             {
                 SimVarChange = -Math.Sign(v) * Math.Min(Math.Abs(v), ValueScale * intervalSecs / DecreaseScaleTimeSecs);
@@ -943,7 +943,6 @@ public string Description { get; private set; }
             // AxisText and AxisToolTip are not updated after creation
             // Value and SimVarValue are notified by Update...
             /**/ if (name == nameof(ControllerButtonsFilter))   NotifyPropertyChanges(nameof(ControllerButtonsText), nameof(TriggerDeviceName), nameof(TriggerText), nameof(TriggerToolTip));
-            else if (name == nameof(DisableDetents))            NotifyPropertyChanged(nameof(DetentDirectionText));
             else if (name == nameof(InputText))                 NotifyPropertyChanged(nameof(Text));
             else if (name == nameof(IncreaseDirection))         NotifyPropertyChanges(nameof(IncreaseDirectionText), nameof(IncreaseDirection2), nameof(InputToolTip));
             else if (name == nameof(IncreaseDirection2))        NotifyPropertyChanges(nameof(IncreaseDirection2Text), nameof(InputText), nameof(DetentDirection), nameof(DetentDirectionText));
@@ -952,15 +951,16 @@ public string Description { get; private set; }
             else if (name == nameof(IsHidden))                  NotifyPropertyChanges(nameof(IsPersistentlyHidden), nameof(IsVisible));
             else if (name == nameof(KeyboardKeyDownFilter))     NotifyPropertyChanges(nameof(KeyboardKeyText), nameof(TriggerDeviceName), nameof(TriggerText), nameof(TriggerToolTip));
             else if (name == nameof(MouseButtonsFilter))        NotifyPropertyChanges(nameof(MouseButtonsText), nameof(MouseButtonsToolTip), nameof(TriggerDeviceName), nameof(TriggerText), nameof(TriggerToolTip));
+            else if (name == nameof(NegativeDetent))            NotifyPropertyChanges(nameof(NegativeScale), nameof(NegativeScaleString), nameof(MinScale), nameof(MinScaleString));
             else if (name == nameof(PositiveDetent))            NotifyPropertyChanges(nameof(PositiveScale), nameof(PositiveScaleString), nameof(MaxScale), nameof(MaxScaleString));
             else if (name == nameof(Sensitivity))               NotifyPropertyChanged(nameof(IncreaseDirection2Text));
             else if (name == nameof(TriggerText))               NotifyPropertyChanges(nameof(InputText), nameof(IsVisible));
             else if (name == nameof(TriggerToolTip))            NotifyPropertyChanges(nameof(InputToolTip));
-            else if (name == nameof(TrimCounterCenteringMove))  NotifyPropertyChanges(nameof(InputText), nameof(InputToolTip));
-            else if (name == nameof(ValueMin))                  NotifyPropertyChanges(nameof(ValueScale), nameof(ValueIncrement), /*nameof(SimVarValue), nameof(SimVarChange), nameof(Value),*/ nameof(NegativeScale), nameof(NegativeScaleString), nameof(PositiveScale), nameof(PositiveScaleString), nameof(MaxScale), nameof(MaxScaleString));
-            else if (name == nameof(ValueMax))                  NotifyPropertyChanges(nameof(ValueScale), nameof(ValueIncrement), /*nameof(SimVarValue), nameof(SimVarChange), nameof(Value),*/ nameof(NegativeScale), nameof(NegativeScaleString), nameof(PositiveScale), nameof(PositiveScaleString), nameof(MaxScale), nameof(MaxScaleString));
-            //else if (name == nameof(SimVarValue))               NotifyPropertyChanges(nameof(SimVarChange), nameof(Value));
             else if (name == nameof(WaitTriggerReleased))       NotifyPropertyChanges(nameof(InputText), nameof(InputToolTip));
+            else if (name == nameof(TrimCounterCenteringMove))  NotifyPropertyChanges(nameof(InputText), nameof(InputToolTip));
+            else if (name == nameof(ValueMin))                  NotifyPropertyChanges(nameof(ValueScale), nameof(ValueIncrement), nameof(NegativeScale), nameof(NegativeScaleString), nameof(MinScale), nameof(MinScaleString)); // Do not notify SimVarValue, SimVarChange, Value
+            else if (name == nameof(ValueMax))                  NotifyPropertyChanges(nameof(ValueScale), nameof(ValueIncrement), nameof(PositiveScale), nameof(PositiveScaleString), nameof(MaxScale), nameof(MaxScaleString)); // Do not notify SimVarValue, SimVarChange, Value
+            //else if (name == nameof(SimVarValue))               // Do not notify SimVarChange, Value
             // BEWARE of cycles in notifications of dependent properties!
         }
 
@@ -969,8 +969,7 @@ public string Description { get; private set; }
         private double      _allowedExternalChangePerSec;
         private Color       _color = Colors.Black;
         private double      _decreaseScaleTimeSecs;
-        private bool        _disableIncreaseDirection2;
-        private bool        _disableThrottleReverse;
+        private double      _negativeDetentPercent;
         private double      _positiveDetentPercent;
         private Direction   _increaseDirection = Direction.Push;
         private Direction?  _increaseDirection2;

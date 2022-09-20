@@ -36,11 +36,12 @@
                             <RowDefinition/>
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="{Binding MinScaleString, UpdateSourceTrigger=PropertyChanged}"/>
                             <ColumnDefinition Width="{Binding NegativeScaleString, UpdateSourceTrigger=PropertyChanged}"/>
                             <ColumnDefinition Width="{Binding PositiveScaleString, UpdateSourceTrigger=PropertyChanged}"/>
                             <ColumnDefinition Width="{Binding MaxScaleString, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid.ColumnDefinitions>
-                            <ProgressBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextBlock.TextAlignment="Left" BorderThickness="0"
+                            <ProgressBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" TextBlock.TextAlignment="Left" BorderThickness="0"
                             Value="{Binding SimVarValue, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" 
                             Minimum="{Binding ValueMin, UpdateSourceTrigger=PropertyChanged}" 
                             Maximum="{Binding ValueMax, UpdateSourceTrigger=PropertyChanged}">
@@ -52,7 +53,7 @@
                                 <SolidColorBrush Color="DarkCyan" Opacity="0.2"/>
                             </ProgressBar.Background>
                         </ProgressBar>
-                        <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" TextAlignment="Left" FontWeight="DemiBold"
+                        <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" TextAlignment="Left" FontWeight="DemiBold"
                             FontSize="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeFontSize, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}"
                             Text="{Binding Text, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
                             <TextBlock.Foreground>
@@ -61,11 +62,14 @@
                         </TextBlock>
                         <Rectangle Grid.Row="1" Grid.Column="0" 
                             Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
-                            Fill="{Binding NegativeScaleColor}"/>
+                            Fill="{Binding MinScaleColor}"/>
                         <Rectangle Grid.Row="1" Grid.Column="1" 
                             Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
-                            Fill="{Binding PositiveScaleColor}"/>
+                            Fill="{Binding NegativeScaleColor}"/>
                         <Rectangle Grid.Row="1" Grid.Column="2" 
+                            Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
+                            Fill="{Binding PositiveScaleColor}"/>
+                        <Rectangle Grid.Row="1" Grid.Column="3" 
                             Height="{Binding Source={x:Static properties:Settings.Default}, Path=SimVarScaleHeightInPixels}"
                             Fill="{Binding MaxScaleColor}"/>
                     </Grid>

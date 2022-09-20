@@ -127,34 +127,38 @@
             </StackPanel></Border>
         <Border Grid.Column="2" Grid.Row="3" Background="#FFE0FEFF">
             <StackPanel Orientation="Vertical" VerticalAlignment="Top">
-                <StackPanel>
-                    <CheckBox 
-                    IsChecked="{Binding Axis.DisableDetents}"
-                    Content="Disable smart detents"
-                    ToolTip="For continuous axis where detents can be simulated by a orthogonal change in mouse move direction: throttle..."/>
-                    <TextBlock>
-                    (move 
+                <TextBlock
+                    ToolTip="For continuous axis where detents can be simulated by a orthogonal change in mouse move direction: throttle...">
+                    Smart detents (move 
                     <TextBlock Margin="0" FontWeight="Bold" Background="LightGray" HorizontalAlignment="Center"
                     Text="{Binding Axis.DetentDirectionText, UpdateSourceTrigger=PropertyChanged, StringFormat='{} {0} '}"/>
-                    to pass)
-                </TextBlock>
+                    to pass):
+                    </TextBlock>
+                <StackPanel>
+                    <ComboBox IsEditable="True" VerticalAlignment="Bottom"
+                    Text="{Binding Axis.NegativeDetent}">
+                        <ComboBoxItem>0</ComboBoxItem>
+                        <ComboBoxItem>50</ComboBoxItem>
+                        <ComboBoxItem ToolTip="No detent">100</ComboBoxItem>
+                    </ComboBox>
+                    <TextBlock 
+                    Text="Negative detent position (%)"
+                    ToolTip="For axis where min negative position should be protected with a detent: reverse, feather..."/>
                     </StackPanel>
-                <CheckBox
-                    IsEnabled="{Binding Axis.IsThrottle}"
-                    IsChecked="{Binding Axis.DisableThrottleReverse}"
-                    Content="Disable smart reverse throttle and detent"/>
                 <StackPanel>
                     <ComboBox IsEditable="True" VerticalAlignment="Bottom"
                     Text="{Binding Axis.PositiveDetent}">
-                        <ComboBoxItem ToolTip="No detent">0</ComboBoxItem>
+                        <ComboBoxItem>70</ComboBoxItem>
+                        <ComboBoxItem>75</ComboBoxItem>
                         <ComboBoxItem>80</ComboBoxItem>
                         <ComboBoxItem>85</ComboBoxItem>
                         <ComboBoxItem>90</ComboBoxItem>
                         <ComboBoxItem>95</ComboBoxItem>
+                        <ComboBoxItem ToolTip="No detent">100</ComboBoxItem>
                     </ComboBox>
                     <TextBlock 
-                    Text="Detent position (%) on max side"
-                    ToolTip="For axis where max (positive) position should be protected with a detent: auto/throttle..."/>
+                    Text="Positive detent position (%)"
+                    ToolTip="For axis where max positive position should be protected with a detent: auto/throttle..."/>
                 </StackPanel>
             </StackPanel></Border>
         <Border Grid.Column="0" Grid.Row="4" Background="#FFF0FEFF">

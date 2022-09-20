@@ -390,7 +390,7 @@ namespace HandOnMouse
                         RegisterData(RequestId(id), m.SimVarName, m.ValueUnit, (float)m.ValueIncrement);
                         RequestData(RequestId(id), SIMCONNECT_PERIOD.SIM_FRAME);
                     }
-                    if (m.IsThrottle && !m.DisableThrottleReverse)          _requestReverse = true;
+                    if (m.IsThrottleSimVar)                                       _requestReverse = true;
                     if (m.SimVarName == "FLAPS HANDLE INDEX")               _requestFlaps = true;
                     if (m.SimVarName == "GEAR HANDLE POSITION")             _requestGear = true;
                     if (m.SimVarName == "SPOILERS HANDLE POSITION")         _requestSpoiler = true;
