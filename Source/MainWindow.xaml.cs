@@ -360,8 +360,6 @@ namespace HandOnMouse
             _requestGear = false;
             _requestSpoiler = false;
             _requestBrakes = false;
-            _requestEngines = false;
-            _requestEngineType = false;
             _requestSpeeds = false;
             _requestJoystickButtonInputEvents.Clear();
             for (int id = 0; id < Axis.Mappings.Count; id++)
@@ -392,7 +390,6 @@ namespace HandOnMouse
                         RegisterData(RequestId(id), m.SimVarName, m.ValueUnit, (float)m.ValueIncrement);
                         RequestData(RequestId(id), SIMCONNECT_PERIOD.SIM_FRAME);
                     }
-                    if (m.IsThrottleSimVar)                                     _requestReverse = true;
                     if (m.SimVarName == "FLAPS HANDLE INDEX")                   _requestFlaps = true;
                     if (m.SimVarName == "GEAR HANDLE POSITION")                 _requestGear = true;
                     if (m.SimVarName == "SPOILERS HANDLE POSITION")             _requestSpoiler = true;
@@ -401,20 +398,12 @@ namespace HandOnMouse
                     if (m.SimVarName.StartsWith("ELEVATOR TRIM"))               _requestElevatorTrim = true;
                     if (m.SimVarName.StartsWith("AILERON TRIM"))                _requestAileronTrim = true;
                     if (m.SimVarName.StartsWith("RUDDER TRIM"))                 _requestRudderTrim = true;
-                    if (m.SimVarName == "GENERAL ENG MIXTURE LEVER POSITION")   _requestEngineType = true;
-                    foreach (var v in Axis.EngineSimVars) 
-                        if (m.SimVarName.StartsWith(v))                         _requestEngines = true;
                     if (m.SensitivityAtCruiseSpeed)                             _requestSpeeds = true;
                 }
                 if (m.SimJoystickButtonFilter > 0)
                 {
                     _requestJoystickButtonInputEvents.Add(m.SimJoystickButtonFilter-1);
                 }
-            }
-            if (_requestReverse)
-            {
-                RegisterData(Definitions.ThrottleLowerLimit, "THROTTLE LOWER LIMIT", "Percent" /* <0 */);
-                RequestData(Definitions.ThrottleLowerLimit);
             }
             if (_requestSpeeds)
             {
@@ -423,16 +412,6 @@ namespace HandOnMouse
 
                 RegisterData(Definitions.DesignCruiseSpeedFeetPerSec, "DESIGN SPEED VC", "Feet per second", 5);
                 RequestData(Definitions.DesignCruiseSpeedFeetPerSec);
-            }
-            if (_requestEngines)
-            {
-                RegisterData(Definitions.EnginesCount, "NUMBER OF ENGINES", "Number");
-                RequestData(Definitions.EnginesCount);
-            }
-            if (_requestEngineType)
-            {
-                RegisterData(Definitions.EngineType, "ENGINE TYPE", "Enum");
-                RequestData(Definitions.EngineType);
             }
             if (_requestBrakes)
             {
@@ -495,6 +474,12 @@ namespace HandOnMouse
             _simConnect.AddToDataDefinition(Definitions.AircraftTitle, "TITLE", null, SIMCONNECT_DATATYPE.STRING256, 0, SimConnect.SIMCONNECT_UNUSED);
             _simConnect.RegisterDataDefineStruct<SimString>(Definitions.AircraftTitle);
             RequestData(Definitions.AircraftTitle);
+            RegisterData(Definitions.ThrottleLowerLimit, "THROTTLE LOWER LIMIT", "Percent" /* <0 */);
+            RequestData(Definitions.ThrottleLowerLimit);
+            RegisterData(Definitions.EnginesCount, "NUMBER OF ENGINES", "Number");
+            RequestData(Definitions.EnginesCount);
+            RegisterData(Definitions.EngineType, "ENGINE TYPE", "Enum");
+            RequestData(Definitions.EngineType);
         }
         private void RegisterData(Definitions id, string simVarName, string simVarType, float epsilon = 1)
         {
@@ -779,42 +764,35 @@ namespace HandOnMouse
                         }
                     }
                 }
-                else if (i == (int)Definitions.EngineType && (int)data.dwData[0] != 0) // Piston as of https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Aircraft_SimVars/Aircraft_Engine_Variables.htm#ENGINE%20TYPE
+                else if (i == (int)Definitions.EngineType)
                 {
-                    foreach (var m in Axis.Mappings)
-                        if (m.SimVarName == "GENERAL ENG MIXTURE LEVER POSITION")
-                            m.IsAvailable = false;
+                    var type = (int)data.dwData[0];
+                    // See https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Aircraft_SimVars/Aircraft_Engine_Variables.htm#ENGINE%20TYPE
+                    UpdateSimVarsAvailable(type != 2 /* None */, "GENERAL ENG THROTTLE LEVER POSITION");
+                    UpdateSimVarsAvailable(type == 0 /* Piston */, "GENERAL ENG MIXTURE LEVER POSITION");
+                    UpdateSimVarsAvailable(type != 1 /* Jet */, "GENERAL ENG PROPELLER LEVER POSITION");
+                    UpdateSimVarsAvailable(type == 5 /* Turboprop */, "TURB ENG CONDITION LEVER POSITION");
                 }
                 else if (i == (int)Definitions.BrakesAvailable && (int)data.dwData[0] == 0)
                 {
-                    foreach (var m in Axis.Mappings)
-                        if (m.SimVarName.StartsWith("BRAKE LEFT POSITION") ||
-                            m.SimVarName.StartsWith("BRAKE RIGHT POSITION"))
-                            m.IsAvailable = false;
+                    UpdateSimVarsAvailable(false, "BRAKE LEFT POSITION");
+                    UpdateSimVarsAvailable(false, "BRAKE RIGHT POSITION");
                 }
                 else if (i == (int)Definitions.SpoilerAvailable && (int)data.dwData[0] == 0)
                 {
-                    foreach (var m in Axis.Mappings)
-                        if (m.SimVarName == "SPOILERS HANDLE POSITION")
-                            m.IsAvailable = false;
+                    UpdateSimVarsAvailable(false, "SPOILERS HANDLE POSITION");
                 }
                 else if (i == (int)Definitions.FlapsAvailable && (int)data.dwData[0] == 0)
                 {
-                    foreach (var m in Axis.Mappings)
-                        if (m.SimVarName.StartsWith("FLAPS HANDLE INDEX"))
-                            m.IsAvailable = false;
+                    UpdateSimVarsAvailable(false, "FLAPS HANDLE INDEX");
                 }
                 else if (i == (int)Definitions.IsGearRetractable && (int)data.dwData[0] == 0)
                 {
-                    foreach (var m in Axis.Mappings)
-                        if (m.SimVarName == "GEAR HANDLE POSITION")
-                            m.IsAvailable = false;
+                    UpdateSimVarsAvailable(false, "GEAR HANDLE POSITION");
                 }
                 else if (i == (int)Definitions.ElevatorTrimDisabled && (int)data.dwData[0] != 0)
                 {
-                    foreach (var m in Axis.Mappings)
-                        if (m.SimVarName.StartsWith("ELEVATOR TRIM"))
-                            m.IsAvailable = false;
+                    UpdateSimVarsAvailable(false, "ELEVATOR TRIM");
                 }
                 else if (i == (int)Definitions.ElevatorTrimMinDegrees)
                 {
@@ -830,15 +808,11 @@ namespace HandOnMouse
                 }
                 else if (i == (int)Definitions.AileronTrimDisabled && (int)data.dwData[0] != 0)
                 {
-                    foreach (var m in Axis.Mappings)
-                        if (m.SimVarName.StartsWith("AILERON TRIM"))
-                            m.IsAvailable = false;
+                    UpdateSimVarsAvailable(false, "AILERON TRIM");
                 }
                 else if (i == (int)Definitions.RudderTrimDisabled && (int)data.dwData[0] != 0)
                 {
-                    foreach (var m in Axis.Mappings)
-                        if (m.SimVarName.StartsWith("RUDDER TRIM"))
-                            m.IsAvailable = false;
+                    UpdateSimVarsAvailable(false, "RUDDER TRIM");
                 }
                 else if (i == (int)Definitions.ThrottleLowerLimit)
                 {
@@ -881,6 +855,13 @@ namespace HandOnMouse
             catch (Exception ex) { Trace.WriteLine($"{ex.Message} at: {ex.StackTrace}"); }
         }
 
+        private static void UpdateSimVarsAvailable(bool value, string prefix)
+        {
+            foreach (var m in Axis.Mappings)
+                if (m.SimVarName.StartsWith(prefix))
+                    m.IsAvailable = value;
+        }
+
         // Implementation
 
         IntPtr _hwnd;
@@ -896,10 +877,7 @@ namespace HandOnMouse
         bool _requestGear = false;
         bool _requestSpoiler = false;
         bool _requestBrakes = false;
-        bool _requestEngines = false;
-        bool _requestEngineType = false;
         bool _requestSpeeds = false;
-        bool _requestReverse = false;
         bool _requestElevatorTrim = false;
         bool _requestAileronTrim = false;
         bool _requestRudderTrim = false;

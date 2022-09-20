@@ -145,18 +145,6 @@ namespace HandOnMouse.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1 Throttle+(Prop or Mixt)+Flaps+Gear")]
-        public string MappingFile {
-            get {
-                return ((string)(this["MappingFile"]));
-            }
-            set {
-                this["MappingFile"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool AutoConnect {
             get {
@@ -212,6 +200,18 @@ namespace HandOnMouse.Properties {
             }
             set {
                 this["GaugeSettingsVisible"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1 Throttle Prop(or Mixt) Flaps+Gear")]
+        public string MappingFile {
+            get {
+                return ((string)(this["MappingFile"]));
+            }
+            set {
+                this["MappingFile"] = value;
             }
         }
     }

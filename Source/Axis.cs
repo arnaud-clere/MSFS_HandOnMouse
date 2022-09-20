@@ -35,15 +35,24 @@ namespace HandOnMouse
             Mappings.Clear();
             MappingsFilePath = filePath;
             var errors = "";
+            var required = new List<List<string>>();
             foreach (var section in sections)
             {
-                var m = new Axis();
-                errors += m.Read(section, aircraftTitle);
-                if (m.ExternalName.Length > 0)
+                if (section == "Require")
                 {
-                    Mappings.Add(m);
+                    // TODO Fill required with keys split('|')
+                }
+                else
+                {
+                    var m = new Axis();
+                    errors += m.Read(section, aircraftTitle);
+                    if (m.ExternalName.Length > 0)
+                    {
+                        Mappings.Add(m);
+                    }
                 }
             }
+            // TODO Mark required Mappings
             return errors;
         }
         static public string MappingsFilePath { get; private set; }
@@ -628,7 +637,7 @@ public string Description { get; private set; }
             {
                 var u = ValueUnit.ToLowerInvariant();
                 return
-                    u == "number" || u == "bool" ? 1 :
+                    u == "number" || u == "enum" || u == "bool" || u == "boolean" ? 1 :
                     ValueScale / Math.Max(1, Settings.Default.ContinuousValueIncrements); // to avoid division by 0
             }
         }

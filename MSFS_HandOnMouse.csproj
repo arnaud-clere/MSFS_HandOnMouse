@@ -130,7 +130,7 @@
     <None Include="LICENSE.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\1 Throttle+%28Prop or Mixt%29+Flaps+Gear.cfg">
+    <None Include="Mappings\1 Throttle Prop%28or Mixt%29 Flaps+Gear.cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Mappings\_Aileron_.ini">
@@ -170,6 +170,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Mappings\_Gear_.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Mappings\_Condition_.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Mappings\_Propeller_Pilatus PC-6.ini">
@@ -241,22 +244,20 @@
     <None Include="Mappings\_Right brake_.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\To customize.cfg">
+    <None Include="Mappings\To customize.cfg" />
+    <None Include="Mappings\vJoy %28for Aircraft disabling SimVars%29.cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\Aircraft disabling SimVars.cfg">
+    <None Include="Mappings\5 Throttle Yoke Flaps+Gear.cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\4 Throttle+Yoke+Flaps+Gear.cfg">
+    <None Include="Mappings\3 Throttle Spoilers Flaps+Gear.cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\5 Throttle+Spoilers+Flaps+Gear.cfg">
+    <None Include="Mappings\2 Throttle Prop %28Mixt or Cond%29.cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\2 Throttle+Prop+Mixt.cfg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\3 Throttle x 2.cfg">
+    <None Include="Mappings\4 Throttle Throttle.cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Properties\Settings.settings">
