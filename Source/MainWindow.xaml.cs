@@ -97,7 +97,8 @@ namespace HandOnMouse
             ElevatorTrimMinDegrees = 15,
             ElevatorTrimMaxDegrees = 16,
             AircraftTitle = 17,
-            Axis = 18
+            EngineType = 18,
+            Axis = 19
         }
 
         public MainWindow()
@@ -360,6 +361,7 @@ namespace HandOnMouse
             _requestSpoiler = false;
             _requestBrakes = false;
             _requestEngines = false;
+            _requestEngineType = false;
             _requestSpeeds = false;
             _requestJoystickButtonInputEvents.Clear();
             for (int id = 0; id < Axis.Mappings.Count; id++)
@@ -390,18 +392,19 @@ namespace HandOnMouse
                         RegisterData(RequestId(id), m.SimVarName, m.ValueUnit, (float)m.ValueIncrement);
                         RequestData(RequestId(id), SIMCONNECT_PERIOD.SIM_FRAME);
                     }
-                    if (m.IsThrottleSimVar)                                       _requestReverse = true;
-                    if (m.SimVarName == "FLAPS HANDLE INDEX")               _requestFlaps = true;
-                    if (m.SimVarName == "GEAR HANDLE POSITION")             _requestGear = true;
-                    if (m.SimVarName == "SPOILERS HANDLE POSITION")         _requestSpoiler = true;
+                    if (m.IsThrottleSimVar)                                     _requestReverse = true;
+                    if (m.SimVarName == "FLAPS HANDLE INDEX")                   _requestFlaps = true;
+                    if (m.SimVarName == "GEAR HANDLE POSITION")                 _requestGear = true;
+                    if (m.SimVarName == "SPOILERS HANDLE POSITION")             _requestSpoiler = true;
                     if (m.SimVarName.StartsWith("BRAKE LEFT POSITION") || 
-                        m.SimVarName.StartsWith("BRAKE RIGHT POSITION"))    _requestBrakes = true;
-                    if (m.SimVarName.StartsWith("ELEVATOR TRIM"))           _requestElevatorTrim = true;
-                    if (m.SimVarName.StartsWith("AILERON TRIM"))            _requestAileronTrim = true;
-                    if (m.SimVarName.StartsWith("RUDDER TRIM"))             _requestRudderTrim = true;
+                        m.SimVarName.StartsWith("BRAKE RIGHT POSITION"))        _requestBrakes = true;
+                    if (m.SimVarName.StartsWith("ELEVATOR TRIM"))               _requestElevatorTrim = true;
+                    if (m.SimVarName.StartsWith("AILERON TRIM"))                _requestAileronTrim = true;
+                    if (m.SimVarName.StartsWith("RUDDER TRIM"))                 _requestRudderTrim = true;
+                    if (m.SimVarName == "GENERAL ENG MIXTURE LEVER POSITION")   _requestEngineType = true;
                     foreach (var v in Axis.EngineSimVars) 
-                        if (m.SimVarName.StartsWith(v))                     _requestEngines = true;
-                    if (m.SensitivityAtCruiseSpeed)                         _requestSpeeds = true;
+                        if (m.SimVarName.StartsWith(v))                         _requestEngines = true;
+                    if (m.SensitivityAtCruiseSpeed)                             _requestSpeeds = true;
                 }
                 if (m.SimJoystickButtonFilter > 0)
                 {
@@ -425,6 +428,11 @@ namespace HandOnMouse
             {
                 RegisterData(Definitions.EnginesCount, "NUMBER OF ENGINES", "Number");
                 RequestData(Definitions.EnginesCount);
+            }
+            if (_requestEngineType)
+            {
+                RegisterData(Definitions.EngineType, "ENGINE TYPE", "Enum");
+                RequestData(Definitions.EngineType);
             }
             if (_requestBrakes)
             {
@@ -491,8 +499,19 @@ namespace HandOnMouse
         private void RegisterData(Definitions id, string simVarName, string simVarType, float epsilon = 1)
         {
             Debug.Assert(_simConnect != null);
-            _simConnect?.AddToDataDefinition(id, simVarName, simVarType, SIMCONNECT_DATATYPE.FLOAT64, epsilon, SimConnect.SIMCONNECT_UNUSED);
-            _simConnect?.RegisterDataDefineStruct<double>(id);
+            switch (simVarType.ToLowerInvariant())
+            {
+                case "bool":
+                case "boolean":
+                case "enum":
+                    _simConnect?.AddToDataDefinition(id, simVarName, simVarType, SIMCONNECT_DATATYPE.INT32, 0, SimConnect.SIMCONNECT_UNUSED);
+                    _simConnect?.RegisterDataDefineStruct<int>(id);
+                    break;
+                default:
+                    _simConnect?.AddToDataDefinition(id, simVarName, simVarType, SIMCONNECT_DATATYPE.FLOAT64, epsilon, SimConnect.SIMCONNECT_UNUSED);
+                    _simConnect?.RegisterDataDefineStruct<double>(id);
+                    break;
+            }
         }
         private void RequestData(Definitions id, SIMCONNECT_PERIOD period = SIMCONNECT_PERIOD.ONCE)
         {
@@ -760,32 +779,38 @@ namespace HandOnMouse
                         }
                     }
                 }
-                else if (i == (int)Definitions.BrakesAvailable && (double)data.dwData[0] == 0)
+                else if (i == (int)Definitions.EngineType && (int)data.dwData[0] != 0) // Piston as of https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Aircraft_SimVars/Aircraft_Engine_Variables.htm#ENGINE%20TYPE
+                {
+                    foreach (var m in Axis.Mappings)
+                        if (m.SimVarName == "GENERAL ENG MIXTURE LEVER POSITION")
+                            m.IsAvailable = false;
+                }
+                else if (i == (int)Definitions.BrakesAvailable && (int)data.dwData[0] == 0)
                 {
                     foreach (var m in Axis.Mappings)
                         if (m.SimVarName.StartsWith("BRAKE LEFT POSITION") ||
                             m.SimVarName.StartsWith("BRAKE RIGHT POSITION"))
                             m.IsAvailable = false;
                 }
-                else if (i == (int)Definitions.SpoilerAvailable && (double)data.dwData[0] == 0)
+                else if (i == (int)Definitions.SpoilerAvailable && (int)data.dwData[0] == 0)
                 {
                     foreach (var m in Axis.Mappings)
                         if (m.SimVarName == "SPOILERS HANDLE POSITION")
                             m.IsAvailable = false;
                 }
-                else if (i == (int)Definitions.FlapsAvailable && (double)data.dwData[0] == 0)
+                else if (i == (int)Definitions.FlapsAvailable && (int)data.dwData[0] == 0)
                 {
                     foreach (var m in Axis.Mappings)
                         if (m.SimVarName.StartsWith("FLAPS HANDLE INDEX"))
                             m.IsAvailable = false;
                 }
-                else if (i == (int)Definitions.IsGearRetractable && (double)data.dwData[0] == 0)
+                else if (i == (int)Definitions.IsGearRetractable && (int)data.dwData[0] == 0)
                 {
                     foreach (var m in Axis.Mappings)
                         if (m.SimVarName == "GEAR HANDLE POSITION")
                             m.IsAvailable = false;
                 }
-                else if (i == (int)Definitions.ElevatorTrimDisabled && (double)data.dwData[0] != 0)
+                else if (i == (int)Definitions.ElevatorTrimDisabled && (int)data.dwData[0] != 0)
                 {
                     foreach (var m in Axis.Mappings)
                         if (m.SimVarName.StartsWith("ELEVATOR TRIM"))
@@ -803,13 +828,13 @@ namespace HandOnMouse
                         if (m.SimVarName == "ELEVATOR TRIM POSITION")
                             m.UpdateElevatorTrimMaxValue((double)data.dwData[0]);
                 }
-                else if (i == (int)Definitions.AileronTrimDisabled && (double)data.dwData[0] != 0)
+                else if (i == (int)Definitions.AileronTrimDisabled && (int)data.dwData[0] != 0)
                 {
                     foreach (var m in Axis.Mappings)
                         if (m.SimVarName.StartsWith("AILERON TRIM"))
                             m.IsAvailable = false;
                 }
-                else if (i == (int)Definitions.RudderTrimDisabled && (double)data.dwData[0] != 0)
+                else if (i == (int)Definitions.RudderTrimDisabled && (int)data.dwData[0] != 0)
                 {
                     foreach (var m in Axis.Mappings)
                         if (m.SimVarName.StartsWith("RUDDER TRIM"))
@@ -872,6 +897,7 @@ namespace HandOnMouse
         bool _requestSpoiler = false;
         bool _requestBrakes = false;
         bool _requestEngines = false;
+        bool _requestEngineType = false;
         bool _requestSpeeds = false;
         bool _requestReverse = false;
         bool _requestElevatorTrim = false;
