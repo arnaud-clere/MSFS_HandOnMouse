@@ -70,7 +70,7 @@ namespace HandOnMouse
     {
         public static string MappingsDir() { return Path.Combine(Directory.GetCurrentDirectory(), "Mappings"); }
         public static string MappingFile() { return Path.ChangeExtension(Path.Combine(MappingsDir(), Settings.Default.MappingFile), ".cfg"); }
-        public static string SimAircraftTitle { get; private set; } = "";
+        public static string SimAircraftTitle { get; private set; } = "a XCub 1";
         public static Controller.Buttons SimJoystickButtons { get; private set; }
         public static bool vJoyIsAvailable { get; private set; }
 

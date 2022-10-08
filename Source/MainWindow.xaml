@@ -53,9 +53,6 @@
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <DockPanel Margin="0 3 0 0">
-                        <CheckBox DockPanel.Dock="Left" Style="{StaticResource HideShow}" 
-                                IsChecked="{Binding IsPersistentlyHidden, UpdateSourceTrigger=PropertyChanged}"
-                                ToolTip="Hide/Show in Gauge window even if a trigger is defined"/>
                         <TextBlock DockPanel.Dock="Left" Width="35" FontSize="8" TextAlignment="Center" VerticalAlignment="Center"
                                 Text="{Binding ValueMin, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.#}'}"
                                 ToolTip="{Binding ValueUnit}"/>
@@ -70,6 +67,9 @@
                         <CheckBox DockPanel.Dock="Right" Style="{StaticResource UnlockLock}" 
                                 IsChecked="{Binding IsPersistentlyEnabled, UpdateSourceTrigger=PropertyChanged}"
                                 ToolTip="Lock/Unlock mouse move input even if a trigger is defined"/>
+                        <CheckBox DockPanel.Dock="Right" Style="{StaticResource HideShow}" 
+                                IsChecked="{Binding IsPersistentlyHidden, UpdateSourceTrigger=PropertyChanged}"
+                                ToolTip="Hide/Show in Gauge window even if a trigger is defined"/>
                         <TextBlock DockPanel.Dock="Right" Width="35" FontSize="8" TextAlignment="Center" VerticalAlignment="Center"
                                 Text="{Binding ValueMax, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.#}'}"
                                 ToolTip="{Binding ValueUnit}"/>
@@ -89,7 +89,7 @@
                                 Minimum="{Binding ValueMin, UpdateSourceTrigger=PropertyChanged}" 
                                 Maximum="{Binding ValueMax, UpdateSourceTrigger=PropertyChanged}"/>
                             <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" TextAlignment="Left"
-                                Text="{Binding Text, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
+                                Text="{Binding AxisText, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}">
                                 <TextBlock.Foreground>
                                     <SolidColorBrush Color="{Binding ChangeColorForText, UpdateSourceTrigger=PropertyChanged}"/>
                                 </TextBlock.Foreground>
@@ -123,7 +123,7 @@
                     Drag HandOnMouse Gauge window to its place<LineBreak/>
                     and/or adjust its settings if needed:</TextBlock>
         <DockPanel Margin="0 3 0 0">
-            <CheckBox DockPanel.Dock="Right" Style="{StaticResource CollapseExpand}"  
+            <CheckBox DockPanel.Dock="Left" Style="{StaticResource CollapseExpand}"  
                     IsChecked="{Binding Source={x:Static properties:Settings.Default}, Path=GaugeSettingsVisible, Mode=TwoWay}"
                     ToolTip="Collapse/Expand Gauge window settings"/>
             <CheckBox DockPanel.Dock="Left" Style="{StaticResource HideShow}"  

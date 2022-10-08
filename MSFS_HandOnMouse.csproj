@@ -130,128 +130,77 @@
     <None Include="LICENSE.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\1 Throttle Prop%28or Mixt%29 Flaps+Gear.cfg">
+    <None Include="Mappings\1 Throttle Prop%28or Mixt%29 Rudder Flaps%28or Gear%29.cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Aileron_.ini">
+    <None Include="Mappings\__Beechcraft King Air.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Elevator trim_Beechcraft King Air.ini">
+    <None Include="Mappings\__Cessna Skyhawk.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Elevator trim_DA40.ini">
+    <None Include="Mappings\__Savage Cub.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Elevator trim_DR400.ini">
+    <None Include="Mappings\__DA62.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Elevator trim_Grand Caravan.ini">
+    <None Include="Mappings\__DA40.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Elevator trim_Mudry Cap 10.ini">
+    <None Include="Mappings\__DR400.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Elevator trim_NXCub.ini">
+    <None Include="Mappings\__Cessna 152.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Elevator trim_Pitts Special S.ini">
+    <None Include="Mappings\__Grand Caravan.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Elevator trim_Stream.ini">
+    <None Include="Mappings\__Mudry Cap 10.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Elevator trim_XCub.ini">
+    <None Include="Mappings\__Pitts Special S.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Elevator_.ini">
+    <None Include="Mappings\__Stream.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Flaps_Grand Caravan.ini">
+    <None Include="Mappings\__XCub.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Gear_.ini">
+    <None Include="Mappings\__PC-6.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Condition_.ini">
+    <None Include="Mappings\__DHC-6.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Propeller_Pilatus PC-6.ini">
+    <None Include="Mappings\__CRJ.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Propeller_DHC-6.ini">
+    <None Include="Mappings\__Boeing F!A 18.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Propeller_Beechcraft King Air.ini">
+    <None Include="Mappings\__VL-3 915.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Propeller_Grand Caravan.ini">
+    <None Include="Mappings\__Cessna CJ4.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Throttle_Boeing F!A 18.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\_Throttle_VL-3 915.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\_Throttle_Cessna CJ4.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\_Throttle_Airbus A320.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\_vJoy Rudder.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\_vJoy Spoilers_.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\_vJoy Throttle_.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\_Rudder_.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\_Throttle_.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\_Propeller_.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\_Mixture_.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\_Spoilers_.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\_Flaps_.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\_Elevator trim_.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\_Rudder trim_.ini">
+    <None Include="Mappings\__Airbus A320.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Mappings\Logitech G602.cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\_Aileron trim_.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\_Left brake_.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\_Right brake_.ini">
+    <None Include="Mappings\__.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Mappings\To customize.cfg" />
-    <None Include="Mappings\vJoy %28for Aircraft disabling SimVars%29.cfg">
+    <None Include="Mappings\5 Throttle Yoke Rudder Flaps%28or Gear%29.cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\5 Throttle Yoke Flaps+Gear.cfg">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="Mappings\3 Throttle Spoilers Flaps+Gear.cfg">
+    <None Include="Mappings\3 Throttle Spoilers Rudder Flaps%28or Gear%29.cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Mappings\2 Throttle Prop %28Mixt or Cond%29.cfg">

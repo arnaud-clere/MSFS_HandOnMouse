@@ -77,7 +77,7 @@ namespace HandOnMouse
         {
             MappingName = mappingName;
             var defaultName = mappingName.Split(':')[0].Trim();
-            var mappingFilePath = MappingFilePath(Path.ChangeExtension(Path.GetFileName(MappingsFilePath), null), defaultName, aircraftPattern);
+            var mappingFilePath = MappingFilePath(Path.ChangeExtension(Path.GetFileName(MappingsFilePath), null), mappingName, aircraftPattern);
             var defaultFilePath = MappingFilePath("", defaultName, aircraftPattern);
             var errors = "";
             try 
@@ -209,7 +209,8 @@ namespace HandOnMouse
                 SensitivityAtCruiseSpeed = 
                     (bool)Kernel32.ReadIni(mappingFilePath, mappingName, "SensitivityAtCruiseSpeed",
                     (bool)Kernel32.ReadIni(defaultFilePath, defaultName, "SensitivityAtCruiseSpeed", false, ref errors), ref errors);
-                AllowedExternalChangePerSec = Math.Max(0, Math.Min(20, (double)Kernel32.ReadIni(mappingFilePath, mappingName, "AllowedExternalChangePerSec", IsThrottleSimVar ? 5.0 : 20.0, ref errors)));
+                AllowedExternalChangePerSec = Math.Max(0, Math.Min(20, 
+                    (double)Kernel32.ReadIni(mappingFilePath, mappingName, "AllowedExternalChangePerSec", IsThrottleSimVar ? 5.0 : 20.0, ref errors)));
 
                 IncreaseDirection = (Direction)Enum.Parse(typeof(Direction), 
                     Kernel32.ReadIni(mappingFilePath, mappingName, "IncreaseDirection",
@@ -336,19 +337,18 @@ namespace HandOnMouse
                 {
                     var suffix = Path.ChangeExtension(iniFile.Name.Remove(0, prefix.Length), null);
                     if (aircraftPattern.Contains(suffix.Trim()) &&
-                        found.Length < iniFile.Name.Length)
+                        found.Length < iniFile.FullName.Length)
                     {
                         foreach (var section in Kernel32.ReadIni(iniFile.FullName))
                         {
                             if (section == axisName)
-                                found = iniFile.Name;
+                                found = iniFile.FullName;
                         }
                     }
                 }
                 if (found != "")
                     break;
             }
-            found = Path.Combine(dir, found);
             return File.Exists(found) ? found : MappingsFilePath;
         }
 
@@ -371,7 +371,7 @@ namespace HandOnMouse
             get => _simVarName;
             private set
             {
-                _simVarName = value;
+                _simVarName = value.ToUpperInvariant();
                 IsThrottleSimVar = _simVarName.StartsWith("GENERAL ENG THROTTLE LEVER POSITION");
                 foreach (var v in EngineSimVars)
                     if (v == _simVarName)
@@ -916,7 +916,7 @@ namespace HandOnMouse
                 {
                     simInfo *= -1;
                 }
-                if (ValueUnit == "Radians")
+                if (ValueUnit.ToLowerInvariant() == "radians")
                 {
                     simInfo *= Math.PI / 180; // Degrees
                 }
@@ -928,7 +928,7 @@ namespace HandOnMouse
         {
             if (SimVarName == "ELEVATOR TRIM POSITION")
             {
-                if (ValueUnit == "Radians")
+                if (ValueUnit.ToLowerInvariant() == "radians")
                 {
                     simInfo *= Math.PI / 180; // Degrees
                 }
