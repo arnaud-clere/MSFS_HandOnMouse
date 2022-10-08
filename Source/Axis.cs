@@ -21,7 +21,7 @@ namespace HandOnMouse
         public enum Direction { Push, Draw, Left, Right };
 
         static public ObservableCollection<Axis> Mappings { get; private set; } = new ObservableCollection<Axis>();
-        static public string MappingsRead(string filePath, string aircraftTitle)
+        static public string MappingsRead(string filePath)
         {
             if (!File.Exists(filePath))
             {
@@ -45,7 +45,7 @@ namespace HandOnMouse
                 else
                 {
                     var m = new Axis();
-                    errors += m.Read(section, aircraftTitle);
+                    errors += m.Read(section, MainWindow.SimAircraftTitle);
                     if (m.ExternalName.Length > 0)
                     {
                         Mappings.Add(m);
@@ -73,18 +73,20 @@ namespace HandOnMouse
 
         // Instance members
 
-        public string Read(string section, string aircraftTitle)
+        public string Read(string mappingName, string aircraftPattern)
         {
-            MappingName = section;
-            var customFilePath = File.Exists(CustomFilePath(aircraftTitle)) ? CustomFilePath(aircraftTitle) : MappingsFilePath;
+            MappingName = mappingName;
+            var defaultName = mappingName.Split(':')[0].Trim();
+            var mappingFilePath = MappingFilePath(Path.ChangeExtension(Path.GetFileName(MappingsFilePath), null), defaultName, aircraftPattern);
+            var defaultFilePath = MappingFilePath("", defaultName, aircraftPattern);
             var errors = "";
             try 
             {
-                SimJoystickButtonFilter = (uint)Kernel32.ReadIni(AxisFilePath(), AxisName, "SimJoystickButtonFilter", 0u, ref errors);
+                SimJoystickButtonFilter = (uint)Kernel32.ReadIni(defaultFilePath, defaultName, "SimJoystickButtonFilter", 0u, ref errors);
 
                 var space = new char[] { ' ' };
-                var key = "VJoyAxis";
-                var vJoyNameAndId = Kernel32.ReadIni(AxisFilePath(), AxisName, key).Split(space, StringSplitOptions.RemoveEmptyEntries);
+                var key = "VJoyAxis"; // specific to each mapping (DO NOT use defaultName but mappingName with defaultFilePath)
+                var vJoyNameAndId = Kernel32.ReadIni(defaultFilePath, mappingName, key).Split(space, StringSplitOptions.RemoveEmptyEntries);
                 if (vJoyNameAndId.Length > 1)
                 {
                     try
@@ -92,13 +94,13 @@ namespace HandOnMouse
                         VJoyId = uint.Parse(vJoyNameAndId[1]);
                         if (VJoyId > 16)
                         {
-                            errors += $"[{section}]{key}={string.Join(" ", vJoyNameAndId)} device {VJoyId} is not supported\r\n";
+                            errors += $"[{mappingName}]{key}={string.Join(" ", vJoyNameAndId)} device {VJoyId} is not supported\r\n";
                             VJoyId = 0;
                         }
                     }
                     catch (Exception e)
                     {
-                        errors += $"[{section}]{key}={string.Join(" ", vJoyNameAndId)} is invalid: {e.Message}\r\n";
+                        errors += $"[{mappingName}]{key}={string.Join(" ", vJoyNameAndId)} is invalid: {e.Message}\r\n";
                         VJoyId = 0;
                     }
                 }
@@ -116,7 +118,7 @@ namespace HandOnMouse
                         case "SLIDERX": VJoyAxis = HID_USAGES.HID_USAGE_SL0; break;
                         case "SLIDERY": VJoyAxis = HID_USAGES.HID_USAGE_SL1; break;
                         default:
-                            errors += $"[{section}]{key}={string.Join(" ", vJoyNameAndId)} is invalid (use one of LX, LY, LZ, RX, RY, RZ, SLIDERX, SLIDERY)\r\n";
+                            errors += $"[{mappingName}]{key}={string.Join(" ", vJoyNameAndId)} is invalid (use one of LX, LY, LZ, RX, RY, RZ, SLIDERX, SLIDERY)\r\n";
                             VJoyId = 0;
                             break;
                     }
@@ -126,13 +128,13 @@ namespace HandOnMouse
                     ValueUnit = "Increment";
                     ValueMin = 0;
                     ValueMax = 32767;
-                    ValueZero = (uint)Kernel32.ReadIni(customFilePath, section, "VJoyAxisZero", 0u, ref errors);
+                    ValueZero = (uint)Kernel32.ReadIni(defaultFilePath, defaultName, "VJoyAxisZero", 0u, ref errors); // common to all mappings
                 }
                 else
                 {
                     ValueZero = 0;
-                    SimVarName = Kernel32.ReadIni(AxisFilePath(), AxisName, "SimVarName").Trim().ToUpperInvariant() + AxisSuffix;
-                    ValueUnit = Kernel32.ReadIni(AxisFilePath(), AxisName, "SimVarUnit", "Percent").Trim();
+                    SimVarName = Kernel32.ReadIni(defaultFilePath, defaultName, "SimVarName").Trim().ToUpperInvariant() + mappingName.Remove(0, defaultName.Length); // prefix common to all mappings
+                    ValueUnit  = Kernel32.ReadIni(defaultFilePath, defaultName, "SimVarUnit", "Percent").Trim();
                     if (ValueUnit.ToLowerInvariant() == "bool")
                     {
                         ValueMin = 0;
@@ -140,20 +142,20 @@ namespace HandOnMouse
                     }
                     else
                     {
-                        var min = (double)Kernel32.ReadIni(AxisFilePath(), AxisName, "SimVarMin", 0.0, ref errors);
-                        var max = (double)Kernel32.ReadIni(AxisFilePath(), AxisName, "SimVarMax", 100.0, ref errors);
+                        var min = (double)Kernel32.ReadIni(defaultFilePath, defaultName, "SimVarMin", 0.0, ref errors);
+                        var max = (double)Kernel32.ReadIni(defaultFilePath, defaultName, "SimVarMax", 100.0, ref errors);
                         ValueMin = Math.Min(min, max);
                         ValueMax = Math.Max(min, max);
                     };
                     SimVarValue = Math.Max(0, ValueMin);
                     TrimCounterCenteringMove = 
-                        (bool)Kernel32.ReadIni(customFilePath, section, "TrimCounterCenteringMove",
-                        (bool)Kernel32.ReadIni(AxisFilePath(), AxisName, "TrimCounterCenteringMove", false, ref errors), ref errors);
+                        (bool)Kernel32.ReadIni(mappingFilePath, mappingName, "TrimCounterCenteringMove",
+                        (bool)Kernel32.ReadIni(defaultFilePath, defaultName, "TrimCounterCenteringMove", false, ref errors), ref errors);
                 }
 
                 var btn = RAWMOUSE.RI_MOUSE.None;
-                var btnString = Kernel32.ReadIni(customFilePath, section, "MouseButtonsFilter",
-                                Kernel32.ReadIni(AxisFilePath(), AxisName, "MouseButtonsFilter")).ToUpper().Split(new char[] { '-' });
+                var btnString = Kernel32.ReadIni(mappingFilePath, mappingName, "MouseButtonsFilter",
+                                Kernel32.ReadIni(defaultFilePath, defaultName, "MouseButtonsFilter")).ToUpper().Split(new char[] { '-' });
                 if (btnString.Length > 0)
                 {
                     if (btnString[0].Contains("L")) btn |= RAWMOUSE.RI_MOUSE.LEFT_BUTTON_DOWN;
@@ -176,12 +178,12 @@ namespace HandOnMouse
                 ControllerProductId = 0;
                 ControllerButtonsFilter = Controller.Buttons.None;
                 key = "ControllerButtonsFilter";
-                var controllerBtnString = Kernel32.ReadIni(customFilePath, section, key).Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+                var controllerBtnString = Kernel32.ReadIni(mappingFilePath, mappingName, key).Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
                 if (controllerBtnString.Length > 0)
                 {
                     if (controllerBtnString.Length != 3)
                     {
-                        errors += $"[{section}]{key}={string.Join("/", controllerBtnString)} requires 3 integers separated with '/'\r\n";
+                        errors += $"[{mappingName}]{key}={string.Join("/", controllerBtnString)} requires 3 integers separated with '/'\r\n";
                     }
                     else
                         try
@@ -195,27 +197,27 @@ namespace HandOnMouse
                         }
                         catch (Exception e)
                         {
-                            errors += $"[{section}]{key}={string.Join("/", controllerBtnString)} is invalid: {e.Message}\r\n";
+                            errors += $"[{mappingName}]{key}={string.Join("/", controllerBtnString)} is invalid: {e.Message}\r\n";
                         }
                 }
 
-                KeyboardKeyDownFilter = (Key)Kernel32.ReadIni(customFilePath, section, "KeyboardKeyDownFilter", Key.None, ref errors);
+                KeyboardKeyDownFilter = (Key)Kernel32.ReadIni(mappingFilePath, mappingName, "KeyboardKeyDownFilter", Key.None, ref errors);
 
                 Sensitivity = Math.Max(1 / 100, Math.Min(100, 
-                    (double)Kernel32.ReadIni(customFilePath, section, "Sensitivity",
-                    (double)Kernel32.ReadIni(AxisFilePath(), AxisName, "Sensitivity", 1.0, ref errors), ref errors)));
+                    (double)Kernel32.ReadIni(mappingFilePath, mappingName, "Sensitivity",
+                    (double)Kernel32.ReadIni(defaultFilePath, defaultName, "Sensitivity", 1.0, ref errors), ref errors)));
                 SensitivityAtCruiseSpeed = 
-                    (bool)Kernel32.ReadIni(customFilePath, section, "SensitivityAtCruiseSpeed",
-                    (bool)Kernel32.ReadIni(AxisFilePath(), AxisName, "SensitivityAtCruiseSpeed", false, ref errors), ref errors);
-                AllowedExternalChangePerSec = Math.Max(0, Math.Min(20, (double)Kernel32.ReadIni(customFilePath, section, "AllowedExternalChangePerSec", IsThrottleSimVar ? 5.0 : 20.0, ref errors)));
+                    (bool)Kernel32.ReadIni(mappingFilePath, mappingName, "SensitivityAtCruiseSpeed",
+                    (bool)Kernel32.ReadIni(defaultFilePath, defaultName, "SensitivityAtCruiseSpeed", false, ref errors), ref errors);
+                AllowedExternalChangePerSec = Math.Max(0, Math.Min(20, (double)Kernel32.ReadIni(mappingFilePath, mappingName, "AllowedExternalChangePerSec", IsThrottleSimVar ? 5.0 : 20.0, ref errors)));
 
                 IncreaseDirection = (Direction)Enum.Parse(typeof(Direction), 
-                    Kernel32.ReadIni(customFilePath, section, "IncreaseDirection",
-                    Kernel32.ReadIni(AxisFilePath(), AxisName, "IncreaseDirection", "Push")).Trim(), true);
+                    Kernel32.ReadIni(mappingFilePath, mappingName, "IncreaseDirection",
+                    Kernel32.ReadIni(defaultFilePath, defaultName, "IncreaseDirection", "Push")).Trim(), true);
                 key = "IncreaseDirection2";
                 var direction = 
-                    Kernel32.ReadIni(customFilePath, section, key,
-                    Kernel32.ReadIni(AxisFilePath(), AxisName, key)).Trim();
+                    Kernel32.ReadIni(mappingFilePath, mappingName, key,
+                    Kernel32.ReadIni(defaultFilePath, defaultName, key)).Trim();
                 try
                 {
                     if (direction != "")
@@ -223,50 +225,49 @@ namespace HandOnMouse
                 }
                 catch (Exception e)
                 {
-                    errors += $"[{section}]{key}={direction} is invalid: {e.Message}\r\n";
+                    errors += $"[{mappingName}]{key}={direction} is invalid: {e.Message}\r\n";
                 }
                 WaitTriggerReleased = 
-                    (bool)Kernel32.ReadIni(customFilePath, section, "WaitTriggerReleased",
-                    (bool)Kernel32.ReadIni(AxisFilePath(), AxisName, "WaitTriggerReleased", false, ref errors), ref errors);
+                    (bool)Kernel32.ReadIni(mappingFilePath, mappingName, "WaitTriggerReleased",
+                    (bool)Kernel32.ReadIni(defaultFilePath, defaultName, "WaitTriggerReleased", false, ref errors), ref errors);
                 DecreaseScaleTimeSecs = Math.Max(0, Math.Min(10, 
-                    (double)Kernel32.ReadIni(customFilePath, section, "DecreaseScaleTimeSecs",
-                    (double)Kernel32.ReadIni(AxisFilePath(), AxisName, "DecreaseScaleTimeSecs", 0.0, ref errors), ref errors)));
+                    (double)Kernel32.ReadIni(mappingFilePath, mappingName, "DecreaseScaleTimeSecs",
+                    (double)Kernel32.ReadIni(defaultFilePath, defaultName, "DecreaseScaleTimeSecs", 0.0, ref errors), ref errors)));
 
                 NegativeDetent = 
-                    (double)Kernel32.ReadIni(customFilePath, section, "NegativeDetent",
-                    (double)Kernel32.ReadIni(AxisFilePath(), AxisName, "NegativeDetent", 100.0, ref errors), ref errors);
+                    (double)Kernel32.ReadIni(mappingFilePath, mappingName, "NegativeDetent",
+                    (double)Kernel32.ReadIni(defaultFilePath, defaultName, "NegativeDetent", 100.0, ref errors), ref errors);
                 PositiveDetent = 
-                    (double)Kernel32.ReadIni(customFilePath, section, "PositiveDetent",
-                    (double)Kernel32.ReadIni(AxisFilePath(), AxisName, "PositiveDetent", 100.0, ref errors), ref errors);
+                    (double)Kernel32.ReadIni(mappingFilePath, mappingName, "PositiveDetent",
+                    (double)Kernel32.ReadIni(defaultFilePath, defaultName, "PositiveDetent", 100.0, ref errors), ref errors);
 
-                var scaleColors = Kernel32.ReadIni(AxisFilePath(), AxisName, "MinNegativePositiveMaxScaleColors").Split(space, StringSplitOptions.RemoveEmptyEntries);
-                MinScaleColor      = ReadColor(scaleColors, 0, $"{section}[MinNegativePositiveMaxScaleColors]", ref errors);
-                NegativeScaleColor = ReadColor(scaleColors, 1, $"{section}[MinNegativePositiveMaxScaleColors]", ref errors);
-                PositiveScaleColor = ReadColor(scaleColors, 2, $"{section}[MinNegativePositiveMaxScaleColors]", ref errors);
-                MaxScaleColor      = ReadColor(scaleColors, 3, $"{section}[MinNegativePositiveMaxScaleColors]", ref errors);
+                var scaleColors = Kernel32.ReadIni(defaultFilePath, defaultName, "MinNegativePositiveMaxScaleColors").Split(space, StringSplitOptions.RemoveEmptyEntries);
+                MinScaleColor      = ReadColor(scaleColors, 0, $"{mappingName}[MinNegativePositiveMaxScaleColors]", ref errors);
+                NegativeScaleColor = ReadColor(scaleColors, 1, $"{mappingName}[MinNegativePositiveMaxScaleColors]", ref errors);
+                PositiveScaleColor = ReadColor(scaleColors, 2, $"{mappingName}[MinNegativePositiveMaxScaleColors]", ref errors);
+                MaxScaleColor      = ReadColor(scaleColors, 3, $"{mappingName}[MinNegativePositiveMaxScaleColors]", ref errors);
 
-                Description = Kernel32.ReadIni(AxisFilePath(), AxisName, "Description").Trim();
+                Description = Kernel32.ReadIni(defaultFilePath, defaultName, "Description").Trim();
 
-                IsEnabled = (bool)Kernel32.ReadIni(customFilePath, section, "IsEnabled", 
-                            (bool)Kernel32.ReadIni(AxisFilePath(), AxisName, "IsEnabled", true, ref errors), ref errors);
-                IsHidden  = (bool)Kernel32.ReadIni(customFilePath, section, "IsHidden",
-                            (bool)Kernel32.ReadIni(AxisFilePath(), AxisName, "IsHidden", false, ref errors), ref errors);
+                IsEnabled = (bool)Kernel32.ReadIni(mappingFilePath, mappingName, "IsEnabled", 
+                            (bool)Kernel32.ReadIni(defaultFilePath, defaultName, "IsEnabled", true, ref errors), ref errors);
+                IsHidden  = (bool)Kernel32.ReadIni(mappingFilePath, mappingName, "IsHidden",
+                            (bool)Kernel32.ReadIni(defaultFilePath, defaultName, "IsHidden", false, ref errors), ref errors);
             }
             catch (Exception e)
             {
-                errors += $"[{MappingName}] error while reading {customFilePath}: {e.Message}\r\n";
+                errors += $"[{mappingName}] error while reading {mappingFilePath}: {e.Message}\r\n";
             }
             return errors;
         }
         public string Save(string aircraftPattern = "")
         {
-            aircraftPattern = aircraftPattern ?? "";
             if (Id < 0)
             {
                 return $"Cannot save axis not correctly read from: {MappingsFilePath}";
             }
             var errors = "";
-            var customFilePath = Path.ChangeExtension(MappingsFilePath, null)+ValidFileName($"_{MappingName}_{aircraftPattern}.ini");
+            var customFilePath = Path.ChangeExtension(MappingsFilePath, null)+ValidFileName($"_{MappingName}_{aircraftPattern ?? ""}.ini");
             if (ExternalName.Length > 0)
             {
                 try
@@ -317,41 +318,48 @@ namespace HandOnMouse
             }
             catch (Exception e)
             {
-                errors += $"[{AxisName}]: error while deleting custom {MappingsFilePath}: {e.Message}\r\n";
+                errors += $"[{MappingName}]: error while deleting custom {MappingsFilePath}: {e.Message}\r\n";
             }
             return errors;
+        }
+        public string ValidFileName(string fileName) { foreach (var c in Path.GetInvalidFileNameChars()) { fileName = fileName.Replace(c, '!'); } return fileName; }
+        public string MappingFilePath(string mappingsFile, string axisName, string aircraftPattern)
+        {
+            aircraftPattern = ValidFileName(aircraftPattern ?? MainWindow.SimAircraftTitle);
+            Debug.Assert(File.Exists(MappingsFilePath));
+            var dir = Path.GetDirectoryName(MappingsFilePath);
+            var found = "";
+            foreach (var axisPattern in new string[] { axisName, "" })
+            {
+                var prefix = $"{mappingsFile}_{ValidFileName(axisPattern)}_";
+                foreach (var iniFile in new DirectoryInfo(dir).GetFiles(prefix + "*.ini"))
+                {
+                    var suffix = Path.ChangeExtension(iniFile.Name.Remove(0, prefix.Length), null);
+                    if (aircraftPattern.Contains(suffix.Trim()) &&
+                        found.Length < iniFile.Name.Length)
+                    {
+                        foreach (var section in Kernel32.ReadIni(iniFile.FullName))
+                        {
+                            if (section == axisName)
+                                found = iniFile.Name;
+                        }
+                    }
+                }
+                if (found != "")
+                    break;
+            }
+            found = Path.Combine(dir, found);
+            return File.Exists(found) ? found : MappingsFilePath;
         }
 
         // Creation properties
 
         public int Id => Mappings.IndexOf(this);
-        public string AxisName => MappingName.Split(':')[0].Trim();
-        public string AxisSuffix => MappingName.Remove(0, AxisName.Length);
         public string MappingName { get; private set; }
-        public string CustomFilePath(string aircraftPattern = null) => FindBestIniFileFor(aircraftPattern ?? MainWindow.SimAircraftTitle, Path.GetDirectoryName(MappingsFilePath), Path.GetFileName(MappingsFilePath));
-        public string AxisFilePath(string aircraftPattern = null) => FindBestIniFileFor(aircraftPattern ?? MainWindow.SimAircraftTitle, Path.GetDirectoryName(MappingsFilePath));
-        public string ValidFileName(string fileName) { foreach (var c in Path.GetInvalidFileNameChars()) { fileName = fileName.Replace(c, '!'); } return fileName; }
 
-        // TODO Plane specific file paths
-        private string FindBestIniFileFor(string aircraftPattern, string dir, string mappingsFile = "")
-        {
-            aircraftPattern = ValidFileName(aircraftPattern);
-            Debug.Assert(Directory.Exists(dir));
-            var found = "";
-            var prefix = mappingsFile == "" ? $"_{ValidFileName(AxisName)}_" : Path.ChangeExtension(mappingsFile, null)+ValidFileName($"_{MappingName}_");
-            foreach (var iniFile in new DirectoryInfo(dir).GetFiles(prefix+"*.ini"))
-            {
-                var suffix = Path.ChangeExtension(iniFile.Name.Remove(0, prefix.Length), null);
-                if (aircraftPattern.Contains(suffix.Trim()) &&
-                    found.Length < iniFile.Name.Length)
-                    found = iniFile.Name;
-            }
-            return Path.Combine(dir, found.Length > 0 ? found : mappingsFile);
-        }
+        // Configurable properties
 
-// Configurable properties
-
-public string Description { get; private set; }
+        public string Description { get; private set; }
         
         public uint VJoyId { get; private set; }
         public HID_USAGES VJoyAxis { get; private set; }

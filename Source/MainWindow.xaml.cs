@@ -587,11 +587,11 @@ namespace HandOnMouse
             {
                 filePath = MappingFile();
             }
-            var errors = Axis.MappingsRead(filePath, SimAircraftTitle);
+            var errors = Axis.MappingsRead(filePath);
             var revert = false;
             if (Axis.Mappings.Count == 0 && filePath != MappingFile()) // revert to previous file
             {
-                Axis.MappingsRead(MappingFile(), SimAircraftTitle);
+                Axis.MappingsRead(MappingFile());
                 revert = true;
             }
             else

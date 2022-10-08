@@ -5,8 +5,13 @@
         WindowStartupLocation="Manual" WindowStyle="SingleBorderWindow"
         Icon="Settings.png" ShowInTaskbar="False"
         ResizeMode="NoResize" SizeToContent="WidthAndHeight"
-        MinWidth="432" MinHeight="224"
-        Title="{Binding Axis.AxisToolTip, StringFormat='To change {0}:'}">
+        MinWidth="432" MinHeight="224">
+    <Window.Title>
+        <MultiBinding StringFormat="To change {0} ({1}):">
+            <Binding Path="Axis.AxisToolTip"/>
+            <Binding Path="Axis.ExternalName"/>
+        </MultiBinding>
+    </Window.Title>
     <Window.Resources>
         <Style TargetType="Border">
             <Setter Property="Margin" Value="0,0,0,3" />
