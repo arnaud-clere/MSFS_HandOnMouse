@@ -64,8 +64,10 @@ namespace HandOnMouse
             "GENERAL ENG THROTTLE LEVER POSITION",
             "GENERAL ENG MIXTURE LEVER POSITION",
             "GENERAL ENG PROPELLER LEVER POSITION",
+            "TURB ENG CONDITION LEVER POSITION",
             };
         static public readonly IReadOnlyDictionary<string, string> AxisForTrim = new Dictionary<string, string> {
+            { "assign in MSFS to ELEVATOR TRIM AXIS (REVERSE)", "ELEVATOR POSITION" },
             { "ELEVATOR TRIM POSITION", "ELEVATOR POSITION" },
             { "AILERON TRIM PCT"      ,  "AILERON POSITION" },
             { "RUDDER TRIM PCT"       ,   "RUDDER POSITION" },
@@ -133,7 +135,7 @@ namespace HandOnMouse
                 else
                 {
                     ValueZero = 0;
-                    SimVarName = Kernel32.ReadIni(defaultFilePath, defaultName, "SimVarName").Trim().ToUpperInvariant() + mappingName.Remove(0, defaultName.Length); // prefix common to all mappings
+                    SimVarName = Kernel32.ReadIni(defaultFilePath, defaultName, "SimVarName").Trim() + mappingName.Remove(0, defaultName.Length); // prefix common to all mappings
                     ValueUnit  = Kernel32.ReadIni(defaultFilePath, defaultName, "SimVarUnit", "Percent").Trim();
                     if (ValueUnit.ToLowerInvariant() == "bool")
                     {
@@ -471,9 +473,10 @@ namespace HandOnMouse
         public string AxisText => Join(IsAvailable ? "" : "(N/A)", MappingName);
         public string AxisToolTip => Join(IsAvailable ? "" : "(N/A)", MappingName);
         public string ExternalName => SimVarName.Length > 0 ? SimVarName : VJoyAxisName;
+        public string FsName => SimVarName.Length > 0 ? SimVarName : Description;
         public string SimJoystickButtonText => SimJoystickButtonFilter < 0 ? null : SimJoystickButtonFilter.ToString();
-        public bool IsTrim => AxisForTrim.ContainsKey(SimVarName);
-        public string TrimmedAxisName => AxisForTrim.ContainsKey(SimVarName) ? AxisForTrim[SimVarName] : "Not Available";
+        public bool IsTrim => AxisForTrim.ContainsKey(FsName);
+        public string TrimmedAxisName => AxisForTrim.ContainsKey(FsName) ? AxisForTrim[FsName] : "Not Available";
         public string VJoyAxisName
         {
             get

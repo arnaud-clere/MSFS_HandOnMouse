@@ -130,7 +130,7 @@
     <None Include="LICENSE.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\1 Throttle Prop%28or Mixt%29 Rudder Flaps%28or Gear%29.cfg">
+    <None Include="Mappings\1 Throttle Prop[Mixt] Flaps+Rudder[Gear].cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Mappings\__Beechcraft King Air.ini">
@@ -197,13 +197,13 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Mappings\To customize.cfg" />
-    <None Include="Mappings\5 Throttle Yoke Rudder Flaps%28or Gear%29.cfg">
+    <None Include="Mappings\5 Throttle Yoke+Rudder Flaps+Gear.cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\3 Throttle Spoilers Rudder Flaps%28or Gear%29.cfg">
+    <None Include="Mappings\3 Throttle Spoilers+Rudder Flaps+Gear.cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Mappings\2 Throttle Prop %28Mixt or Cond%29.cfg">
+    <None Include="Mappings\2 Throttle Prop Mixt.cfg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="Mappings\4 Throttle Throttle.cfg">

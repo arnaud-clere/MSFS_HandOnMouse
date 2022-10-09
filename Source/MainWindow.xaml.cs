@@ -38,10 +38,24 @@ namespace HandOnMouse
         public double Engine4;
     }
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
-    public struct SimString
+    public struct AircraftInfo
     {
+        public int EnginesCount;
+        public int EngineType;
+        public int BrakesAvailable;
+        public int SpoilerAvailable;
+        public int IsGearRetractable;
+        public int FlapsAvailable;
+        public int FlapsNumHandlePosition;
+        public float ElevatorTrimMinDegrees;
+        public float ElevatorTrimMaxDegrees;
+        public int ElevatorTrimDisabled;
+        public int AileronTrimDisabled;
+        public int RudderTrimDisabled;
+        public float ThrottleLowerLimit;
+        public float DesignCruiseSpeedFeetPerSec;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst=256)]
-        public string value;
+        public string AircraftTitle;
     }
 
     public class ViewModel : INotifyPropertyChanged
@@ -83,22 +97,8 @@ namespace HandOnMouse
             JoystickButtonPressed = 1,
             AircraftLoaded = 2,
             IndicatedAirSpeedKnots = 3,
-            DesignCruiseSpeedFeetPerSec = 4,
-            EnginesCount = 5,
-            BrakesAvailable = 6,
-            SpoilerAvailable = 7,
-            FlapsAvailable = 8,
-            IsGearRetractable = 9,
-            ThrottleLowerLimit = 10,
-            FlapsNumHandlePosition = 11,
-            ElevatorTrimDisabled = 12,
-            AileronTrimDisabled = 13,
-            RudderTrimDisabled = 14,
-            ElevatorTrimMinDegrees = 15,
-            ElevatorTrimMaxDegrees = 16,
-            AircraftTitle = 17,
-            EngineType = 18,
-            Axis = 19
+            AircraftInfo = 4,
+            Axis = 5
         }
 
         public MainWindow()
@@ -327,15 +327,12 @@ namespace HandOnMouse
         }
 
         private enum RequestType { AxisValue = 0, SmartAxisValue = 1, Count = SmartAxisValue + 1 }
-        private Definitions RequestId(int i, RequestType requestType = RequestType.AxisValue)
-        {
-            return Definitions.Axis + i + Axis.Mappings.Count * (int)requestType;
-        }
+        private Definitions RequestId(int i, RequestType requestType = RequestType.AxisValue) => Definitions.Axis + i + Axis.Mappings.Count * (int)requestType;
         private Definitions ReadAxisValueId(int i)
         {
             var m = Axis.Mappings[i];
             var requestType =
-                m.TrimCounterCenteringMove && Axis.AxisForTrim.ContainsKey(m.SimVarName) ? RequestType.SmartAxisValue :
+                m.TrimCounterCenteringMove && Axis.AxisForTrim.ContainsKey(m.FsName) ? RequestType.SmartAxisValue :
                 RequestType.AxisValue;
             return RequestId(i, requestType);
         }
@@ -356,10 +353,6 @@ namespace HandOnMouse
 
             ((ViewModel)DataContext).StatusBrushForText = new SolidColorBrush(_connected && Settings.Default.Sensitivity > 0 ? Colors.Black : Colors.Gray);
 
-            _requestFlaps = false;
-            _requestGear = false;
-            _requestSpoiler = false;
-            _requestBrakes = false;
             _requestSpeeds = false;
             _requestJoystickButtonInputEvents.Clear();
             for (int id = 0; id < Axis.Mappings.Count; id++)
@@ -367,12 +360,12 @@ namespace HandOnMouse
                 var m = Axis.Mappings[id];
                 if (m.SimVarName.Length > 0)
                 {
-                    if (m.TrimCounterCenteringMove && Axis.AxisForTrim.ContainsKey(m.SimVarName))
+                    if (m.TrimCounterCenteringMove && Axis.AxisForTrim.ContainsKey(m.FsName))
                     {
                         RegisterData(RequestId(id), m.SimVarName, m.ValueUnit, (float)m.ValueIncrement);
 
                         _simConnect.AddToDataDefinition(ReadAxisValueId(id), m.SimVarName, m.ValueUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)m.ValueIncrement, SimConnect.SIMCONNECT_UNUSED);
-                        _simConnect.AddToDataDefinition(ReadAxisValueId(id), Axis.AxisForTrim[m.SimVarName], "Position", SIMCONNECT_DATATYPE.FLOAT64, (float)((1 - -1) / Math.Max(1, Settings.Default.ContinuousValueIncrements)), SimConnect.SIMCONNECT_UNUSED);
+                        _simConnect.AddToDataDefinition(ReadAxisValueId(id), Axis.AxisForTrim[m.FsName], "Position", SIMCONNECT_DATATYPE.FLOAT64, (float)((1 - -1) / Math.Max(1, Settings.Default.ContinuousValueIncrements)), SimConnect.SIMCONNECT_UNUSED);
                         _simConnect.RegisterDataDefineStruct<SmartTrimAxis>(ReadAxisValueId(id));
                         RequestData(ReadAxisValueId(id), SIMCONNECT_PERIOD.SIM_FRAME);
                     }
@@ -390,14 +383,6 @@ namespace HandOnMouse
                         RegisterData(RequestId(id), m.SimVarName, m.ValueUnit, (float)m.ValueIncrement);
                         RequestData(RequestId(id), SIMCONNECT_PERIOD.SIM_FRAME);
                     }
-                    if (m.SimVarName == "FLAPS HANDLE INDEX")                   _requestFlaps = true;
-                    if (m.SimVarName == "GEAR HANDLE POSITION")                 _requestGear = true;
-                    if (m.SimVarName == "SPOILERS HANDLE POSITION")             _requestSpoiler = true;
-                    if (m.SimVarName.StartsWith("BRAKE LEFT POSITION") || 
-                        m.SimVarName.StartsWith("BRAKE RIGHT POSITION"))        _requestBrakes = true;
-                    if (m.SimVarName.StartsWith("ELEVATOR TRIM"))               _requestElevatorTrim = true;
-                    if (m.SimVarName.StartsWith("AILERON TRIM"))                _requestAileronTrim = true;
-                    if (m.SimVarName.StartsWith("RUDDER TRIM"))                 _requestRudderTrim = true;
                     if (m.SensitivityAtCruiseSpeed)                             _requestSpeeds = true;
                 }
                 if (m.SimJoystickButtonFilter > 0)
@@ -409,51 +394,6 @@ namespace HandOnMouse
             {
                 RegisterData(Definitions.IndicatedAirSpeedKnots, "AIRSPEED INDICATED", "Knots", 5);
                 RequestData(Definitions.IndicatedAirSpeedKnots, SIMCONNECT_PERIOD.SECOND);
-
-                RegisterData(Definitions.DesignCruiseSpeedFeetPerSec, "DESIGN SPEED VC", "Feet per second", 5);
-                RequestData(Definitions.DesignCruiseSpeedFeetPerSec);
-            }
-            if (_requestBrakes)
-            {
-                RegisterData(Definitions.BrakesAvailable, "TOE BRAKES AVAILABLE", "Bool");
-                RequestData(Definitions.BrakesAvailable);
-            }
-            if (_requestSpoiler)
-            {
-                RegisterData(Definitions.SpoilerAvailable, "SPOILER AVAILABLE", "Bool");
-                RequestData(Definitions.SpoilerAvailable);
-            }
-            if (_requestGear)
-            {
-                RegisterData(Definitions.IsGearRetractable, "IS GEAR RETRACTABLE", "Bool");
-                RequestData(Definitions.IsGearRetractable);
-            }
-            if (_requestFlaps)
-            {
-                RegisterData(Definitions.FlapsAvailable, "FLAPS AVAILABLE", "Bool");
-                RequestData(Definitions.FlapsAvailable);
-
-                RegisterData(Definitions.FlapsNumHandlePosition, "FLAPS NUM HANDLE POSITIONS", "Number");
-                RequestData(Definitions.FlapsNumHandlePosition);
-            }
-            if (_requestElevatorTrim)
-            {
-                RegisterData(Definitions.ElevatorTrimMinDegrees, "ELEVATOR TRIM DOWN LIMIT", "Degrees");
-                RegisterData(Definitions.ElevatorTrimMaxDegrees, "ELEVATOR TRIM UP LIMIT", "Degrees");
-                RegisterData(Definitions.ElevatorTrimDisabled, "ELEVATOR TRIM DISABLED", "Bool");
-                RequestData(Definitions.ElevatorTrimMinDegrees);
-                RequestData(Definitions.ElevatorTrimMaxDegrees);
-                RequestData(Definitions.ElevatorTrimDisabled);
-            }
-            if (_requestAileronTrim)
-            {
-                RegisterData(Definitions.AileronTrimDisabled, "AILERON TRIM DISABLED", "Bool");
-                RequestData(Definitions.AileronTrimDisabled);
-            }
-            if (_requestRudderTrim)
-            {
-                RegisterData(Definitions.RudderTrimDisabled, "RUDDER TRIM DISABLED", "Bool");
-                RequestData(Definitions.RudderTrimDisabled);
             }
             if (_requestJoystickButtonInputEvents.Count > 0)
             {
@@ -471,15 +411,23 @@ namespace HandOnMouse
                 }
             }
             _simConnect.SubscribeToSystemEvent(Definitions.AircraftLoaded, "AircraftLoaded");
-            _simConnect.AddToDataDefinition(Definitions.AircraftTitle, "TITLE", null, SIMCONNECT_DATATYPE.STRING256, 0, SimConnect.SIMCONNECT_UNUSED);
-            _simConnect.RegisterDataDefineStruct<SimString>(Definitions.AircraftTitle);
-            RequestData(Definitions.AircraftTitle);
-            RegisterData(Definitions.ThrottleLowerLimit, "THROTTLE LOWER LIMIT", "Percent" /* <0 */);
-            RequestData(Definitions.ThrottleLowerLimit);
-            RegisterData(Definitions.EnginesCount, "NUMBER OF ENGINES", "Number");
-            RequestData(Definitions.EnginesCount);
-            RegisterData(Definitions.EngineType, "ENGINE TYPE", "Enum");
-            RequestData(Definitions.EngineType);
+            _simConnect.AddToDataDefinition(Definitions.AircraftInfo, "NUMBER OF ENGINES", "Number", SIMCONNECT_DATATYPE.INT32, 0, SimConnect.SIMCONNECT_UNUSED);
+            _simConnect.AddToDataDefinition(Definitions.AircraftInfo, "ENGINE TYPE", "Enum", SIMCONNECT_DATATYPE.INT32, 0, SimConnect.SIMCONNECT_UNUSED);
+            _simConnect.AddToDataDefinition(Definitions.AircraftInfo, "TOE BRAKES AVAILABLE", "Bool", SIMCONNECT_DATATYPE.INT32, 0, SimConnect.SIMCONNECT_UNUSED);
+            _simConnect.AddToDataDefinition(Definitions.AircraftInfo, "SPOILER AVAILABLE", "Bool", SIMCONNECT_DATATYPE.INT32, 0, SimConnect.SIMCONNECT_UNUSED);
+            _simConnect.AddToDataDefinition(Definitions.AircraftInfo, "IS GEAR RETRACTABLE", "Bool", SIMCONNECT_DATATYPE.INT32, 0, SimConnect.SIMCONNECT_UNUSED);
+            _simConnect.AddToDataDefinition(Definitions.AircraftInfo, "FLAPS AVAILABLE", "Bool", SIMCONNECT_DATATYPE.INT32, 0, SimConnect.SIMCONNECT_UNUSED);
+            _simConnect.AddToDataDefinition(Definitions.AircraftInfo, "FLAPS NUM HANDLE POSITIONS", "Number", SIMCONNECT_DATATYPE.INT32, 0, SimConnect.SIMCONNECT_UNUSED);
+            _simConnect.AddToDataDefinition(Definitions.AircraftInfo, "ELEVATOR TRIM DOWN LIMIT", "Degrees", SIMCONNECT_DATATYPE.FLOAT32, 1, SimConnect.SIMCONNECT_UNUSED);
+            _simConnect.AddToDataDefinition(Definitions.AircraftInfo, "ELEVATOR TRIM UP LIMIT", "Degrees", SIMCONNECT_DATATYPE.FLOAT32, 1, SimConnect.SIMCONNECT_UNUSED);
+            _simConnect.AddToDataDefinition(Definitions.AircraftInfo, "ELEVATOR TRIM DISABLED", "Bool", SIMCONNECT_DATATYPE.INT32, 0, SimConnect.SIMCONNECT_UNUSED);
+            _simConnect.AddToDataDefinition(Definitions.AircraftInfo, "AILERON TRIM DISABLED", "Bool", SIMCONNECT_DATATYPE.INT32, 0, SimConnect.SIMCONNECT_UNUSED);
+            _simConnect.AddToDataDefinition(Definitions.AircraftInfo, "RUDDER TRIM DISABLED", "Bool", SIMCONNECT_DATATYPE.INT32, 0, SimConnect.SIMCONNECT_UNUSED);
+            _simConnect.AddToDataDefinition(Definitions.AircraftInfo, "THROTTLE LOWER LIMIT", "Percent" /* <0 */, SIMCONNECT_DATATYPE.FLOAT32, 1, SimConnect.SIMCONNECT_UNUSED);
+            _simConnect.AddToDataDefinition(Definitions.AircraftInfo, "DESIGN SPEED VC", "Feet per second", SIMCONNECT_DATATYPE.FLOAT32, 5, SimConnect.SIMCONNECT_UNUSED);
+            _simConnect.AddToDataDefinition(Definitions.AircraftInfo, "TITLE", null, SIMCONNECT_DATATYPE.STRING256, 0, SimConnect.SIMCONNECT_UNUSED);
+            _simConnect.RegisterDataDefineStruct<AircraftInfo>(Definitions.AircraftInfo);
+            RequestData(Definitions.AircraftInfo);
         }
         private void RegisterData(Definitions id, string simVarName, string simVarType, float epsilon = 1)
         {
@@ -489,6 +437,7 @@ namespace HandOnMouse
                 case "bool":
                 case "boolean":
                 case "enum":
+                case "number":
                     _simConnect?.AddToDataDefinition(id, simVarName, simVarType, SIMCONNECT_DATATYPE.INT32, 0, SimConnect.SIMCONNECT_UNUSED);
                     _simConnect?.RegisterDataDefineStruct<int>(id);
                     break;
@@ -725,7 +674,11 @@ namespace HandOnMouse
                 }
                 else
                 {
-                    _simConnect?.SetDataOnSimObject(RequestId(m.Id), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, m.SimVarValue);
+                    var u = m.ValueUnit.ToLowerInvariant();
+                    if (u == "number" || u == "enum" || u == "bool" || u == "boolean")
+                        _simConnect?.SetDataOnSimObject(RequestId(m.Id), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, Convert.ToInt32(m.SimVarValue));
+                    else
+                        _simConnect?.SetDataOnSimObject(RequestId(m.Id), (uint)SIMCONNECT_SIMOBJECT_TYPE.USER, SIMCONNECT_DATA_SET_FLAG.DEFAULT, m.SimVarValue);
                 }
             }
         }
@@ -739,94 +692,42 @@ namespace HandOnMouse
 
             try
             {
-                if (i == (int)Definitions.AircraftTitle)
+                if (i == (int)Definitions.AircraftInfo)
                 {
-                    MainWindow.SimAircraftTitle = ((SimString)data.dwData[0]).value;
-                }
-                else if (i == (int)Definitions.IndicatedAirSpeedKnots)
-                {
-                    Axis.IndicatedAirSpeedKnots = Math.Max(0, (double)data.dwData[0]);
-                }
-                else if (i == (int)Definitions.DesignCruiseSpeedFeetPerSec)
-                {
-                    Axis.DesignCruiseSpeedKnots = Math.Max(50, ((double)data.dwData[0]) * /* ft/s to knots */ 0.592484);
-                }
-                else if (i == (int)Definitions.EnginesCount)
-                {
-                    Axis.EnginesCount = (uint)Math.Max(0, Math.Min(4, (double)data.dwData[0]));
+                    var info = (AircraftInfo)data.dwData[0];
+                    MainWindow.SimAircraftTitle = info.AircraftTitle;
+                    Axis.DesignCruiseSpeedKnots = Math.Max(50, (info.DesignCruiseSpeedFeetPerSec) * /* ft/s to knots */ 0.592484);
+                    Axis.EnginesCount = (uint)Math.Max(0, Math.Min(4, info.EnginesCount));
+                    // See https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Aircraft_SimVars/Aircraft_Engine_Variables.htm#ENGINE%20TYPE
+                    UpdateSimVarsAvailable(info.EngineType != 2 /* None */, "GENERAL ENG THROTTLE LEVER POSITION");
+                    UpdateSimVarsAvailable(info.EngineType == 0 /* Piston */, "GENERAL ENG MIXTURE LEVER POSITION");
+                    UpdateSimVarsAvailable(info.EngineType != 1 /* Jet */, "GENERAL ENG PROPELLER LEVER POSITION");
+                    UpdateSimVarsAvailable(info.EngineType == 5 /* Turboprop */, "TURB ENG CONDITION LEVER POSITION");
                     foreach (var m in Axis.Mappings)
                     {
                         var n = m.SimVarName.Split(':');
                         uint engine = 0;
-                        if (n.Length > 1 && uint.TryParse(n[1], out engine))
+                        if (n.Length > 1 && uint.TryParse(n[1], out engine) && engine > Axis.EnginesCount)
                         {
-                            m.IsAvailable = engine <= Axis.EnginesCount;
+                            m.IsAvailable = false;
                         }
+                        if (info.ThrottleLowerLimit < 0) m.UpdateThrottleLowerLimit(info.ThrottleLowerLimit);
+                        m.UpdateElevatorTrimMinValue(info.ElevatorTrimMinDegrees);
+                        m.UpdateElevatorTrimMaxValue(info.ElevatorTrimMaxDegrees);
+                        if (info.FlapsNumHandlePosition >= 1) m.UpdateFlapsNumHandlePosition((uint)info.FlapsNumHandlePosition);
+                        if (m.SimVarName == "BRAKE LEFT POSITION") m.IsAvailable = info.BrakesAvailable != 0;
+                        if (m.SimVarName == "BRAKE RIGHT POSITION") m.IsAvailable = info.BrakesAvailable != 0;
+                        if (m.SimVarName == "SPOILERS HANDLE POSITION") m.IsAvailable = info.SpoilerAvailable != 0;
+                        if (m.SimVarName == "FLAPS HANDLE INDEX") m.IsAvailable = info.FlapsAvailable != 0;
+                        if (m.SimVarName == "GEAR HANDLE POSITION") m.IsAvailable = info.IsGearRetractable != 0;
+                        if (m.SimVarName == "ELEVATOR TRIM") m.IsAvailable = info.ElevatorTrimDisabled == 0;
+                        if (m.SimVarName == "AILERON TRIM") m.IsAvailable = info.AileronTrimDisabled == 0;
+                        if (m.SimVarName == "RUDDER TRIM") m.IsAvailable = info.RudderTrimDisabled == 0;
                     }
                 }
-                else if (i == (int)Definitions.EngineType)
+                else if (i == (int)Definitions.IndicatedAirSpeedKnots)
                 {
-                    var type = (int)data.dwData[0];
-                    // See https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Aircraft_SimVars/Aircraft_Engine_Variables.htm#ENGINE%20TYPE
-                    UpdateSimVarsAvailable(type != 2 /* None */, "GENERAL ENG THROTTLE LEVER POSITION");
-                    UpdateSimVarsAvailable(type == 0 /* Piston */, "GENERAL ENG MIXTURE LEVER POSITION");
-                    UpdateSimVarsAvailable(type != 1 /* Jet */, "GENERAL ENG PROPELLER LEVER POSITION");
-                    UpdateSimVarsAvailable(type == 5 /* Turboprop */, "TURB ENG CONDITION LEVER POSITION");
-                }
-                else if (i == (int)Definitions.BrakesAvailable && (int)data.dwData[0] == 0)
-                {
-                    UpdateSimVarsAvailable(false, "BRAKE LEFT POSITION");
-                    UpdateSimVarsAvailable(false, "BRAKE RIGHT POSITION");
-                }
-                else if (i == (int)Definitions.SpoilerAvailable && (int)data.dwData[0] == 0)
-                {
-                    UpdateSimVarsAvailable(false, "SPOILERS HANDLE POSITION");
-                }
-                else if (i == (int)Definitions.FlapsAvailable && (int)data.dwData[0] == 0)
-                {
-                    UpdateSimVarsAvailable(false, "FLAPS HANDLE INDEX");
-                }
-                else if (i == (int)Definitions.IsGearRetractable && (int)data.dwData[0] == 0)
-                {
-                    UpdateSimVarsAvailable(false, "GEAR HANDLE POSITION");
-                }
-                else if (i == (int)Definitions.ElevatorTrimDisabled && (int)data.dwData[0] != 0)
-                {
-                    UpdateSimVarsAvailable(false, "ELEVATOR TRIM");
-                }
-                else if (i == (int)Definitions.ElevatorTrimMinDegrees)
-                {
-                    foreach (var m in Axis.Mappings)
-                        if (m.SimVarName == "ELEVATOR TRIM POSITION")
-                            m.UpdateElevatorTrimMinValue((double)data.dwData[0]);
-                }
-                else if (i == (int)Definitions.ElevatorTrimMaxDegrees)
-                {
-                    foreach (var m in Axis.Mappings)
-                        if (m.SimVarName == "ELEVATOR TRIM POSITION")
-                            m.UpdateElevatorTrimMaxValue((double)data.dwData[0]);
-                }
-                else if (i == (int)Definitions.AileronTrimDisabled && (int)data.dwData[0] != 0)
-                {
-                    UpdateSimVarsAvailable(false, "AILERON TRIM");
-                }
-                else if (i == (int)Definitions.RudderTrimDisabled && (int)data.dwData[0] != 0)
-                {
-                    UpdateSimVarsAvailable(false, "RUDDER TRIM");
-                }
-                else if (i == (int)Definitions.ThrottleLowerLimit)
-                {
-                    var n = (double)data.dwData[0];
-                    if (n < 0)
-                        foreach (var m in Axis.Mappings)
-                            m.UpdateThrottleLowerLimit((double)data.dwData[0]);
-                }
-                else if (i == (int)Definitions.FlapsNumHandlePosition)
-                {
-                    var n = (double)data.dwData[0];
-                    if (n >= 1)
-                        foreach (var m in Axis.Mappings)
-                            m.UpdateFlapsNumHandlePosition((uint)n);
+                    Axis.IndicatedAirSpeedKnots = Math.Max(0, (double)data.dwData[0]);
                 }
                 else if ((int)Definitions.Axis <= i) // translate i to an Axis.Mappings index and requestType for processing
                 {
@@ -846,7 +747,11 @@ namespace HandOnMouse
                         }
                         else // requestType == RequestType.AxisValue
                         {
-                            inSimValue = (double)data.dwData[0];
+                            var u = m.ValueUnit.ToLowerInvariant();
+                            if (u == "number" || u == "enum" || u == "bool" || u == "boolean")
+                                inSimValue = (int)data.dwData[0];
+                            else
+                                inSimValue = (double)data.dwData[0];
                         }
                         m.UpdateSimVarValue(inSimValue - m.SimVarValue, trimmedAxisChange);
                     }
@@ -873,14 +778,7 @@ namespace HandOnMouse
         bool _manuallyDisconnected = false;
         bool _wasAutoConnect = false;
 
-        bool _requestFlaps = false;
-        bool _requestGear = false;
-        bool _requestSpoiler = false;
-        bool _requestBrakes = false;
         bool _requestSpeeds = false;
-        bool _requestElevatorTrim = false;
-        bool _requestAileronTrim = false;
-        bool _requestRudderTrim = false;
         HashSet<uint> _requestJoystickButtonInputEvents = new HashSet<uint>();
 
         vJoy _vJoy;

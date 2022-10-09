@@ -155,7 +155,7 @@ Click ![](Source/Settings.png) to assign | **Elevator trim** (forward-backward m
 
 # Known issues:
 
-* Minor scale color problem (with elevator trim)
+* Minor scale color problem (with elevator trim, CRJ Throttle negative detent, etc.)
 * Initialization problems when changing aircraft in developer mode
-* Axis labels not always updated when axis is not available
+* Condition lever does not work for now
 See last known issues: https://github.com/arnaud-clere/MSFS_HandOnMouse/issues
