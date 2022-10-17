@@ -165,7 +165,6 @@ namespace HandOnMouse
                     if (btnString[0].Contains("R")) btn |= RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_DOWN;
                     if (btnString[0].Contains("B")) btn |= RAWMOUSE.RI_MOUSE.BUTTON_4_DOWN;
                     if (btnString[0].Contains("F")) btn |= RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN;
-                    if (btnString[0].Contains("H")) btn |= RAWMOUSE.RI_MOUSE.HWHEEL;
                 }
                 if (btnString.Length > 1)
                 {
@@ -176,6 +175,22 @@ namespace HandOnMouse
                     if (btnString[1].Contains("F")) btn |= RAWMOUSE.RI_MOUSE.BUTTON_5_UP;
                 }
                 MouseButtonsFilter = btn == RAWMOUSE.RI_MOUSE.None ? RAWMOUSE.RI_MOUSE.Reserved : btn; // to avoid changing the axis with no button down
+
+                var wheelFilter =
+                    Kernel32.ReadIni(mappingFilePath, mappingName, "MouseWheelFilter",
+                    Kernel32.ReadIni(defaultFilePath, defaultName, "MouseWheelFilter")).Trim();
+                try
+                {
+                    if (wheelFilter != "")
+                        MouseWheelFilter = (Mouse.Wheel)Enum.Parse(typeof(Mouse.Wheel), wheelFilter, true);
+                }
+                catch (Exception e)
+                {
+                    errors += $"[{mappingName}]MouseWheelFilter={wheelFilter} is invalid: {e.Message}\r\n";
+                }
+                MouseWheelTimeout = TimeSpan.FromSeconds(Math.Max(0.2, Math.Min(2,
+                    (double)Kernel32.ReadIni(mappingFilePath, mappingName, "MouseWheelTimeoutSecs",
+                    (double)Kernel32.ReadIni(defaultFilePath, defaultName, "MouseWheelTimeoutSecs", 1.0, ref errors), ref errors))));
 
                 ControllerManufacturerId = 0;
                 ControllerProductId = 0;
@@ -215,21 +230,30 @@ namespace HandOnMouse
                 AllowedExternalChangePerSec = Math.Max(0, Math.Min(20, 
                     (double)Kernel32.ReadIni(mappingFilePath, mappingName, "AllowedExternalChangePerSec", IsThrottleSimVar ? 5.0 : 20.0, ref errors)));
 
-                IncreaseDirection = (Direction)Enum.Parse(typeof(Direction), 
-                    Kernel32.ReadIni(mappingFilePath, mappingName, "IncreaseDirection",
-                    Kernel32.ReadIni(defaultFilePath, defaultName, "IncreaseDirection", "Push")).Trim(), true);
+                var direction =
+                        Kernel32.ReadIni(mappingFilePath, mappingName, "IncreaseDirection",
+                        Kernel32.ReadIni(defaultFilePath, defaultName, "IncreaseDirection", "Push")).Trim();
+                try
+                {
+                    IncreaseDirection = (Direction)Enum.Parse(typeof(Direction), direction, true);
+                }
+                catch (Exception e)
+                {
+                    errors += $"[{mappingName}]IncreaseDirection={direction} is invalid: {e.Message}\r\n";
+                }
+
                 key = "IncreaseDirection2";
-                var direction = 
+                var direction2 = 
                     Kernel32.ReadIni(mappingFilePath, mappingName, key,
                     Kernel32.ReadIni(defaultFilePath, defaultName, key)).Trim();
                 try
                 {
-                    if (direction != "")
-                        IncreaseDirection2 = (Direction)Enum.Parse(typeof(Direction), direction, true);
+                    if (direction2 != "")
+                        IncreaseDirection2 = (Direction)Enum.Parse(typeof(Direction), direction2, true);
                 }
                 catch (Exception e)
                 {
-                    errors += $"[{mappingName}]{key}={direction} is invalid: {e.Message}\r\n";
+                    errors += $"[{mappingName}]{key}={direction2} is invalid: {e.Message}\r\n";
                 }
                 WaitTriggerReleased = 
                     (bool)Kernel32.ReadIni(mappingFilePath, mappingName, "WaitTriggerReleased",
@@ -404,6 +428,8 @@ namespace HandOnMouse
 
         /// <summary>A filter of mouse buttons down encoded as a combination of RAWMOUSE.RI_MOUSE</summary>
         public RAWMOUSE.RI_MOUSE MouseButtonsFilter { get => _mouseButtonsFilter; set { if (_mouseButtonsFilter != value) { _mouseButtonsFilter = value; NotifyPropertyChanged(); } } }
+        public Mouse.Wheel MouseWheelFilter { get => _mouseWheelFilter; set { if (_mouseWheelFilter != value) { _mouseWheelFilter = value; NotifyPropertyChanged(); } } }
+        public TimeSpan MouseWheelTimeout { get => _mouseWheelTimeSpan; set { if (_mouseWheelTimeSpan != value) { _mouseWheelTimeSpan = value; NotifyPropertyChanged(); } } }
         public Key KeyboardKeyDownFilter { get => _keyboardKeyDownFilter; set { if (_keyboardKeyDownFilter != value) { _keyboardKeyDownFilter = value; NotifyPropertyChanged(); } } }
         public Controller.Buttons ControllerButtonsFilter { get => _controllerButtonsFilter; set { if (_controllerButtonsFilter != value) { _controllerButtonsFilter = value; NotifyPropertyChanged(); } } }
         
@@ -582,7 +608,6 @@ namespace HandOnMouse
                     if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_DOWN)) btn += "R";
                     if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_4_DOWN)) btn += "B";
                     if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN)) btn += "F";
-                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.HWHEEL)) btn += "H";
                     var btnUp = "";
                     if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.LEFT_BUTTON_UP)) btnUp += "L";
                     if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_UP)) btnUp += "M";
@@ -730,6 +755,10 @@ namespace HandOnMouse
             var isActive = false;
             if (MouseButtonsFilter != RAWMOUSE.RI_MOUSE.Reserved)
                 isActive = Mouse.Device.Buttons.HasFlag(MouseButtonsFilter);
+
+            if (MouseWheelFilter != Mouse.Wheel.None && Mouse.Device.WheelDirection != Mouse.Wheel.None)
+                isActive |= MouseWheelFilter.HasFlag(Mouse.Device.WheelDirection)
+                    && DateTime.UtcNow < Mouse.Device.WheelDirectionInput.Add(MouseWheelTimeout);
 
             if (KeyboardKeyDownFilter != Key.None)
                 isActive |= Keyboard.IsKeyDown(KeyboardKeyDownFilter);
@@ -997,6 +1026,8 @@ namespace HandOnMouse
         private Direction   _increaseDirection = Direction.Push;
         private Direction?  _increaseDirection2;
         private RAWMOUSE.RI_MOUSE _mouseButtonsFilter = RAWMOUSE.RI_MOUSE.Reserved;
+        private Mouse.Wheel _mouseWheelFilter = Mouse.Wheel.None;
+        private TimeSpan    _mouseWheelTimeSpan = TimeSpan.FromSeconds(1);
         private Key         _keyboardKeyDownFilter;
         private Controller.Buttons _controllerButtonsFilter;
         private bool    _isEnabled = true;

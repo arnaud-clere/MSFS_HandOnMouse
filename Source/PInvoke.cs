@@ -256,7 +256,7 @@ namespace winuser
         [FieldOffset(4)]
         public RI_MOUSE ButtonFlags;
         [FieldOffset(6)]
-        public ushort ButtonData;
+        public short ButtonData;
         [FieldOffset(8)]
         public uint RawButtons;
         [FieldOffset(12)]

@@ -16,6 +16,8 @@ namespace HandOnMouse
 
     public class Mouse
     {
+        public enum Wheel { None = 0, Right = 1, Left = 2, RightOrLeft = Right | Left }
+
         public static Mouse Device
         {
             get
@@ -39,8 +41,7 @@ namespace HandOnMouse
                 RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_DOWN |
                 RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_DOWN |
                 RAWMOUSE.RI_MOUSE.BUTTON_4_DOWN |
-                RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN |
-                RAWMOUSE.RI_MOUSE.HWHEEL);
+                RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN);
             // Check UP after DOWN in case both are true in a single coalesced message
             if (buttons.HasFlag(RAWMOUSE.RI_MOUSE.LEFT_BUTTON_UP    )) Buttons &= ~RAWMOUSE.RI_MOUSE.LEFT_BUTTON_DOWN;
             if (buttons.HasFlag(RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_UP  )) Buttons &= ~RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_DOWN;
@@ -53,6 +54,16 @@ namespace HandOnMouse
             if (Buttons.HasFlag(RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_DOWN )) Buttons &= ~RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_UP ; else Buttons |= RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_UP;
             if (Buttons.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_4_DOWN     )) Buttons &= ~RAWMOUSE.RI_MOUSE.BUTTON_4_UP     ; else Buttons |= RAWMOUSE.RI_MOUSE.BUTTON_4_UP;
             if (Buttons.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN     )) Buttons &= ~RAWMOUSE.RI_MOUSE.BUTTON_5_UP     ; else Buttons |= RAWMOUSE.RI_MOUSE.BUTTON_5_UP;
+
+
+            if (buttons.HasFlag(RAWMOUSE.RI_MOUSE.HWHEEL))
+            {
+                WheelDirectionInput = DateTime.UtcNow;
+                if (mouse.ButtonData > 0)
+                    WheelDirection = Wheel.Right;
+                else if (mouse.ButtonData < 0)
+                    WheelDirection = Wheel.Left;
+            }
 
             if (mouse.LastX != 0 ||
                 mouse.LastY != 0)
@@ -68,6 +79,9 @@ namespace HandOnMouse
             return true;
         }
 
+        public DateTime WheelDirectionInput;
+        public Wheel WheelDirection;
+
         public RAWMOUSE.RI_MOUSE Buttons;
         public RAWMOUSE.RI_MOUSE ButtonsPressed
         {
@@ -78,8 +92,7 @@ namespace HandOnMouse
                     RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_DOWN |
                     RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_DOWN |
                     RAWMOUSE.RI_MOUSE.BUTTON_4_DOWN |
-                    RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN |
-                    RAWMOUSE.RI_MOUSE.HWHEEL);
+                    RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN);
             }
         }
 
