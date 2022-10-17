@@ -39,7 +39,8 @@ namespace HandOnMouse
                 RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_DOWN |
                 RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_DOWN |
                 RAWMOUSE.RI_MOUSE.BUTTON_4_DOWN |
-                RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN);
+                RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN |
+                RAWMOUSE.RI_MOUSE.HWHEEL);
             // Check UP after DOWN in case both are true in a single coalesced message
             if (buttons.HasFlag(RAWMOUSE.RI_MOUSE.LEFT_BUTTON_UP    )) Buttons &= ~RAWMOUSE.RI_MOUSE.LEFT_BUTTON_DOWN;
             if (buttons.HasFlag(RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_UP  )) Buttons &= ~RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_DOWN;
@@ -77,7 +78,8 @@ namespace HandOnMouse
                     RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_DOWN |
                     RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_DOWN |
                     RAWMOUSE.RI_MOUSE.BUTTON_4_DOWN |
-                    RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN);
+                    RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN |
+                    RAWMOUSE.RI_MOUSE.HWHEEL);
             }
         }
 

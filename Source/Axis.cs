@@ -165,6 +165,7 @@ namespace HandOnMouse
                     if (btnString[0].Contains("R")) btn |= RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_DOWN;
                     if (btnString[0].Contains("B")) btn |= RAWMOUSE.RI_MOUSE.BUTTON_4_DOWN;
                     if (btnString[0].Contains("F")) btn |= RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN;
+                    if (btnString[0].Contains("H")) btn |= RAWMOUSE.RI_MOUSE.HWHEEL;
                 }
                 if (btnString.Length > 1)
                 {
@@ -581,6 +582,7 @@ namespace HandOnMouse
                     if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_DOWN)) btn += "R";
                     if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_4_DOWN)) btn += "B";
                     if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN)) btn += "F";
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.HWHEEL)) btn += "H";
                     var btnUp = "";
                     if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.LEFT_BUTTON_UP)) btnUp += "L";
                     if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_UP)) btnUp += "M";
@@ -605,6 +607,7 @@ namespace HandOnMouse
                     if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_4_DOWN     )) btn = Join(btn, "Back"   , "+");
                     if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.RIGHT_BUTTON_DOWN )) btn = Join(btn, "Right"  , "+");
                     if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN     )) btn = Join(btn, "Forward", "+");
+                    if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.BUTTON_5_DOWN     )) btn = Join(btn, "Horizontal Wheel", "+");
                     var btnUp = "";
                     if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.LEFT_BUTTON_UP  )) btnUp = Join(btnUp, "Left"   , "+");
                     if (MouseButtonsFilter.HasFlag(RAWMOUSE.RI_MOUSE.MIDDLE_BUTTON_UP)) btnUp = Join(btnUp, "Middle" , "+");
