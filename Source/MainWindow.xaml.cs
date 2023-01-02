@@ -101,6 +101,11 @@ namespace HandOnMouse
             Axis = 5
         }
 
+        public enum Priorities
+        {
+            Highest = 1,
+        }
+
         public MainWindow()
         {
             Trace.WriteLine($"MainWindow {DateTime.Now}");
@@ -326,7 +331,7 @@ namespace HandOnMouse
             b.IsEnabled = enabled;
         }
 
-        private enum RequestType { AxisValue = 0, SmartAxisValue = 1, Count = SmartAxisValue + 1 }
+        private enum RequestType { AxisValue = 0, SmartAxisValue = 1, AxisEventValue = 2, Count = AxisEventValue + 1 }
         private Definitions RequestId(int i, RequestType requestType = RequestType.AxisValue) => Definitions.Axis + i + Axis.Mappings.Count * (int)requestType;
         private Definitions ReadAxisValueId(int i)
         {
@@ -382,8 +387,15 @@ namespace HandOnMouse
                     {
                         RegisterData(RequestId(id), m.SimVarName, m.ValueUnit, (float)m.ValueIncrement);
                         RequestData(RequestId(id), SIMCONNECT_PERIOD.SIM_FRAME);
+                        if (m.SimEventName.Length > 0)
+                        {
+                            _simConnect?.MapClientEventToSimEvent(RequestId(m.Id, RequestType.AxisEventValue), m.SimEventName);
+                        }
                     }
-                    if (m.SensitivityAtCruiseSpeed)                             _requestSpeeds = true;
+                    if (m.SensitivityAtCruiseSpeed)
+                    {
+                        _requestSpeeds = true;
+                    }
                 }
                 if (m.SimJoystickButtonFilter > 0)
                 {
@@ -400,8 +412,8 @@ namespace HandOnMouse
                 _simConnect.MapClientEventToSimEvent(Definitions.None, "");
                 _simConnect.MapClientEventToSimEvent(Definitions.JoystickButtonPressed, "");
                 _simConnect.AddClientEventToNotificationGroup(Definitions.None, Definitions.None, true);
-                _simConnect.AddClientEventToNotificationGroup(Definitions.None, Definitions.JoystickButtonPressed, true);
-                _simConnect.SetNotificationGroupPriority(Definitions.None, 1000000);
+                _simConnect.AddClientEventToNotificationGroup(Definitions.None, Definitions.JoystickButtonPressed, false);
+                _simConnect.SetNotificationGroupPriority(Definitions.None, (uint)Priorities.Highest);
             }
             foreach (var button in _requestJoystickButtonInputEvents)
             {
@@ -665,6 +677,12 @@ namespace HandOnMouse
                 if (m.VJoyId > 0)
                 {
                     _vJoy?.SetAxis((int)m.SimVarValue, m.VJoyId, m.VJoyAxis);
+                }
+                else if (m.SimEventName.Length > 0)
+                {
+                    int axisEventValue = (int)Math.Round(m.SimEventScale * m.SimVarValue / m.ValueScale); 
+                    uint dword = (uint)axisEventValue;
+                    _simConnect?.TransmitClientEvent((uint)SIMCONNECT_SIMOBJECT_TYPE.USER, RequestId(m.Id, RequestType.AxisEventValue), dword, Priorities.Highest, SIMCONNECT_EVENT_FLAG.GROUPID_IS_PRIORITY);
                 }
                 else if (m.ForAllEngines)
                 {

@@ -159,7 +159,8 @@ namespace winbase
             try
             {
                 if (defaultValue is bool) return bool.Parse(read);
-                else if (defaultValue is uint) return uint.Parse(read, NumberStyles.None, CultureInfo.InvariantCulture);
+                else if (defaultValue is int) return int.Parse(read, NumberStyles.Integer   , CultureInfo.InvariantCulture);
+                else if (defaultValue is uint) return uint.Parse(read, NumberStyles.AllowLeadingWhite, CultureInfo.InvariantCulture);
                 else if (defaultValue is double) return double.Parse(read, NumberStyles.Float, CultureInfo.InvariantCulture);
                 else return Enum.Parse(typeof(T), read);
             }

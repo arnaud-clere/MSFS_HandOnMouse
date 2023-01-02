@@ -135,6 +135,14 @@ namespace HandOnMouse
                 else
                 {
                     ValueZero = 0;
+                    SimEventName = Kernel32.ReadIni(defaultFilePath, defaultName, "SimEventName").Trim();
+                    if (SimEventName.Length > 0)
+                    {
+                        var min = (int)Kernel32.ReadIni(defaultFilePath, defaultName, "SimEventMin", -16383, ref errors);
+                        var max = (int)Kernel32.ReadIni(defaultFilePath, defaultName, "SimEventMax", 16384, ref errors);
+                        SimEventMin = Math.Min(min, max);
+                        SimEventMax = Math.Max(min, max);
+                    };
                     SimVarName = Kernel32.ReadIni(defaultFilePath, defaultName, "SimVarName").Trim() + mappingName.Remove(0, defaultName.Length); // prefix common to all mappings
                     ValueUnit  = Kernel32.ReadIni(defaultFilePath, defaultName, "SimVarUnit", "Percent").Trim();
                     if (ValueUnit.ToLowerInvariant() == "bool")
@@ -405,6 +413,9 @@ namespace HandOnMouse
                         ForAllEngines = true;
             }
         }
+        public string SimEventName { get; set; }
+        public int SimEventMin { get; set; }
+        public int SimEventMax { get; set; }
 
         public ushort ControllerManufacturerId { get; set; }
         public ushort ControllerProductId { get; set; }
@@ -497,6 +508,7 @@ namespace HandOnMouse
 
         // Configurable Read only properties
 
+        public int SimEventScale => SimEventMax > SimEventMin ? SimEventMax - SimEventMin : 1; // to avoid division by 0
         public string AxisText => Join(IsAvailable ? "" : "(N/A)", MappingName);
         public string AxisToolTip => Join(IsAvailable ? "" : "(N/A)", MappingName);
         public string ExternalName => SimVarName.Length > 0 ? SimVarName : VJoyAxisName;
@@ -923,8 +935,9 @@ namespace HandOnMouse
                 {
                     SimVarValue += SmartSensitivity() * trimmedAxisChange;
                 }
-                if (externalChange != 0)
+                if (Math.Abs(externalChange) >= ValueIncrement)
                 {
+                    Debug.WriteLine(externalChange);
                     SimVarValue += externalChange * Math.Min(1, AllowedExternalChangePerSec * Math.Min(0.1, lastUpdateElapsedSecs)); // in case MSFS would not update SimVar during a pause or configuration
                 }
                 if (Math.Abs(lastSimVarValue - SimVarValue) >= ValueIncrement)
@@ -988,7 +1001,7 @@ namespace HandOnMouse
         private void NotifyPropertyChanges(params string[] names) { foreach (var name in names) NotifyPropertyChanged(name); }
         private void NotifyPropertyChanged([CallerMemberName] string name = "")
         {
-            Debug.WriteIf(name != nameof(Value), $"{name} ");
+            //Debug.WriteIf(name != nameof(Value), $"{name} ");
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
             // When PropertyChanged for property below:       | NotifyPropertyChanges for all direct dependent properties below (except those that are also indirect):
             // -----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------
