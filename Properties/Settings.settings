@@ -48,7 +48,7 @@
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="MappingFile" Type="System.String" Scope="User">
-      <Value Profile="(Default)">1 Throttle Prop(or Mixt) Rudder Flaps(or Gear)</Value>
+      <Value Profile="(Default)">1 Throttle Prop[Mixt] Flaps+Rudder[Gear]</Value>
     </Setting>
   </Settings>
 </SettingsFile>

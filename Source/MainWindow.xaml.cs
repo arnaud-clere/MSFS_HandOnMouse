@@ -84,7 +84,7 @@ namespace HandOnMouse
     {
         public static string MappingsDir() { return Path.Combine(Directory.GetCurrentDirectory(), "Mappings"); }
         public static string MappingFile() { return Path.ChangeExtension(Path.Combine(MappingsDir(), Settings.Default.MappingFile), ".cfg"); }
-        public static string SimAircraftTitle { get; private set; } = "a XCub 1";
+        public static string SimAircraftTitle { get; private set; } = "";
         public static Controller.Buttons SimJoystickButtons { get; private set; }
         public static bool vJoyIsAvailable { get; private set; }
 
@@ -369,8 +369,8 @@ namespace HandOnMouse
                     {
                         RegisterData(RequestId(id), m.SimVarName, m.ValueUnit, (float)m.ValueIncrement);
 
-                        _simConnect.AddToDataDefinition(ReadAxisValueId(id), m.SimVarName, m.ValueUnit, SIMCONNECT_DATATYPE.FLOAT64, (float)m.ValueIncrement, SimConnect.SIMCONNECT_UNUSED);
-                        _simConnect.AddToDataDefinition(ReadAxisValueId(id), Axis.AxisForTrim[m.FsName], "Position", SIMCONNECT_DATATYPE.FLOAT64, (float)((1 - -1) / Math.Max(1, Settings.Default.ContinuousValueIncrements)), SimConnect.SIMCONNECT_UNUSED);
+                        _simConnect.AddToDataDefinition(ReadAxisValueId(id), m.SimVarName, "Radians", SIMCONNECT_DATATYPE.FLOAT64, (float)m.ValueIncrement, SimConnect.SIMCONNECT_UNUSED);
+                        _simConnect.AddToDataDefinition(ReadAxisValueId(id), Axis.AxisForTrim[m.FsName], "Radians", SIMCONNECT_DATATYPE.FLOAT64, (float)((1 - -1) / Math.Max(1, Settings.Default.ContinuousValueIncrements)), SimConnect.SIMCONNECT_UNUSED);
                         _simConnect.RegisterDataDefineStruct<SmartTrimAxis>(ReadAxisValueId(id));
                         RequestData(ReadAxisValueId(id), SIMCONNECT_PERIOD.SIM_FRAME);
                     }

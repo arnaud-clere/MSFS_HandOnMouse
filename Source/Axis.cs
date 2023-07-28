@@ -67,10 +67,8 @@ namespace HandOnMouse
             "TURB ENG CONDITION LEVER POSITION",
             };
         static public readonly IReadOnlyDictionary<string, string> AxisForTrim = new Dictionary<string, string> {
-            { "assign in MSFS to ELEVATOR TRIM AXIS (REVERSE)", "ELEVATOR POSITION" },
-            { "ELEVATOR TRIM POSITION", "ELEVATOR POSITION" },
-            { "AILERON TRIM PCT"      ,  "AILERON POSITION" },
-            { "RUDDER TRIM PCT"       ,   "RUDDER POSITION" },
+            { "ELEVATOR TRIM POSITION", "ELEVATOR DEFLECTION" },
+            { "RUDDER TRIM PCT"       ,   "RUDDER DEFLECTION" },
             };
 
         // Instance members
