@@ -738,28 +738,6 @@ namespace HandOnMouse
 
         // Update Methods
 
-        /// <seealso cref="https://www.plantuml.com/plantuml/uml/"/>
-        //! @startuml
-        //! Mouse -> HOM : Mouse_Move\n(trigger, move)
-        //! HOM -> Sim : RequestData(...,SIM_FRAME)
-        //! HOM <- Timer : SimFrameTimer_Tick\n(decrease)
-        //! alt AllowedExternalChange > 0 && _connected && ...
-        //! HOM -> Sim : RequestData(...,ONCE)
-        //! ...
-        //! Mouse -> HOM : Mouse_Move
-        //! Sim -> HOM : SimConnect_OnRecvData\n(newSimValue)
-        //! end
-        //! rnote over HOM
-        //! homChange = UpdateSimVarValue(simValue, extChange,...)
-        //! endrnote
-        //! alt homChange<>0
-        //! HOM -> Sim : SimConnect.SetDataOnSimObject(simValue+homChange)
-        //! end
-        //! Mouse -> HOM : Mouse_Move
-        //! HOM <- Timer : SimFrameTimer_Tick
-        //! Mouse -> HOM : Mouse_Move
-        //! @enduml
-
         public string UpdateTrigger()
         {
             if (!IsAvailable || !IsEnabled) return null;
@@ -922,7 +900,7 @@ namespace HandOnMouse
             {
                 var lastSimVarValue = SimVarValue;
                 var lastUpdateElapsedSecs = _lastUpdate.Elapsed.TotalSeconds;
-                if (externalChange != 0)
+                if (Math.Abs(externalChange) >= ValueIncrement)
                     _lastUpdate.Restart();
 
                 // HandOnMouse changes

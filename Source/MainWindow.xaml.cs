@@ -84,11 +84,17 @@ namespace HandOnMouse
     {
         public static string MappingsDir() { return Path.Combine(Directory.GetCurrentDirectory(), "Mappings"); }
         public static string MappingFile() { return Path.ChangeExtension(Path.Combine(MappingsDir(), Settings.Default.MappingFile), ".cfg"); }
-        public static string SimAircraftTitle { get; private set; } = "a XCub 1";
+        public static string SimAircraftTitle { get; private set; } = "";
         public static Controller.Buttons SimJoystickButtons { get; private set; }
         public static bool vJoyIsAvailable { get; private set; }
 
         const int WM_USER_SIMCONNECT = (int)WM.USER + 2;
+
+        public enum Groups
+        {
+            Receive = 0,
+            Send = 1,
+        }
 
         /// <summary>SimConnect Requests and Data Definitions are actually defined dynamically for each Axis in Axis.Mappings</summary>
         public enum Definitions
@@ -101,9 +107,12 @@ namespace HandOnMouse
             Axis = 5
         }
 
-        public enum Priorities
+        public enum Priorities : uint
         {
-            Highest = 1,
+            Highest         = 1,
+            HighestMaskable = 10000000,
+            Default         = 2000000000,
+            Lowest          = 4000000000,
         }
 
         public MainWindow()
@@ -404,22 +413,23 @@ namespace HandOnMouse
             }
             if (_requestSpeeds)
             {
-                RegisterData(Definitions.IndicatedAirSpeedKnots, "AIRSPEED INDICATED", "Knots", 5);
+                RegisterData(Definitions.IndicatedAirSpeedKnots, "AIRSPEED INDICATED", "Knots", 5); // TODO Compute dynamic pressure = 1/2 * AMBIENT PRESSURE * AIRSPEED TRUE ^2
                 RequestData(Definitions.IndicatedAirSpeedKnots, SIMCONNECT_PERIOD.SECOND);
             }
             if (_requestJoystickButtonInputEvents.Count > 0)
             {
-                _simConnect.MapClientEventToSimEvent(Definitions.None, "");
-                _simConnect.MapClientEventToSimEvent(Definitions.JoystickButtonPressed, "");
-                _simConnect.AddClientEventToNotificationGroup(Definitions.None, Definitions.None, true);
-                _simConnect.AddClientEventToNotificationGroup(Definitions.None, Definitions.JoystickButtonPressed, false);
-                _simConnect.SetNotificationGroupPriority(Definitions.None, (uint)Priorities.Highest);
+                _simConnect.MapClientEventToSimEvent(Definitions.None, "HOM.JoystickButtonDown");
+                _simConnect.MapClientEventToSimEvent(Definitions.JoystickButtonPressed, "HOM.JoystickButtonPressed");
+                _simConnect.AddClientEventToNotificationGroup(Groups.Receive, Definitions.None, true);
+                _simConnect.AddClientEventToNotificationGroup(Groups.Receive, Definitions.JoystickButtonPressed, false);
+                _simConnect.SetNotificationGroupPriority(Groups.Receive, (uint)Priorities.Highest);
+                _simConnect.SetInputGroupPriority(Groups.Receive, (uint)Priorities.Highest);
             }
             foreach (var button in _requestJoystickButtonInputEvents)
             {
                 for (uint i = 0; i < 10; i++) // joystick id can be > 0, so subscribe to any joystick id
                 {
-                    _simConnect.MapInputEventToClientEvent(Definitions.None, $"joystick:{i}:button:{button}", Definitions.JoystickButtonPressed, button, Definitions.None, button, false);
+                    _simConnect.MapInputEventToClientEvent(Groups.Receive, $"joystick:{i}:button:{button}", Definitions.JoystickButtonPressed, button, Definitions.None, button, false);
                 }
             }
             _simConnect.SubscribeToSystemEvent(Definitions.AircraftLoaded, "AircraftLoaded");
@@ -672,7 +682,7 @@ namespace HandOnMouse
         private void Axis_SimVarValueChanged(object sender, PropertyChangedEventArgs p)
         {
             var m = (Axis)sender;
-            if (m.IsAvailable && p.PropertyName == "SimVarValue")
+            if (m.IsAvailable && p.PropertyName == nameof(Axis.SimVarValue))
             {
                 if (m.VJoyId > 0)
                 {

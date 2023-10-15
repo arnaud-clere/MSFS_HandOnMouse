@@ -1,0 +1,21 @@
+﻿@startuml
+Mouse -> HOM : Mouse_Move\n(trigger, move)
+HOM -> Sim : RequestData(...,SIM_FRAME)
+HOM <- Timer : SimFrameTimer_Tick\n(decrease)
+alt AllowedExternalChange > 0 && _connected && ...
+HOM -> Sim : RequestData(...,ONCE)
+...
+Mouse -> HOM : Mouse_Move
+Sim -> HOM : SimConnect_OnRecvData\n(inSimValue)
+end
+rnote over HOM
+UpdateSimVarValue(inSimValue - SimVarValue, trimmedAxisChange)
+Axis_SimVarValueChanged()
+endrnote
+alt Change>Increment
+HOM -> Sim : SimConnect\n.SetDataOnSimObject(simValue+homChange)\n.TransmitClientEvent(...)
+end
+Mouse -> HOM : Mouse_Move
+HOM <- Timer : SimFrameTimer_Tick
+Mouse -> HOM : Mouse_Move
+@enduml
